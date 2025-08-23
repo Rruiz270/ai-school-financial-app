@@ -850,11 +850,22 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
   };
 
   return (
-    <div className={`bg-white relative ${className}`}>
-      {/* Watermark */}
-      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.02] select-none">
-        <div className="transform -rotate-45 text-gray-500 text-6xl font-bold whitespace-nowrap">
-          RAPHAEL RUIZ • PROJECT OWNER • CONFIDENTIAL • AI SCHOOL BRAZIL
+    <div className={`bg-white ${className}`}>
+      {/* Professional Header Stamp - Fixed at top */}
+      <div className="bg-white border-b-2 border-red-200 p-3 no-print sticky top-0 z-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="bg-red-100 border-2 border-red-400 px-3 py-1 rounded-lg">
+              <div className="text-red-700 font-bold text-xs">CONFIDENTIAL</div>
+            </div>
+            <div className="text-gray-700">
+              <div className="font-semibold text-xs">Project Owner: Raphael Ruiz</div>
+              <div className="text-xs text-gray-500">AI School Brazil - Investor Presentation</div>
+            </div>
+          </div>
+          <div className="text-xs text-gray-400">
+            {new Date().toLocaleDateString('pt-BR')}
+          </div>
         </div>
       </div>
       {/* Presentation Header */}

@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar } from 'lucide-react';
+import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge } from 'lucide-react';
 import { FinancialModel, DEFAULT_PARAMETERS, SCENARIO_PRESETS } from './utils/financialModel';
 import Dashboard from './components/Dashboard';
 import ParameterControl from './components/ParameterControl';
 import PresentationMode from './components/PresentationMode';
 import YearByYearEditor from './components/YearByYearEditor';
+import PublicPartnerships from './components/PublicPartnerships';
+import ConsolidatedView from './components/ConsolidatedView';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [parameters, setParameters] = useState(DEFAULT_PARAMETERS);
   const [currentScenario, setCurrentScenario] = useState('realistic');
+  const [publicModelData, setPublicModelData] = useState(null);
   
   // Create financial model instance and calculations
   const model = useMemo(() => new FinancialModel(parameters), [parameters]);
@@ -24,15 +27,36 @@ function App() {
     setParameters(scenarioParams);
   };
 
+  const handlePublicModelChange = (publicParams, publicData) => {
+    setPublicModelData(publicData);
+  };
+
   const tabs = [
     {
       id: 'dashboard',
-      name: 'Financial Dashboard',
-      icon: <BarChart3 className="w-5 h-5" />,
+      name: 'Private Sector',
+      icon: <School className="w-5 h-5" />,
       component: <Dashboard 
         financialData={financialData} 
         onScenarioChange={handleScenarioChange}
         currentScenario={currentScenario}
+      />
+    },
+    {
+      id: 'public',
+      name: 'Public Partnerships',
+      icon: <Building2 className="w-5 h-5" />,
+      component: <PublicPartnerships 
+        onPublicModelChange={handlePublicModelChange}
+      />
+    },
+    {
+      id: 'consolidated',
+      name: 'Consolidated View',
+      icon: <GitMerge className="w-5 h-5" />,
+      component: <ConsolidatedView 
+        privateFinancialData={financialData}
+        publicModelData={publicModelData}
       />
     },
     {
@@ -166,6 +190,19 @@ function App() {
               </div>
             </div>
           </div>
+        )}
+
+        {activeTab === 'public' && (
+          <PublicPartnerships 
+            onPublicModelChange={handlePublicModelChange}
+          />
+        )}
+
+        {activeTab === 'consolidated' && (
+          <ConsolidatedView 
+            privateFinancialData={financialData}
+            publicModelData={publicModelData}
+          />
         )}
 
         {activeTab === 'yearly' && (

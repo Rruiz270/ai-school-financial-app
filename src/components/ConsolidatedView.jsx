@@ -12,8 +12,11 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
   // Default public model data if not provided
   const defaultPublicData = useMemo(() => {
     const years = [];
+    // More realistic public sector growth curve
+    const baseStudents = [50000, 174110, 361233, 606286, 905974, 1257888, 1660146, 2111212, 2609795, 3154786];
+    
     for (let year = 1; year <= 10; year++) {
-      const students = Math.floor(50000 * Math.pow(year / 1, 1.8));
+      const students = baseStudents[year - 1];
       const monthlyRevenue = students * 250 * 12; // R$250/month
       const performanceBonus = monthlyRevenue * 0.15;
       const revenue = monthlyRevenue + performanceBonus;
@@ -51,14 +54,17 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
     
     if (privateData.length === 0) {
       console.warn('Private financial data not available, using defaults');
-      // Create basic private data structure for demonstration
+      // Create realistic private data structure based on our model
+      const privateStudents = [25750, 50750, 75750, 100750, 125750, 150750, 175750, 200750, 225750, 250750];
+      const privateRevenues = [268500000, 537000000, 805500000, 1074000000, 1342500000, 1611000000, 1879500000, 2148000000, 2416500000, 2685000000];
+      
       const defaultPrivateData = [];
       for (let year = 1; year <= 10; year++) {
         defaultPrivateData.push({
           year,
-          totalStudents: 750 + (year * 25000),
-          totalRevenue: 179000000 * year * 1.5,
-          ebitda: 179000000 * year * 1.5 * 0.82
+          totalStudents: privateStudents[year - 1],
+          totalRevenue: privateRevenues[year - 1],
+          ebitda: privateRevenues[year - 1] * 0.82
         });
       }
       return defaultPrivateData.map((privateYear, index) => {

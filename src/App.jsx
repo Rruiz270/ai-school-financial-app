@@ -61,7 +61,7 @@ function App() {
     },
     {
       id: 'yearly',
-      name: 'Year-by-Year Planning',
+      name: 'Private Year-by-Year',
       icon: <Calendar className="w-5 h-5" />,
       component: (
         <YearByYearEditor 

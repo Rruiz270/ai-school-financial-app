@@ -13,7 +13,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="text-center py-8">
           <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Year-by-Year Planning...</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Private Sector Year-by-Year Planning...</h3>
           <p className="text-sm text-gray-600">Please wait while we load the financial data.</p>
         </div>
       </div>
@@ -105,7 +105,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Calendar className="w-6 h-6 text-primary-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Year-by-Year Planning</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Private Sector Year-by-Year Planning</h2>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -383,11 +383,13 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
 
       {/* Instructions */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <h4 className="font-medium text-yellow-900 mb-2">How to Use Year-by-Year Planning:</h4>
+        <h4 className="font-medium text-yellow-900 mb-2">How to Use Private Sector Year-by-Year Planning:</h4>
         <ul className="text-sm text-yellow-800 space-y-1">
+          <li>• <strong>Private Sector Only</strong> - This planning tool covers flagship school, franchise network, and private adoption model</li>
           <li>• <strong>Select a year</strong> from the dropdown to view or edit that year's assumptions</li>
           <li>• <strong>Toggle Edit Mode</strong> to modify student counts, pricing, or investments for specific years</li>
           <li>• <strong>Changes update instantly</strong> - all charts and projections reflect your year-specific modifications</li>
+          <li>• <strong>Public sector planning</strong> is available in the "Public Partnerships" and "Consolidated View" tabs</li>
           <li>• <strong>View results</strong> in the right panel to see the financial impact of your changes</li>
         </ul>
       </div>

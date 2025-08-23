@@ -2,6 +2,13 @@ import React, { useMemo } from 'react';
 import { TrendingUp, DollarSign, Users, Building2, School, GitMerge, Target, Globe } from 'lucide-react';
 
 const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
+  // Debug logging
+  React.useEffect(() => {
+    console.log('ConsolidatedView received:', {
+      privateFinancialData: privateFinancialData?.yearlyData?.length || 'missing',
+      publicModelData: Array.isArray(publicModelData) ? publicModelData.length : typeof publicModelData
+    });
+  }, [privateFinancialData, publicModelData]);
   // Default public model data if not provided
   const defaultPublicData = useMemo(() => {
     const years = [];
@@ -39,6 +46,11 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
   }, [publicModelData, defaultPublicData]);
 
   const consolidatedData = useMemo(() => {
+    if (!privateFinancialData || !privateFinancialData.yearlyData) {
+      console.warn('Private financial data not available for consolidated view');
+      return [];
+    }
+
     return privateFinancialData.yearlyData.map((privateYear, index) => {
       const publicYear = publicData[index] || { students: 0, revenue: 0, ebitda: 0 };
       
@@ -66,6 +78,38 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
   const year10Total = consolidatedData[9];
   const year5Total = consolidatedData[4];
   const year1Total = consolidatedData[0];
+
+  // Handle empty data
+  if (!consolidatedData || consolidatedData.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Consolidated Business Model</h2>
+              <p className="mt-2 opacity-90">
+                Loading consolidated data...
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold">---</div>
+              <div className="text-sm opacity-90">Calculating...</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+          <div className="text-gray-400 mb-4">
+            <GitMerge className="w-16 h-16 mx-auto" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">Loading Financial Data</h3>
+          <p className="text-gray-500">
+            Please wait while we process the private and public sector financial models...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {

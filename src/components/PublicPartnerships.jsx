@@ -158,9 +158,18 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
   // Update parent component with data changes
   React.useEffect(() => {
     if (onPublicModelChange) {
+      console.log('PublicPartnerships sending data:', { publicParameters, dataLength: publicFinancialData?.length });
       onPublicModelChange(publicParameters, publicFinancialData);
     }
   }, [publicFinancialData, publicParameters, onPublicModelChange]);
+
+  // Initialize data on mount
+  React.useEffect(() => {
+    if (onPublicModelChange && publicFinancialData?.length > 0) {
+      console.log('Initial public data send');
+      onPublicModelChange(publicParameters, publicFinancialData);
+    }
+  }, [onPublicModelChange]); // Only run on mount and when callback changes
 
   const year10Data = publicFinancialData[9];
   const year5Data = publicFinancialData[4];

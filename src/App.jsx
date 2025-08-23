@@ -28,6 +28,7 @@ function App() {
   };
 
   const handlePublicModelChange = (publicParams, publicData) => {
+    console.log('App received public data:', { publicParams, publicData });
     setPublicModelData(publicData);
   };
 

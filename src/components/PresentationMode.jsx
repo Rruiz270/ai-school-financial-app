@@ -64,24 +64,37 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
               <span className="text-primary-700 font-medium">AI-Powered Personalized Learning</span>
             </div>
             <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-              First-mover advantage in AI education with Harvard expertise, targeting Brazil's R$100B education market
+              First-mover advantage in AI education targeting Brazil's R$100B private + 46.7M public student market
             </p>
+            
+            {/* Bill Ackman Endorsement */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-lg max-w-4xl mx-auto">
+              <div className="flex items-center justify-center space-x-3 mb-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">BA</div>
+                <span className="font-bold text-blue-900">Bill Ackman</span>
+                <span className="text-sm text-blue-700">• Billionaire Investor • Pershing Square Capital</span>
+              </div>
+              <blockquote className="text-center text-blue-800 italic">
+                "Alpha School is the first truly breakthrough innovation in K-12 education since the KIPP Academy"
+              </blockquote>
+              <div className="text-xs text-blue-600 mt-2 text-center">Ackman is backing Alpha School's expansion, calling it revolutionary AI education</div>
+            </div>
             
             {/* Value Proposition */}
             <div className="bg-primary-50 p-6 rounded-lg max-w-4xl mx-auto">
               <h3 className="text-lg font-semibold text-primary-900 mb-4 text-center">Why Now? Why Brazil? Why AI School?</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="text-center">
-                  <div className="font-semibold text-primary-800">🚀 Market Timing</div>
-                  <div className="text-primary-700">Post-COVID digital transformation + AI breakthrough</div>
+                  <div className="font-semibold text-primary-800">🚀 Proven Model</div>
+                  <div className="text-primary-700">Alpha School: 2x learning in 2 hours, top 0.1% performance</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-primary-800">🇧🇷 Brazil Advantage</div>
-                  <div className="text-primary-700">200M population, growing middle class, education priority</div>
+                  <div className="font-semibold text-primary-800">🇧🇷 Massive Market</div>
+                  <div className="text-primary-700">55.7M total students (9M private + 46.7M public)</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-primary-800">🤖 AI Differentiation</div>
-                  <div className="text-primary-700">Harvard partnership, personalized learning at scale</div>
+                  <div className="font-semibold text-primary-800">🤖 AI Advantage</div>
+                  <div className="text-primary-700">Multi-LLM INCEPT platform + personalized TIMEBACK OS</div>
                 </div>
               </div>
             </div>
@@ -170,10 +183,86 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
       )
     },
 
-    // Slide 3: Market Opportunity
+    // Slide 3: Alpha School - Proven Technology Model
+    {
+      title: "Alpha School: Proven Technology Model",
+      subtitle: "Bill Ackman-Backed Success Story We're Replicating in Brazil",
+      content: (
+        <div className="space-y-8">
+          {/* Bill Ackman Endorsement Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 p-6 rounded-lg">
+            <div className="flex items-center justify-center space-x-4 mb-4">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">BA</div>
+              <div>
+                <div className="text-xl font-bold text-blue-900">Bill Ackman</div>
+                <div className="text-sm text-blue-700">Billionaire Investor • Pershing Square Capital • $18B AUM</div>
+              </div>
+            </div>
+            <blockquote className="text-center text-lg text-blue-800 italic mb-4">
+              "Alpha School is the first truly breakthrough innovation in K-12 education since the KIPP Academy. 
+              Two hours of dedicated AI personal tutor customized for your child's academic program."
+            </blockquote>
+            <div className="text-center text-sm text-blue-600">
+              Ackman serves as brand ambassador and is backing Alpha's expansion to NYC (September 2025)
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Alpha School Results */}
+            <div className="space-y-6">
+              <div className="bg-green-50 border-2 border-green-200 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-green-900 mb-4">🏆 Proven Results</h3>
+                <ul className="space-y-3 text-green-700">
+                  <li>• <strong>2x Learning Speed:</strong> Students achieve 2x learning in just 2 hours</li>
+                  <li>• <strong>Top Performance:</strong> Students test in top 0.1% nationally</li>
+                  <li>• <strong>Multi-State Growth:</strong> Texas, Florida, California + NYC launch</li>
+                  <li>• <strong>Premium Pricing:</strong> $45,000/year tuition with waiting lists</li>
+                  <li>• <strong>Student Satisfaction:</strong> "Alpha kids love school"</li>
+                </ul>
+              </div>
+            </div>
+            
+            {/* Technology Architecture */}
+            <div className="space-y-6">
+              <div className="bg-purple-50 border-2 border-purple-200 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-purple-900 mb-4">🔧 Technology Stack</h3>
+                <ul className="space-y-3 text-purple-700">
+                  <li>• <strong>INCEPT Platform:</strong> Multi-LLM orchestration engine</li>
+                  <li>• <strong>TIMEBACK OS:</strong> Personalized learning operating system</li>
+                  <li>• <strong>Vision Monitoring:</strong> Real-time attention tracking</li>
+                  <li>• <strong>Anti-Pattern Detection:</strong> Prevents topic shopping & knowledge gaps</li>
+                  <li>• <strong>Mastery-Based Progression:</strong> 90%+ completion required</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Our Brazilian Advantage */}
+          <div className="bg-yellow-50 border-2 border-yellow-200 p-6 rounded-lg">
+            <h3 className="text-xl font-semibold text-yellow-900 mb-4 text-center">🇧🇷 Our Brazilian Competitive Advantage</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+              <div>
+                <div className="text-2xl font-bold text-yellow-600">80% Lower Cost</div>
+                <div className="text-sm text-yellow-700">R$2,300/month vs $45k/year Alpha model</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-yellow-600">First Mover</div>
+                <div className="text-sm text-yellow-700">No direct AI education competitors in Brazil</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-yellow-600">Public Sector</div>
+                <div className="text-sm text-yellow-700">46.7M public students = massive scalability</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+
+    // Slide 4: Market Opportunity
     {
       title: "Market Opportunity",
-      subtitle: "R$100B Brazilian Private K-12 Market",
+      subtitle: "R$100B Private + Massive 46.7M Public Sector Opportunity",
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -196,6 +285,29 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
                   <div className="flex justify-between">
                     <span className="text-blue-700">Our Target Share</span>
                     <span className="font-bold text-blue-900">{((summary.year10Students / 9090909) * 100).toFixed(2)}% ({Math.round(summary.year10Students / 1000)}K of 9M)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Public Sector Opportunity */}
+              <div className="bg-gradient-to-r from-emerald-50 to-green-100 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-emerald-900 mb-4">🏛️ Public Sector Goldmine</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-emerald-700">Public K-12 Students</span>
+                    <span className="font-bold text-emerald-900">46.7 Million</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-emerald-700">Partnership Model Revenue</span>
+                    <span className="font-bold text-emerald-900">R$250/student/month</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-emerald-700">Target States</span>
+                    <span className="font-bold text-emerald-900">SP, RJ, PR, SC</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-emerald-700">Year 10 Public Revenue Potential</span>
+                    <span className="font-bold text-emerald-900">R$5.5 Billion</span>
                   </div>
                 </div>
               </div>
@@ -313,10 +425,97 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
       )
     },
 
-    // Slide 5: Financial Projections
+    // Slide 5: Public Sector Strategy
+    {
+      title: "Public Sector Strategy",
+      subtitle: "46.7M Students × R$250/month = R$140B Annual Opportunity",
+      content: (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Phase 1: Private Validation */}
+            <div className="space-y-6">
+              <div className="bg-blue-50 border-2 border-blue-200 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-blue-900 mb-4">Phase 1: Private Validation (Years 1-3)</h3>
+                <ul className="space-y-2 text-blue-700">
+                  <li>• <strong>Flagship School:</strong> São Paulo demonstration center</li>
+                  <li>• <strong>Franchise Network:</strong> 15 locations by Year 3</li>
+                  <li>• <strong>Proof of Concept:</strong> Measurable learning outcomes</li>
+                  <li>• <strong>Revenue:</strong> R$179M Year 3, cash flow positive</li>
+                </ul>
+              </div>
+            </div>
+            
+            {/* Phase 2: Public Pilot */}
+            <div className="space-y-6">
+              <div className="bg-emerald-50 border-2 border-emerald-200 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-emerald-900 mb-4">Phase 2: Public Pilot (Years 4-6)</h3>
+                <ul className="space-y-2 text-emerald-700">
+                  <li>• <strong>Paraná & Santa Catarina:</strong> 50,000 students pilot</li>
+                  <li>• <strong>Teacher Training:</strong> Existing faculty + AI system</li>
+                  <li>• <strong>Performance-Based:</strong> R$250/month per student</li>
+                  <li>• <strong>Validation:</strong> 15% improvement in test scores</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Phase 3: National Expansion */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 p-6 rounded-lg">
+            <h3 className="text-xl font-semibold text-purple-900 mb-4 text-center">Phase 3: National Public Expansion (Years 7-10)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+              <div>
+                <div className="text-2xl font-bold text-purple-600">2.2M</div>
+                <div className="text-sm text-purple-700">Students by Year 10</div>
+                <div className="text-xs text-purple-600">4.7% of public market</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-600">R$6.6B</div>
+                <div className="text-sm text-purple-700">Annual Revenue</div>
+                <div className="text-xs text-purple-600">Performance bonuses included</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-600">120</div>
+                <div className="text-sm text-purple-700">Municipalities</div>
+                <div className="text-xs text-purple-600">Major cities coverage</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-600">75%</div>
+                <div className="text-sm text-purple-700">EBITDA Margin</div>
+                <div className="text-xs text-purple-600">Public sector efficiency</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Strategic Advantages */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-yellow-50 border-2 border-yellow-200 p-6 rounded-lg">
+              <h3 className="text-xl font-semibold text-yellow-900 mb-4">🏛️ Public Sector Advantages</h3>
+              <ul className="space-y-2 text-yellow-700">
+                <li>• <strong>Existing Infrastructure:</strong> Use current schools & teachers</li>
+                <li>• <strong>Political Stability:</strong> Performance-based contracts</li>
+                <li>• <strong>Social Impact:</strong> Democratize AI education access</li>
+                <li>• <strong>Scale Economics:</strong> 5x larger than private market</li>
+              </ul>
+            </div>
+            
+            <div className="bg-green-50 border-2 border-green-200 p-6 rounded-lg">
+              <h3 className="text-xl font-semibold text-green-900 mb-4">💰 Financial Benefits</h3>
+              <ul className="space-y-2 text-green-700">
+                <li>• <strong>Predictable Revenue:</strong> Government contracts</li>
+                <li>• <strong>Lower Customer Acquisition:</strong> B2G vs B2C</li>
+                <li>• <strong>Massive Scale:</strong> 50x bigger than flagship model</li>
+                <li>• <strong>Market Dominance:</strong> First-mover in public AI education</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )
+    },
+
+    // Slide 6: Financial Projections
     {
       title: "Financial Projections",
-      subtitle: "Exceptional Growth & Profitability",
+      subtitle: "Private + Public = Exceptional Growth & Profitability",
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-3 gap-6 text-center">

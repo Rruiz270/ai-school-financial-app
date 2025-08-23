@@ -176,7 +176,13 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
   const year1Data = publicFinancialData[0];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Watermark */}
+      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.03] select-none">
+        <div className="transform -rotate-45 text-gray-500 text-6xl font-bold whitespace-nowrap">
+          RAPHAEL RUIZ • PROJECT OWNER • CONFIDENTIAL • AI SCHOOL BRAZIL
+        </div>
+      </div>
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">

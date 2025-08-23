@@ -94,7 +94,13 @@ const Dashboard = ({ financialData, onScenarioChange, currentScenario = 'realist
   ];
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-6 relative ${className}`}>
+      {/* Watermark */}
+      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.03] select-none">
+        <div className="transform -rotate-45 text-gray-500 text-6xl font-bold whitespace-nowrap">
+          RAPHAEL RUIZ • PROJECT OWNER • CONFIDENTIAL • AI SCHOOL BRAZIL
+        </div>
+      </div>
       {/* Scenario Selection */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-between mb-4">

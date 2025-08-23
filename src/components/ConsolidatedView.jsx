@@ -158,11 +158,18 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
   };
 
   const calculateCAGR = (endValue, startValue, years) => {
+    if (!startValue || startValue <= 0) return '0.0';
     return ((Math.pow(endValue / startValue, 1 / years) - 1) * 100).toFixed(1);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Watermark */}
+      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.03] select-none">
+        <div className="transform -rotate-45 text-gray-500 text-6xl font-bold whitespace-nowrap">
+          RAPHAEL RUIZ • PROJECT OWNER • CONFIDENTIAL • AI SCHOOL BRAZIL
+        </div>
+      </div>
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
@@ -231,7 +238,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
             <div>
               <p className="text-sm font-medium text-gray-600">Revenue Multiple</p>
               <p className="text-2xl font-bold text-green-600">
-                {(year10Total.total.revenue / year1Total.total.revenue).toFixed(1)}x
+                {year1Total.total.revenue > 0 ? (year10Total.total.revenue / year1Total.total.revenue).toFixed(1) : '0'}x
               </p>
             </div>
             <Globe className="w-8 h-8 text-green-600" />

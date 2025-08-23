@@ -850,7 +850,13 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
   };
 
   return (
-    <div className={`bg-white ${className}`}>
+    <div className={`bg-white relative ${className}`}>
+      {/* Watermark */}
+      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.02] select-none">
+        <div className="transform -rotate-45 text-gray-500 text-6xl font-bold whitespace-nowrap">
+          RAPHAEL RUIZ • PROJECT OWNER • CONFIDENTIAL • AI SCHOOL BRAZIL
+        </div>
+      </div>
       {/* Presentation Header */}
       <div className="flex justify-between items-center p-4 border-b border-gray-200 no-print">
         <div className="flex items-center gap-4">

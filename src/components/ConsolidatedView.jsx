@@ -71,6 +71,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
             <h2 className="text-2xl font-bold">Consolidated Business Model</h2>
             <p className="mt-2 opacity-90">
               Complete view: Private Sector + Public Partnerships across Brazil's 55.7M total K-12 students
+            Including expanded coverage in Paraná and Santa Catarina states
             </p>
           </div>
           <div className="text-right">

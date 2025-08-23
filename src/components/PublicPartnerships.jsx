@@ -4,17 +4,18 @@ import { Building2, Users, TrendingUp, DollarSign, MapPin, Calendar, AlertCircle
 const PublicPartnerships = ({ onPublicModelChange }) => {
   const [publicParameters, setPublicParameters] = useState({
     // Student Targets (46.7M total public K-12 students in Brazil)
+    // Includes expanded partnerships with Paraná and Santa Catarina
     year1Students: 50000,
-    year5Students: 500000,
-    year10Students: 2000000,
+    year5Students: 610000, // Updated to include PR + SC expansion
+    year10Students: 2200000, // Expanded target with southern states
     
     // Revenue per student per month (public partnership rates)
     revenuePerStudentMonth: 250, // R$250/month vs R$200 adoption model
     
-    // Geographic rollout
-    pilotMunicipalities: 2,
-    year5Municipalities: 20,
-    year10Municipalities: 100,
+    // Geographic rollout (including Paraná and Santa Catarina)
+    pilotMunicipalities: 5, // SP, Rio, Curitiba, Florianópolis, BH
+    year5Municipalities: 25, // Southern region expansion
+    year10Municipalities: 120, // Extended coverage including PR/SC metro areas
     
     // Performance bonuses
     performanceBonusRate: 0.15, // 15% bonus for educational outcomes

@@ -7,14 +7,36 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
     const years = [];
     for (let year = 1; year <= 10; year++) {
       const students = Math.floor(50000 * Math.pow(year / 1, 1.8));
-      const revenue = students * 250 * 12 * 1.15; // R$250/month + 15% performance bonus
+      const monthlyRevenue = students * 250 * 12; // R$250/month
+      const performanceBonus = monthlyRevenue * 0.15;
+      const revenue = monthlyRevenue + performanceBonus;
       const ebitda = revenue * 0.75;
-      years.push({ year, students, revenue, ebitda });
+      years.push({ 
+        year, 
+        students, 
+        revenue: {
+          total: revenue,
+          monthly: monthlyRevenue,
+          performance: performanceBonus
+        },
+        ebitda 
+      });
     }
     return years;
   }, []);
 
-  const publicData = publicModelData || defaultPublicData;
+  // Process public model data properly
+  const publicData = useMemo(() => {
+    if (publicModelData && Array.isArray(publicModelData) && publicModelData.length > 0) {
+      return publicModelData.map(yearData => ({
+        year: yearData.year,
+        students: yearData.students,
+        revenue: yearData.revenue?.total || yearData.revenue || 0,
+        ebitda: yearData.ebitda || 0
+      }));
+    }
+    return defaultPublicData;
+  }, [publicModelData, defaultPublicData]);
 
   const consolidatedData = useMemo(() => {
     return privateFinancialData.yearlyData.map((privateYear, index) => {

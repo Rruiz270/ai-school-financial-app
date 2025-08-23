@@ -1,7 +1,51 @@
 import React, { useState, useMemo } from 'react';
 import { Building2, Users, TrendingUp, DollarSign, MapPin, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
 
+// Public Sector Scenario Presets
+const PUBLIC_SCENARIO_PRESETS = {
+  optimistic: {
+    name: 'Optimistic',
+    description: 'Strong government partnerships, rapid adoption',
+    year1Students: 50000,
+    year5Students: 610000,
+    year10Students: 2200000,
+    pilotMunicipalities: 5,
+    year5Municipalities: 25,
+    year10Municipalities: 120,
+    revenuePerStudentMonth: 250,
+    performanceBonusRate: 0.15,
+    marginsPublic: 0.75
+  },
+  realistic: {
+    name: 'Realistic',
+    description: 'Moderate government support, steady growth',
+    year1Students: 42500, // -15%
+    year5Students: 518500, // -15%
+    year10Students: 1870000, // -15%
+    pilotMunicipalities: 4,
+    year5Municipalities: 21, // -15%
+    year10Municipalities: 102, // -15%
+    revenuePerStudentMonth: 212, // -15%
+    performanceBonusRate: 0.13, // -15%
+    marginsPublic: 0.64 // -15%
+  },
+  pessimistic: {
+    name: 'Pessimistic',
+    description: 'Slow adoption, regulatory challenges',
+    year1Students: 35000, // -30%
+    year5Students: 427000, // -30%
+    year10Students: 1540000, // -30%
+    pilotMunicipalities: 3,
+    year5Municipalities: 17, // -30%
+    year10Municipalities: 84, // -30%
+    revenuePerStudentMonth: 175, // -30%
+    performanceBonusRate: 0.11, // -30%
+    marginsPublic: 0.53 // -30%
+  }
+};
+
 const PublicPartnerships = ({ onPublicModelChange }) => {
+  const [currentScenario, setCurrentScenario] = useState('optimistic');
   const [publicParameters, setPublicParameters] = useState({
     // Student Targets (46.7M total public K-12 students in Brazil)
     // Includes expanded partnerships with Paraná and Santa Catarina
@@ -96,12 +140,27 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
   };
 
   const handleParameterChange = (key, value) => {
-    const newParams = { ...publicParameters, [key]: value };
+    // Handle empty values
+    const processedValue = value === '' ? 0 : value;
+    const newParams = { ...publicParameters, [key]: processedValue };
     setPublicParameters(newParams);
-    if (onPublicModelChange) {
-      onPublicModelChange(newParams, publicFinancialData);
-    }
   };
+
+  const handleScenarioChange = (scenarioKey) => {
+    setCurrentScenario(scenarioKey);
+    const scenarioParams = {
+      ...publicParameters,
+      ...PUBLIC_SCENARIO_PRESETS[scenarioKey]
+    };
+    setPublicParameters(scenarioParams);
+  };
+
+  // Update parent component with data changes
+  React.useEffect(() => {
+    if (onPublicModelChange) {
+      onPublicModelChange(publicParameters, publicFinancialData);
+    }
+  }, [publicFinancialData, publicParameters, onPublicModelChange]);
 
   const year10Data = publicFinancialData[9];
   const year5Data = publicFinancialData[4];
@@ -121,6 +180,53 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
           <div className="text-right">
             <div className="text-3xl font-bold">{formatNumber(year10Data.students)}</div>
             <div className="text-sm opacity-90">Students by Year 10</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Scenario Selector */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Public Sector Scenarios</h3>
+            <p className="text-sm text-gray-600">Select different market penetration and partnership scenarios</p>
+          </div>
+          <div className="flex space-x-3">
+            {Object.entries(PUBLIC_SCENARIO_PRESETS).map(([key, scenario]) => (
+              <button
+                key={key}
+                onClick={() => handleScenarioChange(key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentScenario === key
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="font-semibold">{scenario.name}</div>
+                  <div className="text-xs opacity-90">{scenario.description}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-emerald-900">
+                Current Scenario: {PUBLIC_SCENARIO_PRESETS[currentScenario].name}
+              </div>
+              <div className="text-sm text-emerald-700 mt-1">
+                {PUBLIC_SCENARIO_PRESETS[currentScenario].description}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold text-emerald-600">
+                {formatNumber(publicParameters.year10Students)} students
+              </div>
+              <div className="text-sm text-emerald-600">by Year 10</div>
+            </div>
           </div>
         </div>
       </div>
@@ -237,9 +343,10 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
               </label>
               <input
                 type="number"
-                value={publicParameters.revenuePerStudentMonth}
-                onChange={(e) => handleParameterChange('revenuePerStudentMonth', Number(e.target.value))}
+                value={publicParameters.revenuePerStudentMonth || ''}
+                onChange={(e) => handleParameterChange('revenuePerStudentMonth', e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="250"
               />
             </div>
             
@@ -249,9 +356,10 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
               </label>
               <input
                 type="number"
-                value={publicParameters.year10Students}
-                onChange={(e) => handleParameterChange('year10Students', Number(e.target.value))}
+                value={publicParameters.year10Students || ''}
+                onChange={(e) => handleParameterChange('year10Students', e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="2200000"
               />
             </div>
             
@@ -261,9 +369,10 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
               </label>
               <input
                 type="number"
-                value={publicParameters.year10Municipalities}
-                onChange={(e) => handleParameterChange('year10Municipalities', Number(e.target.value))}
+                value={publicParameters.year10Municipalities || ''}
+                onChange={(e) => handleParameterChange('year10Municipalities', e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="120"
               />
             </div>
             
@@ -274,9 +383,10 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
               <input
                 type="number"
                 step="0.01"
-                value={publicParameters.performanceBonusRate * 100}
-                onChange={(e) => handleParameterChange('performanceBonusRate', Number(e.target.value) / 100)}
+                value={publicParameters.performanceBonusRate ? (publicParameters.performanceBonusRate * 100) : ''}
+                onChange={(e) => handleParameterChange('performanceBonusRate', e.target.value === '' ? '' : Number(e.target.value) / 100)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="15"
               />
             </div>
             
@@ -287,9 +397,10 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
               <input
                 type="number"
                 step="0.01"
-                value={publicParameters.marginsPublic * 100}
-                onChange={(e) => handleParameterChange('marginsPublic', Number(e.target.value) / 100)}
+                value={publicParameters.marginsPublic ? (publicParameters.marginsPublic * 100) : ''}
+                onChange={(e) => handleParameterChange('marginsPublic', e.target.value === '' ? '' : Number(e.target.value) / 100)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="75"
               />
             </div>
           </div>

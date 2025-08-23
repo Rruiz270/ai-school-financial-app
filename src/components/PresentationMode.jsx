@@ -364,6 +364,145 @@ const PresentationMode = ({ financialData, publicModelData, competitiveCostData,
       )
     },
 
+    // NEW Slide: Public Sector Economics & Competitive Landscape
+    {
+      title: "Public Sector Economics & Competitive Analysis",
+      subtitle: "Understanding the R$16K/Student Cost Structure & Market Players",
+      content: (
+        <div className="space-y-8">
+          {/* Public Sector Cost Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-blue-900 mb-4">📊 Public Sector Cost Breakdown (R$16K/Student/Year)</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-700">Salários e Encargos (74%)</span>
+                    <span className="font-bold text-blue-900">R$11,840</span>
+                  </div>
+                  <div className="text-xs text-blue-600 ml-4">Professores, diretores, equipe administrativa</div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-700">Materiais e Infraestrutura (20%)</span>
+                    <span className="font-bold text-blue-900">R$3,200</span>
+                  </div>
+                  <div className="text-xs text-blue-600 ml-4">Material didático, informática, manutenção</div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-700">Alimentação Escolar (6%)</span>
+                    <span className="font-bold text-blue-900">R$960</span>
+                  </div>
+                  <div className="text-xs text-blue-600 ml-4">Merenda e funcionários</div>
+                  
+                  <div className="flex justify-between items-center pt-3 border-t border-blue-200">
+                    <span className="text-blue-800 font-semibold">Total por Aluno</span>
+                    <span className="font-bold text-blue-900 text-lg">R$16,000</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Our AI Model Efficiency */}
+              <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-green-900 mb-4">🤖 Nossa Eficiência com IA</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-700">Modelo AI School (R$250/mês)</span>
+                    <span className="font-bold text-green-900">R$3,000/ano</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-700">Economia para o Governo</span>
+                    <span className="font-bold text-green-900">81%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-700">Professores Mantidos</span>
+                    <span className="font-bold text-green-900">100%</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-3 border-t border-green-200">
+                    <span className="text-green-800 font-semibold">Economia Anual</span>
+                    <span className="font-bold text-green-900 text-lg">R$13,000/aluno</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Competitive Landscape */}
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-purple-900 mb-4">🏆 Panorama Competitivo K-12 Brasil</h3>
+                <div className="space-y-3">
+                  <div className="bg-white p-3 rounded">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-purple-900">Arco Educação</span>
+                      <span className="text-sm font-bold text-purple-700">R$3.0B (2025)</span>
+                    </div>
+                    <div className="text-xs text-gray-600">4M alunos • 97% privado • Positivo/SAS/COC</div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-purple-900">Vasta (Cogna)</span>
+                      <span className="text-sm font-bold text-purple-700">R$1.5B (2025)</span>
+                    </div>
+                    <div className="text-xs text-gray-600">1.5M alunos • 97% privado • 3% público</div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-purple-900">FTD Educação</span>
+                      <span className="text-sm font-bold text-purple-700">R$1.5B (2024)</span>
+                    </div>
+                    <div className="text-xs text-gray-600">600K+ público • 45%+ PNLD • Líder público</div>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-purple-900">Santillana/Moderna</span>
+                      <span className="text-sm font-bold text-purple-700">R$800M (2025)</span>
+                    </div>
+                    <div className="text-xs text-gray-600">Foco PNLD público • Expansão privado</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Our Competitive Advantage */}
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-orange-900 mb-4">⚡ Nossa Vantagem Competitiva</h3>
+                <ul className="space-y-2 text-orange-700">
+                  <li>• <strong>Único com IA Completa:</strong> 2x aprendizado em 2 horas</li>
+                  <li>• <strong>Foco Dual:</strong> Privado premium + Público massivo</li>
+                  <li>• <strong>Economia Radical:</strong> 81% menos custo público</li>
+                  <li>• <strong>Sem Competição Direta:</strong> Players atuais são conteúdo, não IA</li>
+                  <li>• <strong>First-Mover:</strong> 3-5 anos à frente em tecnologia</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          {/* Strategic Positioning */}
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-indigo-900 mb-4 text-center">🎯 Posicionamento Estratégico</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+              <div>
+                <div className="text-2xl font-bold text-indigo-600">Disrupção</div>
+                <div className="text-sm text-indigo-700">IA vs. Conteúdo tradicional</div>
+                <div className="text-xs text-indigo-600 mt-1">Tecnologia, não editora</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-indigo-600">Economia</div>
+                <div className="text-sm text-indigo-700">R$13K economia/aluno público</div>
+                <div className="text-xs text-indigo-600 mt-1">ROI imediato para governo</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-indigo-600">Escala</div>
+                <div className="text-sm text-indigo-700">46.7M alunos públicos</div>
+                <div className="text-xs text-indigo-600 mt-1">5x maior que privado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+
     // Slide 4: Business Model
     {
       title: "Business Model",

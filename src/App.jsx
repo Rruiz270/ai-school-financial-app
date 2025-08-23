@@ -87,7 +87,7 @@ function App() {
       id: 'presentation',
       name: 'Investor Presentation',
       icon: <Presentation className="w-5 h-5" />,
-      component: <PresentationMode financialData={financialData} />
+      component: <PresentationMode financialData={financialData} publicModelData={publicModelData} />
     }
   ];
 
@@ -285,7 +285,7 @@ function App() {
         
         {activeTab === 'presentation' && (
           <div>
-            <PresentationMode financialData={financialData} />
+            <PresentationMode financialData={financialData} publicModelData={publicModelData} />
             <div className="fixed top-4 left-4 z-50 no-print">
               <button
                 onClick={() => setActiveTab('dashboard')}

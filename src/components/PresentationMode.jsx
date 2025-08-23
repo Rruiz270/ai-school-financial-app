@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Users, TrendingUp, DollarSign, Target, Building, Lightbulb, BarChart3, PieChart, Presentation, Download } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
-const PresentationMode = ({ financialData, competitiveCostData, className = '' }) => {
+const PresentationMode = ({ financialData, publicModelData, competitiveCostData, className = '' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   const { projection, summary } = financialData;
+  
+  // Calculate consolidated data (private + public)
+  const consolidatedSummary = useMemo(() => {
+    if (!publicModelData || !Array.isArray(publicModelData) || publicModelData.length === 0) {
+      return summary; // Return private only if no public data
+    }
+    
+    const publicYear10 = publicModelData[9] || { revenue: { total: 0 }, students: 0, ebitda: 0 };
+    
+    return {
+      ...summary,
+      year10Revenue: summary.year10Revenue + (publicYear10.revenue.total || publicYear10.revenue || 0),
+      year10Students: summary.year10Students + publicYear10.students,
+      year10Ebitda: summary.year10Ebitda + publicYear10.ebitda,
+      // Keep other metrics private-sector focused (IRR, payback, etc.)
+    };
+  }, [summary, publicModelData]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -102,20 +119,24 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-primary-600">{formatCurrency(summary.year10Revenue)}</div>
-              <div className="text-sm text-gray-600">Year 10 Revenue</div>
+              <div className="text-3xl font-bold text-primary-600">{formatCurrency(consolidatedSummary.year10Revenue)}</div>
+              <div className="text-sm text-gray-600">Year 10 Total Revenue</div>
+              <div className="text-xs text-gray-500">Private + Public Sectors</div>
             </div>
             <div className="text-center space-y-2">
               <div className="text-3xl font-bold text-green-600">{formatPercentage(summary.irr)}</div>
               <div className="text-sm text-gray-600">10-Year IRR</div>
+              <div className="text-xs text-gray-500">Private Sector</div>
             </div>
             <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-blue-600">{formatNumber(summary.year10Students)}</div>
+              <div className="text-3xl font-bold text-blue-600">{formatNumber(consolidatedSummary.year10Students)}</div>
               <div className="text-sm text-gray-600">Total Students</div>
+              <div className="text-xs text-gray-500">Private + Public Sectors</div>
             </div>
             <div className="text-center space-y-2">
               <div className="text-3xl font-bold text-orange-600">{summary.flagshipBreakEvenMonths} months</div>
               <div className="text-sm text-gray-600">Flagship Break-even</div>
+              <div className="text-xs text-gray-500">Private Sector</div>
             </div>
           </div>
         </div>
@@ -163,9 +184,9 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
             <h3 className="text-xl font-semibold text-blue-900 mb-4 text-center">🎯 Market Impact</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
               <div>
-                <div className="text-3xl font-bold text-blue-600">{Math.round(summary.year10Students / 1000)}K</div>
+                <div className="text-3xl font-bold text-blue-600">{Math.round(consolidatedSummary.year10Students / 1000)}K</div>
                 <div className="text-sm text-blue-700">Students Reached by 2035</div>
-                <div className="text-xs text-blue-600 mt-1">{((summary.year10Students / 9090909) * 100).toFixed(1)}% market penetration</div>
+                <div className="text-xs text-blue-600 mt-1">{((consolidatedSummary.year10Students / 55700000) * 100).toFixed(1)}% of total Brazil K-12</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-blue-600">50%</div>
@@ -520,19 +541,19 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
         <div className="space-y-8">
           <div className="grid grid-cols-3 gap-6 text-center">
             <div className="bg-green-50 p-6 rounded-lg">
-              <div className="text-3xl font-bold text-green-600 mb-2">{formatCurrency(summary.year10Revenue)}</div>
-              <div className="text-green-700 font-medium">Year 10 Revenue</div>
-              <div className="text-sm text-green-600 mt-1">40%+ CAGR</div>
+              <div className="text-3xl font-bold text-green-600 mb-2">{formatCurrency(consolidatedSummary.year10Revenue)}</div>
+              <div className="text-green-700 font-medium">Year 10 Total Revenue</div>
+              <div className="text-sm text-green-600 mt-1">Private + Public Combined</div>
             </div>
             <div className="bg-blue-50 p-6 rounded-lg">
               <div className="text-3xl font-bold text-blue-600 mb-2">82%</div>
-              <div className="text-blue-700 font-medium">EBITDA Margin</div>
-              <div className="text-sm text-blue-600 mt-1">Best-in-class profitability</div>
+              <div className="text-blue-700 font-medium">Private EBITDA Margin</div>
+              <div className="text-sm text-blue-600 mt-1">75% Public | Blended ~79%</div>
             </div>
             <div className="bg-purple-50 p-6 rounded-lg">
-              <div className="text-3xl font-bold text-purple-600 mb-2">{formatCurrency(summary.cumulativeEbitda)}</div>
-              <div className="text-purple-700 font-medium">Cumulative EBITDA</div>
-              <div className="text-sm text-purple-600 mt-1">10-year total</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">{formatCurrency(consolidatedSummary.year10Ebitda)}</div>
+              <div className="text-purple-700 font-medium">Year 10 Total EBITDA</div>
+              <div className="text-sm text-purple-600 mt-1">Private + Public Combined</div>
             </div>
           </div>
           
@@ -877,25 +898,25 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
           
           {/* Valuation Analysis */}
           <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Projected Exit Valuations (Based on Year 10 Revenue: {formatCurrency(summary.year10Revenue)})</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">Projected Exit Valuations (Based on Year 10 Total Revenue: {formatCurrency(consolidatedSummary.year10Revenue)})</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600 mb-2">
-                  {formatCurrency(summary.year10Revenue * 8)}
+                  {formatCurrency(consolidatedSummary.year10Revenue * 8)}
                 </div>
                 <div className="text-sm text-gray-600">Conservative (8x Revenue)</div>
                 <div className="text-xs text-gray-500 mt-1">35x IRR to investors</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600 mb-2">
-                  {formatCurrency(summary.year10Revenue * 10)}
+                  {formatCurrency(consolidatedSummary.year10Revenue * 10)}
                 </div>
                 <div className="text-sm text-gray-600">Realistic (10x Revenue)</div>
                 <div className="text-xs text-gray-500 mt-1">52x IRR to investors</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600 mb-2">
-                  {formatCurrency(summary.year10Revenue * 12)}
+                  {formatCurrency(consolidatedSummary.year10Revenue * 12)}
                 </div>
                 <div className="text-sm text-gray-600">Optimistic (12x Revenue)</div>
                 <div className="text-xs text-gray-500 mt-1">72x IRR to investors</div>
@@ -979,7 +1000,7 @@ const PresentationMode = ({ financialData, competitiveCostData, className = '' }
               <div className="space-y-2">
                 <DollarSign className="w-8 h-8 text-green-600 mx-auto" />
                 <div className="text-lg font-bold text-gray-900">Massive Market</div>
-                <div className="text-sm text-gray-600">R$9B addressable market with democratic access strategy</div>
+                <div className="text-sm text-gray-600">R$240B+ total market (R$100B private + R$140B public annually)</div>
               </div>
               <div className="space-y-2">
                 <Lightbulb className="w-8 h-8 text-blue-600 mx-auto" />

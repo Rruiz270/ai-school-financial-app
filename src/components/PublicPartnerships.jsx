@@ -48,7 +48,7 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
   const [currentScenario, setCurrentScenario] = useState(initialScenario);
   
   // Initialize parameters based on the initial scenario
-  const getInitialParameters = () => {
+  const getInitialParameters = (scenario = initialScenario) => {
     const baseParams = {
       // Infrastructure & setup fees
       setupFeePerSchool: 50000, // R$50k per school setup
@@ -61,11 +61,20 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
     
     return {
       ...baseParams,
-      ...PUBLIC_SCENARIO_PRESETS[initialScenario]
+      ...PUBLIC_SCENARIO_PRESETS[scenario]
     };
   };
   
   const [publicParameters, setPublicParameters] = useState(getInitialParameters());
+
+  // Reset when initialScenario prop changes (from parent reset button)
+  React.useEffect(() => {
+    if (initialScenario !== currentScenario) {
+      setCurrentScenario(initialScenario);
+      const resetParams = getInitialParameters(initialScenario);
+      setPublicParameters(resetParams);
+    }
+  }, [initialScenario, currentScenario]);
 
   const publicFinancialData = useMemo(() => {
     const years = [];

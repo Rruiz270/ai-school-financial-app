@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge } from 'lucide-react';
+import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge, RotateCcw } from 'lucide-react';
 import { FinancialModel, DEFAULT_PARAMETERS, SCENARIO_PRESETS } from './utils/financialModel';
 import Dashboard from './components/Dashboard';
 import ParameterControl from './components/ParameterControl';
@@ -34,6 +34,22 @@ function App() {
     if (publicScenario) {
       setCurrentPublicScenario(publicScenario);
     }
+  };
+
+  const resetAllToDefault = () => {
+    // Reset private sector to realistic scenario and clear year-by-year overrides
+    const realisticParams = {
+      ...SCENARIO_PRESETS.realistic.parameters,
+      yearlyOverrides: {} // Clear all year-by-year customizations
+    };
+    setCurrentScenario('realistic');
+    setParameters(realisticParams);
+    
+    // Reset public sector to optimistic scenario (default for public)
+    setCurrentPublicScenario('optimistic');
+    
+    // The public sector will reset itself when it receives the new initialScenario prop
+    // This will trigger a re-render and the PublicPartnerships component will initialize with optimistic
   };
 
   const tabs = [
@@ -154,6 +170,16 @@ function App() {
                   <div className="text-gray-600">Students</div>
                 </div>
               </div>
+              
+              {/* Reset All Button */}
+              <button
+                onClick={resetAllToDefault}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                title="Reset all tabs to default scenarios (Private: Realistic, Public: Optimistic)"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span className="hidden sm:inline">Reset All to Default</span>
+              </button>
             </div>
           </div>
         </div>

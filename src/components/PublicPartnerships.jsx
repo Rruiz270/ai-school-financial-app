@@ -44,37 +44,28 @@ const PUBLIC_SCENARIO_PRESETS = {
   }
 };
 
-const PublicPartnerships = ({ onPublicModelChange }) => {
-  const [currentScenario, setCurrentScenario] = useState('optimistic');
-  const [publicParameters, setPublicParameters] = useState({
-    // Student Targets (46.7M total public K-12 students in Brazil)
-    // Includes expanded partnerships with Paraná and Santa Catarina
-    year1Students: 50000,
-    year5Students: 610000, // Updated to include PR + SC expansion
-    year10Students: 2200000, // Expanded target with southern states
+const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic' }) => {
+  const [currentScenario, setCurrentScenario] = useState(initialScenario);
+  
+  // Initialize parameters based on the initial scenario
+  const getInitialParameters = () => {
+    const baseParams = {
+      // Infrastructure & setup fees
+      setupFeePerSchool: 50000, // R$50k per school setup
+      technologyLicenseFee: 25000, // R$25k annual tech license per municipality
+      
+      // Teacher training revenue
+      teacherTrainingFee: 2000, // R$2k per teacher trained
+      teachersPerSchool: 25,
+    };
     
-    // Revenue per student per month (public partnership rates)
-    revenuePerStudentMonth: 250, // R$250/month vs R$200 adoption model
-    
-    // Geographic rollout (including Paraná and Santa Catarina)
-    pilotMunicipalities: 5, // SP, Rio, Curitiba, Florianópolis, BH
-    year5Municipalities: 25, // Southern region expansion
-    year10Municipalities: 120, // Extended coverage including PR/SC metro areas
-    
-    // Performance bonuses
-    performanceBonusRate: 0.15, // 15% bonus for educational outcomes
-    
-    // Infrastructure & setup fees
-    setupFeePerSchool: 50000, // R$50k per school setup
-    technologyLicenseFee: 25000, // R$25k annual tech license per municipality
-    
-    // Teacher training revenue
-    teacherTrainingFee: 2000, // R$2k per teacher trained
-    teachersPerSchool: 25,
-    
-    // Operational costs
-    marginsPublic: 0.75, // 75% margin vs 82% private (more intensive support)
-  });
+    return {
+      ...baseParams,
+      ...PUBLIC_SCENARIO_PRESETS[initialScenario]
+    };
+  };
+  
+  const [publicParameters, setPublicParameters] = useState(getInitialParameters());
 
   const publicFinancialData = useMemo(() => {
     const years = [];
@@ -158,16 +149,16 @@ const PublicPartnerships = ({ onPublicModelChange }) => {
   // Update parent component with data changes
   React.useEffect(() => {
     if (onPublicModelChange) {
-      console.log('PublicPartnerships sending data:', { publicParameters, dataLength: publicFinancialData?.length });
-      onPublicModelChange(publicParameters, publicFinancialData);
+      console.log('PublicPartnerships sending data:', { publicParameters, dataLength: publicFinancialData?.length, currentScenario });
+      onPublicModelChange(publicParameters, publicFinancialData, currentScenario);
     }
-  }, [publicFinancialData, publicParameters, onPublicModelChange]);
+  }, [publicFinancialData, publicParameters, currentScenario, onPublicModelChange]);
 
   // Initialize data on mount
   React.useEffect(() => {
     if (onPublicModelChange && publicFinancialData?.length > 0) {
       console.log('Initial public data send');
-      onPublicModelChange(publicParameters, publicFinancialData);
+      onPublicModelChange(publicParameters, publicFinancialData, currentScenario);
     }
   }, [onPublicModelChange]); // Only run on mount and when callback changes
 

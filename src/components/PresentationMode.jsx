@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Users, TrendingUp, DollarSign, Target, Building, Lightbulb, BarChart3, PieChart, Presentation, Download } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
-const PresentationMode = ({ financialData, publicModelData, competitiveCostData, className = '' }) => {
+const PresentationMode = ({ financialData, publicModelData, currentPrivateScenario, currentPublicScenario, competitiveCostData, className = '' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, DollarSign, Users, Building2, School, GitMerge, Target, Globe } from 'lucide-react';
 
-const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
+const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivateScenario, currentPublicScenario }) => {
   // Debug logging
   React.useEffect(() => {
     console.log('ConsolidatedView received:', {
@@ -214,6 +214,50 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
               {((year10Total.total.students || 0) / 55700000 * 100).toFixed(1)}% Market Share
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Current Scenarios Indicator */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Scenario Configuration</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center space-x-3">
+              <School className="w-6 h-6 text-blue-600" />
+              <div>
+                <div className="font-semibold text-gray-900">Private Sector</div>
+                <div className="text-sm text-gray-600">Flagship, Franchise & Adoption Model</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold text-blue-600 capitalize">
+                {currentPrivateScenario || 'realistic'}
+              </div>
+              <div className="text-sm text-blue-600">Scenario</div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+            <div className="flex items-center space-x-3">
+              <Building2 className="w-6 h-6 text-emerald-600" />
+              <div>
+                <div className="font-semibold text-gray-900">Public Partnerships</div>
+                <div className="text-sm text-gray-600">Municipal & State Contracts</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold text-emerald-600 capitalize">
+                {currentPublicScenario || 'optimistic'}
+              </div>
+              <div className="text-sm text-emerald-600">Scenario</div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+          <p className="text-sm text-indigo-700">
+            <strong>Note:</strong> This consolidated view reflects the current scenario selections from both Private Sector and Public Partnerships tabs. 
+            Change scenarios in those tabs to see updated projections here.
+          </p>
         </div>
       </div>
 

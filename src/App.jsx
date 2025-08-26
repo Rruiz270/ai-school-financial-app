@@ -12,6 +12,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [parameters, setParameters] = useState(DEFAULT_PARAMETERS);
   const [currentScenario, setCurrentScenario] = useState('realistic');
+  const [currentPublicScenario, setCurrentPublicScenario] = useState('optimistic');
   const [publicModelData, setPublicModelData] = useState(null);
   
   // Create financial model instance and calculations
@@ -27,9 +28,12 @@ function App() {
     setParameters(scenarioParams);
   };
 
-  const handlePublicModelChange = (publicParams, publicData) => {
-    console.log('App received public data:', { publicParams, publicData });
+  const handlePublicModelChange = (publicParams, publicData, publicScenario) => {
+    console.log('App received public data:', { publicParams, publicData, publicScenario });
     setPublicModelData(publicData);
+    if (publicScenario) {
+      setCurrentPublicScenario(publicScenario);
+    }
   };
 
   const tabs = [
@@ -49,6 +53,7 @@ function App() {
       icon: <Building2 className="w-5 h-5" />,
       component: <PublicPartnerships 
         onPublicModelChange={handlePublicModelChange}
+        initialScenario={currentPublicScenario}
       />
     },
     {
@@ -58,6 +63,8 @@ function App() {
       component: <ConsolidatedView 
         privateFinancialData={financialData}
         publicModelData={publicModelData}
+        currentPrivateScenario={currentScenario}
+        currentPublicScenario={currentPublicScenario}
       />
     },
     {
@@ -88,7 +95,12 @@ function App() {
       id: 'presentation',
       name: 'Investor Presentation',
       icon: <Presentation className="w-5 h-5" />,
-      component: <PresentationMode financialData={financialData} publicModelData={publicModelData} />
+      component: <PresentationMode 
+        financialData={financialData} 
+        publicModelData={publicModelData}
+        currentPrivateScenario={currentScenario}
+        currentPublicScenario={currentPublicScenario}
+      />
     }
   ];
 
@@ -197,6 +209,7 @@ function App() {
         {activeTab === 'public' && (
           <PublicPartnerships 
             onPublicModelChange={handlePublicModelChange}
+            initialScenario={currentPublicScenario}
           />
         )}
 
@@ -204,6 +217,8 @@ function App() {
           <ConsolidatedView 
             privateFinancialData={financialData}
             publicModelData={publicModelData}
+            currentPrivateScenario={currentScenario}
+            currentPublicScenario={currentPublicScenario}
           />
         )}
 
@@ -287,7 +302,12 @@ function App() {
         
         {activeTab === 'presentation' && (
           <div>
-            <PresentationMode financialData={financialData} publicModelData={publicModelData} />
+            <PresentationMode 
+              financialData={financialData} 
+              publicModelData={publicModelData}
+              currentPrivateScenario={currentScenario}
+              currentPublicScenario={currentPublicScenario}
+            />
             <div className="fixed top-4 left-4 z-50 no-print">
               <button
                 onClick={() => setActiveTab('dashboard')}

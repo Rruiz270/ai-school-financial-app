@@ -69,6 +69,7 @@ function App() {
           parameters={parameters} 
           onParameterChange={handleParameterChange}
           financialData={financialData}
+          currentScenario={currentScenario}
         />
       )
     },
@@ -211,6 +212,7 @@ function App() {
             parameters={parameters} 
             onParameterChange={handleParameterChange}
             financialData={financialData}
+            currentScenario={currentScenario}
           />
         )}
         

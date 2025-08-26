@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Calendar, Users, DollarSign, Building, Edit3 } from 'lucide-react';
-import { CAPEX_SCENARIOS } from '../utils/financialModel';
+import { Calendar, Users, DollarSign, Building, Edit3, RotateCcw } from 'lucide-react';
+import { CAPEX_SCENARIOS, SCENARIO_PRESETS } from '../utils/financialModel';
 
-const YearByYearEditor = ({ parameters, onParameterChange, financialData, className = '' }) => {
+const YearByYearEditor = ({ parameters, onParameterChange, financialData, currentScenario, className = '' }) => {
   const [selectedYear, setSelectedYear] = useState(1);
   const [editMode, setEditMode] = useState(false);
   const [inputValues, setInputValues] = useState({});
@@ -97,6 +97,13 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
     }
   };
 
+  const resetToScenarioDefaults = () => {
+    // Clear all year overrides
+    onParameterChange({ yearlyOverrides: {} });
+    // Clear any input values
+    setInputValues({});
+  };
+
   const selectedYearData = getYearData(selectedYear);
   const selectedYearProjection = projection?.[selectedYear] || {};
 
@@ -127,6 +134,14 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
             <h2 className="text-xl font-semibold text-gray-900">Private Sector Year-by-Year Planning</h2>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={resetToScenarioDefaults}
+              className="px-4 py-2 rounded-md text-sm font-medium bg-gray-600 text-white hover:bg-gray-700"
+              title={`Reset all years to ${currentScenario} scenario defaults`}
+            >
+              <RotateCcw className="w-4 h-4 mr-2 inline" />
+              Back to Default
+            </button>
             <button
               onClick={() => setEditMode(!editMode)}
               className={`px-4 py-2 rounded-md text-sm font-medium ${
@@ -235,51 +250,60 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
             </div>
 
             {/* Franchise Planning */}
-            {selectedYear > 2 && (
+            {selectedYear > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
                   <Building className="w-5 h-5 text-green-600" />
                   <h4 className="font-medium text-gray-900">Franchise Network</h4>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Number of Franchises</label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      value={getInputValue(selectedYear, 'franchiseCount', selectedYearData.franchiseCount)}
-                      onChange={(e) => handleInputChange(selectedYear, 'franchiseCount', e.target.value)}
-                      onBlur={(e) => handleInputBlur(selectedYear, 'franchiseCount', e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                      max="100"
-                      placeholder="Enter number of franchises"
-                    />
-                  ) : (
-                    <div className="text-lg font-semibold text-green-600">{formatNumber(selectedYearData.franchiseCount)}</div>
-                  )}
-                  <p className="text-xs text-gray-500">New franchises generate R${formatCurrency(parameters?.franchiseFee || 180000)} fee each</p>
-                </div>
+                {selectedYear <= 2 ? (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm italic">Franchises start in Year 3</p>
+                    <p className="text-xs mt-1">Building proven model first</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Number of Franchises</label>
+                      {editMode ? (
+                        <input
+                          type="number"
+                          value={getInputValue(selectedYear, 'franchiseCount', selectedYearData.franchiseCount)}
+                          onChange={(e) => handleInputChange(selectedYear, 'franchiseCount', e.target.value)}
+                          onBlur={(e) => handleInputBlur(selectedYear, 'franchiseCount', e.target.value)}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
+                          min="0"
+                          max="100"
+                          placeholder="Enter number of franchises"
+                        />
+                      ) : (
+                        <div className="text-lg font-semibold text-green-600">{formatNumber(selectedYearData.franchiseCount)}</div>
+                      )}
+                      <p className="text-xs text-gray-500">New franchises generate R${formatCurrency(parameters?.franchiseFee || 180000)} fee each</p>
+                    </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Students per Franchise</label>
-                  {editMode ? (
-                    <input
-                      type="number"
-                      value={getInputValue(selectedYear, 'studentsPerFranchise', selectedYearData.studentsPerFranchise)}
-                      onChange={(e) => handleInputChange(selectedYear, 'studentsPerFranchise', e.target.value)}
-                      onBlur={(e) => handleInputBlur(selectedYear, 'studentsPerFranchise', e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                      max="3000"
-                      step="100"
-                      placeholder="Enter students per franchise"
-                    />
-                  ) : (
-                    <div className="text-lg font-semibold text-green-600">{formatNumber(selectedYearData.studentsPerFranchise)}</div>
-                  )}
-                  <p className="text-xs text-gray-500">Total franchise students: {formatNumber(selectedYearData.franchiseCount * selectedYearData.studentsPerFranchise)}</p>
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Students per Franchise</label>
+                      {editMode ? (
+                        <input
+                          type="number"
+                          value={getInputValue(selectedYear, 'studentsPerFranchise', selectedYearData.studentsPerFranchise)}
+                          onChange={(e) => handleInputChange(selectedYear, 'studentsPerFranchise', e.target.value)}
+                          onBlur={(e) => handleInputBlur(selectedYear, 'studentsPerFranchise', e.target.value)}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
+                          min="0"
+                          max="3000"
+                          step="100"
+                          placeholder="Enter students per franchise"
+                        />
+                      ) : (
+                        <div className="text-lg font-semibold text-green-600">{formatNumber(selectedYearData.studentsPerFranchise)}</div>
+                      )}
+                      <p className="text-xs text-gray-500">Total franchise students: {formatNumber(selectedYearData.franchiseCount * selectedYearData.studentsPerFranchise)}</p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

@@ -149,8 +149,10 @@ export class FinancialModel {
        this.params.flagshipStudents);
     
     // Franchises only start after Year 2 (need proven model first)
-    const franchiseCount = year <= 2 ? 0 : Math.min((year - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount);
-    const franchiseStudents = yearOverrides.franchiseStudents || (franchiseCount * this.params.studentsPerFranchise);
+    const franchiseCount = yearOverrides.franchiseCount !== undefined ? yearOverrides.franchiseCount :
+      (year <= 2 ? 0 : Math.min((year - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount));
+    const studentsPerFranchise = yearOverrides.studentsPerFranchise !== undefined ? yearOverrides.studentsPerFranchise : this.params.studentsPerFranchise;
+    const franchiseStudents = franchiseCount * studentsPerFranchise;
     
     // Adoption students start small in Year 2, grow gradually
     let adoptionStudents;
@@ -180,12 +182,20 @@ export class FinancialModel {
     const currentAdoptionFee = yearOverrides.adoptionFee || (this.params.adoptionLicenseFee * Math.pow(1 + this.params.tuitionIncreaseRate, year - 1));
     const currentKitCost = yearOverrides.kitCost || (this.params.kitCostPerStudent * Math.pow(1 + this.params.tuitionIncreaseRate, year - 1));
     
+    // Calculate NEW franchises this year for franchise fees
+    const previousYear = year - 1;
+    const previousYearOverrides = this.params.yearlyOverrides?.[previousYear] || {};
+    const previousFranchiseCount = previousYear <= 2 ? 0 : 
+      (previousYearOverrides.franchiseCount !== undefined ? previousYearOverrides.franchiseCount :
+       Math.min((previousYear - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount));
+    const newFranchises = Math.max(0, franchiseCount - previousFranchiseCount);
+    
     // Revenue calculations
     const flagshipRevenue = flagshipStudents * currentTuition * 12;
     const franchiseTuitionRevenue = franchiseStudents * currentTuition * 12;
     const franchiseRoyaltyRevenue = franchiseTuitionRevenue * this.params.franchiseRoyaltyRate;
     const franchiseMarketingRevenue = franchiseTuitionRevenue * this.params.marketingFeeRate;
-    const franchiseFeeRevenue = year <= 10 ? this.params.franchiseFee * this.params.franchiseGrowthRate : 0;
+    const franchiseFeeRevenue = newFranchises * this.params.franchiseFee;
     const adoptionRevenue = adoptionStudents * currentAdoptionFee * 12;
     const totalStudents = flagshipStudents + franchiseStudents + adoptionStudents;
     const kitRevenue = totalStudents * currentKitCost;

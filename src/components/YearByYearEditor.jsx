@@ -42,6 +42,8 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
     return {
       flagshipStudents: yearOverrides.flagshipStudents || (year <= 1 ? 750 : parameters?.flagshipStudents || 1500),
       adoptionStudents: yearOverrides.adoptionStudents || (currentYearData.students?.adoption || 25000),
+      franchiseCount: yearOverrides.franchiseCount || (currentYearData.franchiseCount || 0),
+      studentsPerFranchise: yearOverrides.studentsPerFranchise || (parameters?.studentsPerFranchise || 1200),
       tuition: yearOverrides.tuition || ((parameters?.flagshipTuition || 2500) * Math.pow(1 + (parameters?.tuitionIncreaseRate || 0.08), Math.max(0, year - 1))),
       capex: yearOverrides.capex || (year === 0 ? CAPEX_SCENARIOS[parameters?.capexScenario || 'government']?.initialCapex || 8000000 : 0)
     };
@@ -232,6 +234,55 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
               )}
             </div>
 
+            {/* Franchise Planning */}
+            {selectedYear > 2 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                  <Building className="w-5 h-5 text-green-600" />
+                  <h4 className="font-medium text-gray-900">Franchise Network</h4>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Number of Franchises</label>
+                  {editMode ? (
+                    <input
+                      type="number"
+                      value={getInputValue(selectedYear, 'franchiseCount', selectedYearData.franchiseCount)}
+                      onChange={(e) => handleInputChange(selectedYear, 'franchiseCount', e.target.value)}
+                      onBlur={(e) => handleInputBlur(selectedYear, 'franchiseCount', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
+                      min="0"
+                      max="100"
+                      placeholder="Enter number of franchises"
+                    />
+                  ) : (
+                    <div className="text-lg font-semibold text-green-600">{formatNumber(selectedYearData.franchiseCount)}</div>
+                  )}
+                  <p className="text-xs text-gray-500">New franchises generate R${formatCurrency(parameters?.franchiseFee || 180000)} fee each</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Students per Franchise</label>
+                  {editMode ? (
+                    <input
+                      type="number"
+                      value={getInputValue(selectedYear, 'studentsPerFranchise', selectedYearData.studentsPerFranchise)}
+                      onChange={(e) => handleInputChange(selectedYear, 'studentsPerFranchise', e.target.value)}
+                      onBlur={(e) => handleInputBlur(selectedYear, 'studentsPerFranchise', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
+                      min="0"
+                      max="3000"
+                      step="100"
+                      placeholder="Enter students per franchise"
+                    />
+                  ) : (
+                    <div className="text-lg font-semibold text-green-600">{formatNumber(selectedYearData.studentsPerFranchise)}</div>
+                  )}
+                  <p className="text-xs text-gray-500">Total franchise students: {formatNumber(selectedYearData.franchiseCount * selectedYearData.studentsPerFranchise)}</p>
+                </div>
+              </div>
+            )}
+
             {/* Pricing Planning */}
             {selectedYear > 0 && (
               <div className="space-y-4">
@@ -318,6 +369,11 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
                       {formatCurrency((selectedYearProjection.revenue?.franchiseRoyalty || 0) + (selectedYearProjection.revenue?.franchiseMarketing || 0) + (selectedYearProjection.revenue?.franchiseFees || 0))}
                     </span>
                   </div>
+                  {selectedYear > 2 && selectedYearProjection.revenue?.franchiseFees > 0 && (
+                    <div className="ml-4 text-xs text-gray-500">
+                      • New franchise fees: {formatCurrency(selectedYearProjection.revenue?.franchiseFees || 0)}
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Adoption Revenue</span>
                     <span className="font-semibold text-purple-600">
@@ -361,6 +417,14 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, classN
                       {formatNumber(selectedYearProjection.students?.total || 0)}
                     </span>
                   </div>
+                  {selectedYear > 2 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Active Franchises</span>
+                      <span className="font-semibold text-green-600">
+                        {formatNumber(selectedYearData.franchiseCount)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Free Cash Flow</span>
                     <span className="font-semibold text-gray-900">

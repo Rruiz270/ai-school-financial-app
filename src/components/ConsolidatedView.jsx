@@ -49,10 +49,13 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
   }, [publicModelData, defaultPublicData]);
 
   const consolidatedData = useMemo(() => {
-    // Always try to use private data if available, otherwise create default structure
-    const privateData = privateFinancialData?.yearlyData || [];
+    // Use the private financial projection data which has the correct structure
+    const privateProjection = privateFinancialData?.projection || [];
     
-    if (privateData.length === 0) {
+    // If we have private data, use it; otherwise use defaults
+    const privateDataSource = privateProjection.length > 0 ? privateProjection.slice(1, 11) : []; // Skip year 0, take years 1-10
+    
+    if (privateDataSource.length === 0) {
       console.warn('Private financial data not available, using defaults');
       // Create realistic private data structure based on our model
       const privateStudents = [25750, 50750, 75750, 100750, 125750, 150750, 175750, 200750, 225750, 250750];
@@ -62,53 +65,55 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
       for (let year = 1; year <= 10; year++) {
         defaultPrivateData.push({
           year,
-          totalStudents: privateStudents[year - 1],
-          totalRevenue: privateRevenues[year - 1],
+          students: { total: privateStudents[year - 1] },
+          revenue: { total: privateRevenues[year - 1] },
           ebitda: privateRevenues[year - 1] * 0.82
         });
       }
+      
       return defaultPrivateData.map((privateYear, index) => {
         const publicYear = publicData[index] || { students: 0, revenue: 0, ebitda: 0 };
         return {
           year: privateYear.year,
           private: {
-            students: privateYear.totalStudents,
-            revenue: privateYear.totalRevenue,
-            ebitda: privateYear.ebitda
+            students: privateYear.students.total || 0,
+            revenue: privateYear.revenue.total || 0,
+            ebitda: privateYear.ebitda || 0
           },
           public: {
-            students: publicYear.students,
-            revenue: publicYear.revenue,
-            ebitda: publicYear.ebitda
+            students: publicYear.students || 0,
+            revenue: publicYear.revenue || 0,
+            ebitda: publicYear.ebitda || 0
           },
           total: {
-            students: privateYear.totalStudents + publicYear.students,
-            revenue: privateYear.totalRevenue + publicYear.revenue,
-            ebitda: privateYear.ebitda + publicYear.ebitda
+            students: (privateYear.students.total || 0) + (publicYear.students || 0),
+            revenue: (privateYear.revenue.total || 0) + (publicYear.revenue || 0),
+            ebitda: (privateYear.ebitda || 0) + (publicYear.ebitda || 0)
           }
         };
       });
     }
 
-    return privateData.map((privateYear, index) => {
+    // Use actual private data
+    return privateDataSource.map((privateYear, index) => {
       const publicYear = publicData[index] || { students: 0, revenue: 0, ebitda: 0 };
       
       return {
         year: privateYear.year,
         private: {
-          students: privateYear.totalStudents,
-          revenue: privateYear.totalRevenue,
-          ebitda: privateYear.ebitda
+          students: privateYear.students?.total || 0,
+          revenue: privateYear.revenue?.total || 0,
+          ebitda: privateYear.ebitda || 0
         },
         public: {
-          students: publicYear.students,
-          revenue: publicYear.revenue,
-          ebitda: publicYear.ebitda
+          students: publicYear.students || 0,
+          revenue: publicYear.revenue || 0,
+          ebitda: publicYear.ebitda || 0
         },
         total: {
-          students: privateYear.totalStudents + publicYear.students,
-          revenue: privateYear.totalRevenue + publicYear.revenue,
-          ebitda: privateYear.ebitda + publicYear.ebitda
+          students: (privateYear.students?.total || 0) + (publicYear.students || 0),
+          revenue: (privateYear.revenue?.total || 0) + (publicYear.revenue || 0),
+          ebitda: (privateYear.ebitda || 0) + (publicYear.ebitda || 0)
         }
       };
     });
@@ -164,8 +169,13 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
   };
 
   const calculateCAGR = (endValue, startValue, years) => {
-    if (!startValue || startValue <= 0) return '0.0';
-    return ((Math.pow(endValue / startValue, 1 / years) - 1) * 100).toFixed(1);
+    if (!startValue || startValue <= 0 || !endValue || endValue <= 0) return '0.0';
+    try {
+      const cagr = ((Math.pow(endValue / startValue, 1 / years) - 1) * 100);
+      return isNaN(cagr) ? '0.0' : cagr.toFixed(1);
+    } catch (error) {
+      return '0.0';
+    }
   };
 
   return (
@@ -201,7 +211,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
             <div className="text-3xl font-bold">{formatNumber(year10Total.total.students)}</div>
             <div className="text-sm opacity-90">Total Students by Year 10</div>
             <div className="text-lg font-semibold mt-1">
-              {((year10Total.total.students / 55700000) * 100).toFixed(1)}% Market Share
+              {((year10Total.total.students || 0) / 55700000 * 100).toFixed(1)}% Market Share
             </div>
           </div>
         </div>
@@ -231,7 +241,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
             <DollarSign className="w-8 h-8 text-purple-600" />
           </div>
           <div className="mt-4 text-xs text-gray-500">
-            {((year10Total.total.ebitda / year10Total.total.revenue) * 100).toFixed(1)}% EBITDA Margin
+            {year10Total.total.revenue > 0 ? ((year10Total.total.ebitda / year10Total.total.revenue) * 100).toFixed(1) : '0.0'}% EBITDA Margin
           </div>
         </div>
 
@@ -240,7 +250,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
             <div>
               <p className="text-sm font-medium text-gray-600">Market Penetration</p>
               <p className="text-2xl font-bold text-pink-600">
-                {((year10Total.total.students / 55700000) * 100).toFixed(1)}%
+                {((year10Total.total.students || 0) / 55700000 * 100).toFixed(1)}%
               </p>
             </div>
             <Target className="w-8 h-8 text-pink-600" />
@@ -255,7 +265,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
             <div>
               <p className="text-sm font-medium text-gray-600">Revenue Multiple</p>
               <p className="text-2xl font-bold text-green-600">
-                {year1Total.total.revenue > 0 ? (year10Total.total.revenue / year1Total.total.revenue).toFixed(1) : '0'}x
+                {(year1Total.total.revenue || 0) > 0 ? ((year10Total.total.revenue || 0) / (year1Total.total.revenue || 1)).toFixed(1) : '0'}x
               </p>
             </div>
             <Globe className="w-8 h-8 text-green-600" />
@@ -285,7 +295,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
                   {formatCurrency(year10Total.private.revenue)}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {((year10Total.private.revenue / year10Total.total.revenue) * 100).toFixed(1)}% of total
+                  {(year10Total.total.revenue || 0) > 0 ? (((year10Total.private.revenue || 0) / (year10Total.total.revenue || 1)) * 100).toFixed(1) : '0'}% of total
                 </div>
               </div>
             </div>
@@ -303,7 +313,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
                   {formatCurrency(year10Total.public.revenue)}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {((year10Total.public.revenue / year10Total.total.revenue) * 100).toFixed(1)}% of total
+                  {(year10Total.total.revenue || 0) > 0 ? (((year10Total.public.revenue || 0) / (year10Total.total.revenue || 1)) * 100).toFixed(1) : '0'}% of total
                 </div>
               </div>
             </div>
@@ -436,7 +446,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData }) => {
                 <ul className="text-sm text-indigo-700 space-y-1">
                   <li>• Year 10: {formatCurrency(year10Total.total.revenue)} total revenue</li>
                   <li>• 10-year CAGR: {calculateCAGR(year10Total.total.revenue, year1Total.total.revenue, 10)}%</li>
-                  <li>• Market penetration: {((year10Total.total.students / 55700000) * 100).toFixed(1)}% of Brazil K-12</li>
+                  <li>• Market penetration: {((year10Total.total.students || 0) / 55700000 * 100).toFixed(1)}% of Brazil K-12</li>
                   <li>• Democratizing AI education across all socioeconomic levels</li>
                 </ul>
               </div>

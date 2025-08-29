@@ -69,12 +69,10 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
 
   // Reset when initialScenario prop changes (from parent reset button)
   React.useEffect(() => {
-    if (initialScenario !== currentScenario) {
-      setCurrentScenario(initialScenario);
-      const resetParams = getInitialParameters(initialScenario);
-      setPublicParameters(resetParams);
-    }
-  }, [initialScenario, currentScenario]);
+    setCurrentScenario(initialScenario);
+    const resetParams = getInitialParameters(initialScenario);
+    setPublicParameters(resetParams);
+  }, [initialScenario]); // Only depend on initialScenario, not currentScenario
 
   const publicFinancialData = useMemo(() => {
     const years = [];
@@ -157,19 +155,11 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
 
   // Update parent component with data changes
   React.useEffect(() => {
-    if (onPublicModelChange) {
+    if (onPublicModelChange && publicFinancialData?.length > 0) {
       console.log('PublicPartnerships sending data:', { publicParameters, dataLength: publicFinancialData?.length, currentScenario });
       onPublicModelChange(publicParameters, publicFinancialData, currentScenario);
     }
   }, [publicFinancialData, publicParameters, currentScenario, onPublicModelChange]);
-
-  // Initialize data on mount
-  React.useEffect(() => {
-    if (onPublicModelChange && publicFinancialData?.length > 0) {
-      console.log('Initial public data send');
-      onPublicModelChange(publicParameters, publicFinancialData, currentScenario);
-    }
-  }, [onPublicModelChange]); // Only run on mount and when callback changes
 
   const year10Data = publicFinancialData[9];
   const year5Data = publicFinancialData[4];
@@ -222,7 +212,7 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
               <button
                 key={key}
                 onClick={() => handleScenarioChange(key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   currentScenario === key
                     ? 'bg-emerald-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

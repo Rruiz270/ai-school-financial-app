@@ -13,7 +13,6 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 25,
     year10Municipalities: 120,
     revenuePerStudentMonth: 250,
-    performanceBonusRate: 0.15,
     marginsPublic: 0.75
   },
   realistic: {
@@ -26,7 +25,6 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 21, // -15%
     year10Municipalities: 102, // -15%
     revenuePerStudentMonth: 212, // -15%
-    performanceBonusRate: 0.13, // -15%
     marginsPublic: 0.64 // -15%
   },
   pessimistic: {
@@ -39,7 +37,6 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 17, // -30%
     year10Municipalities: 84, // -30%
     revenuePerStudentMonth: 175, // -30%
-    performanceBonusRate: 0.11, // -30%
     marginsPublic: 0.53 // -30%
   }
 };
@@ -94,12 +91,11 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
       
       // Core revenue streams
       const monthlyRevenue = students * publicParameters.revenuePerStudentMonth * 12;
-      const performanceBonus = monthlyRevenue * publicParameters.performanceBonusRate;
       const setupRevenue = Math.floor(municipalities * 50) * publicParameters.setupFeePerSchool; // 50 schools per municipality avg
       const technologyRevenue = Math.floor(municipalities) * publicParameters.technologyLicenseFee;
       const trainingRevenue = Math.floor(municipalities * 50 * publicParameters.teachersPerSchool) * publicParameters.teacherTrainingFee;
       
-      const totalRevenue = monthlyRevenue + performanceBonus + setupRevenue + technologyRevenue + trainingRevenue;
+      const totalRevenue = monthlyRevenue + setupRevenue + technologyRevenue + trainingRevenue;
       const costs = totalRevenue * (1 - publicParameters.marginsPublic);
       const ebitda = totalRevenue - costs;
       
@@ -109,7 +105,6 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
         municipalities: Math.floor(municipalities),
         revenue: {
           monthly: monthlyRevenue,
-          performance: performanceBonus,
           setup: setupRevenue,
           technology: technologyRevenue,
           training: trainingRevenue,
@@ -159,7 +154,7 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
       console.log('PublicPartnerships sending data:', { publicParameters, dataLength: publicFinancialData?.length, currentScenario });
       onPublicModelChange(publicParameters, publicFinancialData, currentScenario);
     }
-  }, [publicFinancialData, publicParameters, currentScenario, onPublicModelChange]);
+  }, [publicFinancialData, publicParameters, onPublicModelChange]); // Removed currentScenario to prevent flashing
 
   const year10Data = publicFinancialData[9];
   const year5Data = publicFinancialData[4];
@@ -317,12 +312,6 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
               </span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-700">Performance Bonuses</span>
-              <span className="font-semibold text-green-600">
-                {formatCurrency(year10Data.revenue.performance)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
               <span className="text-gray-700">School Setup Fees</span>
               <span className="font-semibold text-blue-600">
                 {formatCurrency(year10Data.revenue.setup)}
@@ -394,15 +383,14 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Performance Bonus Rate (%)
+                Teacher Training per School (R$)
               </label>
               <input
                 type="number"
-                step="0.01"
-                value={publicParameters.performanceBonusRate ? (publicParameters.performanceBonusRate * 100) : ''}
-                onChange={(e) => handleParameterChange('performanceBonusRate', e.target.value === '' ? '' : Number(e.target.value) / 100)}
+                value={publicParameters.teacherTrainingFee || ''}
+                onChange={(e) => handleParameterChange('teacherTrainingFee', e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="15"
+                placeholder="2000"
               />
             </div>
             

@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Users, TrendingUp, DollarSign, Target, Building, Lightbulb, BarChart3, PieChart, Presentation, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, TrendingUp, DollarSign, Target, Building, Lightbulb, BarChart3, PieChart, Presentation, Download, X, Info } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 const PresentationMode = ({ financialData, publicModelData, currentPrivateScenario, currentPublicScenario, competitiveCostData, className = '' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
   
   const { projection, summary } = financialData;
   
@@ -1249,17 +1250,144 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
             <Presentation className="w-4 h-4 mr-2 inline" />
             Fullscreen
           </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          >
-            <Download className="w-4 h-4 mr-2 inline" />
-            Print/PDF
-          </button>
+          {currentSlide === 0 && (
+            <button
+              onClick={() => setShowExpenseModal(true)}
+              className="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+              <Info className="w-4 h-4 mr-2 inline" />
+              Expense Details
+            </button>
+          )}
+          {currentSlide !== 0 && (
+            <button
+              onClick={() => window.print()}
+              className="px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            >
+              <Download className="w-4 h-4 mr-2 inline" />
+              Print/PDF
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Slide Content */}
+      {/* Expense Details Modal */}
+      {showExpenseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">AI School Brazil - Complete Expense Categories</h2>
+              <button
+                onClick={() => setShowExpenseModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              {/* Key Message Highlighted */}
+              <div className="bg-yellow-100 border-2 border-yellow-300 p-4 rounded-lg mb-6">
+                <p className="text-lg font-bold text-gray-900 text-center">
+                  The model is designed to maintain ~80-85% EBITDA margins at scale while ensuring comprehensive coverage of all operational needs.
+                </p>
+              </div>
+
+              {/* Expense Categories */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">1. TECHNOLOGY EXPENSES</h3>
+                    <p className="text-sm text-gray-600 mb-2">4% of total revenue</p>
+                    <p className="text-xs text-gray-500">Cloud infrastructure, software licenses, API costs, system maintenance</p>
+                  </div>
+                  
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">2. MARKETING & GROWTH</h3>
+                    <p className="text-sm text-gray-600 mb-2">8% of total revenue</p>
+                    <p className="text-xs text-gray-500">Customer acquisition, brand building, digital marketing, advertising, events</p>
+                  </div>
+                  
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">3. STAFFING COSTS</h3>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Corporate:</strong> Max(R$3M OR R$80/student)</p>
+                      <p><strong>Flagship:</strong> Max(R$2.5M OR R$2,200/student)</p>
+                      <p><strong>Franchise Support:</strong> R$300K per franchise</p>
+                      <p><strong>Adoption Support:</strong> R$150 per student</p>
+                    </div>
+                  </div>
+                  
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">4. EDUCATIONAL OPERATIONS</h3>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Curriculum:</strong> Max(R$500K OR R$200/student)</p>
+                      <p><strong>Student Support:</strong> R$300 per student</p>
+                      <p><strong>Parent Engagement:</strong> Max(R$200K OR R$100/student)</p>
+                      <p><strong>Teacher Training:</strong> Max(R$800K OR 10% × R$15K)</p>
+                    </div>
+                  </div>
+                  
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">5. QUALITY & COMPLIANCE</h3>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Quality Assurance:</strong> Max(R$400K OR 1.5% revenue)</p>
+                      <p><strong>Regulatory:</strong> Max(R$600K OR 0.8% revenue)</p>
+                      <p><strong>Data Privacy:</strong> Max(R$300K OR R$50/student)</p>
+                      <p><strong>Legal:</strong> Max(R$500K OR 0.3% revenue)</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">6. FACILITIES & INFRASTRUCTURE</h3>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Government Partnership:</strong> R$800K/year</p>
+                      <p><strong>Built-to-Suit Lease:</strong> R$3.2M/year</p>
+                      <p><strong>Direct Investment:</strong> R$1.2M/year</p>
+                    </div>
+                  </div>
+                  
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">7. OPERATIONAL EXPENSES</h3>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Insurance:</strong> 0.2% of revenue</p>
+                      <p><strong>Travel & Business:</strong> Max(R$300K OR R$50K×locations)</p>
+                      <p><strong>Working Capital:</strong> 1% of revenue</p>
+                      <p><strong>Contingency:</strong> 0.5% of revenue</p>
+                    </div>
+                  </div>
+                  
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">8. CAPITAL EXPENDITURES</h3>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Initial CAPEX:</strong> R$5M-R$25M (by scenario)</p>
+                      <p><strong>Ongoing:</strong> 0.5% revenue (Y1-5), 0.3% (Y6+)</p>
+                    </div>
+                  </div>
+                  
+                  <div className="border border-gray-200 p-4 rounded-lg">
+                    <h3 className="font-bold text-primary-600 mb-2">9. TAXES</h3>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p><strong>Corporate Income Tax:</strong> 25% of EBITDA</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 bg-primary-50 p-4 rounded-lg">
+                <h4 className="font-bold text-primary-900 mb-2">TOTAL OPERATING EXPENSE RATIO</h4>
+                <div className="text-sm text-primary-800">
+                  <p>At scale (Year 10): <strong>Total Operating Expenses ~15-20% of revenue</strong></p>
+                  <p><strong>EBITDA Margin: ~80-85%</strong> | <strong>Net Margin (after tax): ~60-65%</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Slide Content */
       <div className="p-8 lg:p-12 min-h-screen flex flex-col">
         <div className="text-center mb-8">
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">

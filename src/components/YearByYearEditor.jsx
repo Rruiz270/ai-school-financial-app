@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar, Users, DollarSign, Building, Edit3, RotateCcw, TrendingUp, BarChart3, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Users, DollarSign, Building, Edit3, RotateCcw, TrendingUp, BarChart3, AlertCircle, CheckCircle, Info, X } from 'lucide-react';
 import { CAPEX_SCENARIOS, SCENARIO_PRESETS } from '../utils/financialModel';
 
 const YearByYearEditor = ({ parameters, onParameterChange, financialData, currentScenario, className = '' }) => {
   const [selectedYear, setSelectedYear] = useState(1);
   const [editMode, setEditMode] = useState(false);
   const [inputValues, setInputValues] = useState({});
+  const [showStaffBreakdown, setShowStaffBreakdown] = useState(null); // null, 'corporate', 'flagship', 'franchise', 'adoption', 'training'
   
   // Ensure we have data
   if (!parameters || !financialData) {
@@ -507,25 +508,61 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Staff - Corporate</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Staff - Corporate</span>
+                        <button
+                          onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'corporate' ? null : 'corporate')}
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                          title="View staff breakdown"
+                        >
+                          <Info className="w-3 h-3 text-gray-400" />
+                        </button>
+                      </div>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.costs?.staffCorporate || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Staff - Flagship</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Staff - Flagship</span>
+                        <button
+                          onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'flagship' ? null : 'flagship')}
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                          title="View staff breakdown"
+                        >
+                          <Info className="w-3 h-3 text-gray-400" />
+                        </button>
+                      </div>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.costs?.staffFlagship || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Staff - Franchise Support</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Staff - Franchise Support</span>
+                        <button
+                          onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'franchise' ? null : 'franchise')}
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                          title="View staff breakdown"
+                        >
+                          <Info className="w-3 h-3 text-gray-400" />
+                        </button>
+                      </div>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.costs?.staffFranchiseSupport || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Staff - Adoption Support</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Staff - Adoption Support</span>
+                        <button
+                          onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'adoption' ? null : 'adoption')}
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                          title="View staff breakdown"
+                        >
+                          <Info className="w-3 h-3 text-gray-400" />
+                        </button>
+                      </div>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.costs?.staffAdoptionSupport || 0)}
                       </span>
@@ -543,7 +580,16 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Teacher Training</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Teacher Training</span>
+                        <button
+                          onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'training' ? null : 'training')}
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                          title="View staff breakdown"
+                        >
+                          <Info className="w-3 h-3 text-gray-400" />
+                        </button>
+                      </div>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.costs?.teacherTraining || 0)}
                       </span>
@@ -574,9 +620,15 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                   <h5 className="font-semibold text-blue-900 mb-3">📊 Financial Results</h5>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">EBITDA</span>
+                      <span className="text-sm text-gray-600">Bad Debt (5%)</span>
+                      <span className="font-semibold text-red-600">
+                        {formatCurrency((selectedYearProjection.revenue?.total || 0) * 0.05)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">EBITDA (after bad debt)</span>
                       <span className="font-semibold text-blue-600">
-                        {formatCurrency(selectedYearProjection.ebitda || 0)}
+                        {formatCurrency((selectedYearProjection.ebitda || 0) - ((selectedYearProjection.revenue?.total || 0) * 0.05))}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -705,6 +757,211 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
           <li>• <strong>Public sector planning</strong> is available in the "Public Partnerships" and "Consolidated View" tabs</li>
         </ul>
       </div>
+
+      {/* Staff Breakdown Modal */}
+      {showStaffBreakdown && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">
+                {showStaffBreakdown === 'corporate' && 'Corporate Staff Breakdown'}
+                {showStaffBreakdown === 'flagship' && 'Flagship School Staff Breakdown'}
+                {showStaffBreakdown === 'franchise' && 'Franchise Support Staff Breakdown'}
+                {showStaffBreakdown === 'adoption' && 'Adoption Support Staff Breakdown'}
+                {showStaffBreakdown === 'training' && 'Teacher Training Staff Breakdown'}
+              </h2>
+              <button
+                onClick={() => setShowStaffBreakdown(null)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              {showStaffBreakdown === 'corporate' && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-3">Corporate Team Structure</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">CEO / Founder</span>
+                        <span className="text-sm font-medium">R$50,000/month × 1 = R$600,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">CTO / Head of Technology</span>
+                        <span className="text-sm font-medium">R$35,000/month × 1 = R$420,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Head of Operations</span>
+                        <span className="text-sm font-medium">R$30,000/month × 1 = R$360,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Head of Finance</span>
+                        <span className="text-sm font-medium">R$25,000/month × 1 = R$300,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Software Engineers</span>
+                        <span className="text-sm font-medium">R$18,000/month × 8 = R$1,728,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Product Managers</span>
+                        <span className="text-sm font-medium">R$20,000/month × 2 = R$480,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Legal & Compliance</span>
+                        <span className="text-sm font-medium">R$15,000/month × 1 = R$180,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">HR & Admin</span>
+                        <span className="text-sm font-medium">R$12,000/month × 2 = R$288,000/year</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="text-sm font-bold">Total Base Cost</span>
+                        <span className="text-sm font-bold">R$4,356,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                        <span className="text-sm font-medium">R$1,524,600/year</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="text-sm font-bold text-blue-900">Total Corporate Staff</span>
+                        <span className="text-sm font-bold text-blue-900">R$5,880,600/year</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    * Corporate staff costs are calculated as Max(R$3M base, R$80 per total student) to ensure scaling efficiency
+                  </p>
+                </div>
+              )}
+              
+              {showStaffBreakdown === 'flagship' && (
+                <div className="space-y-4">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-900 mb-3">Flagship School Team (300 students)</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">School Director</span>
+                        <span className="text-sm font-medium">R$25,000/month × 1 = R$300,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Academic Coordinator</span>
+                        <span className="text-sm font-medium">R$18,000/month × 1 = R$216,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">AI Learning Facilitators</span>
+                        <span className="text-sm font-medium">R$12,000/month × 12 = R$1,728,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Student Success Managers</span>
+                        <span className="text-sm font-medium">R$10,000/month × 4 = R$480,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Administrative Staff</span>
+                        <span className="text-sm font-medium">R$8,000/month × 3 = R$288,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Technical Support</span>
+                        <span className="text-sm font-medium">R$10,000/month × 2 = R$240,000/year</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="text-sm font-bold">Total Base Cost</span>
+                        <span className="text-sm font-bold">R$3,252,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                        <span className="text-sm font-medium">R$1,138,200/year</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="text-sm font-bold text-green-900">Total Flagship Staff</span>
+                        <span className="text-sm font-bold text-green-900">R$4,390,200/year</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    * Flagship staff ratio: 1:25 facilitator:student ratio for personalized AI-assisted learning
+                  </p>
+                </div>
+              )}
+              
+              {showStaffBreakdown === 'franchise' && (
+                <div className="space-y-4">
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-yellow-900 mb-3">Franchise Support Team (0 franchises in Year 1)</h3>
+                    <div className="space-y-2">
+                      <div className="text-center py-4 text-gray-500">
+                        <p>No franchise support staff needed in Year 1</p>
+                        <p className="text-xs mt-2">Franchise network starts in Year 3</p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    * Franchise support: R$300K per franchise for training, operations, and ongoing support
+                  </p>
+                </div>
+              )}
+              
+              {showStaffBreakdown === 'adoption' && (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-purple-900 mb-3">Adoption Support Team (0 adoption students in Year 1)</h3>
+                    <div className="space-y-2">
+                      <div className="text-center py-4 text-gray-500">
+                        <p>No adoption support staff needed in Year 1</p>
+                        <p className="text-xs mt-2">Adoption program starts in Year 2</p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    * Adoption support: R$150 per student for customer success, training, and technical support
+                  </p>
+                </div>
+              )}
+              
+              {showStaffBreakdown === 'training' && (
+                <div className="space-y-4">
+                  <div className="bg-indigo-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-indigo-900 mb-3">Teacher Training Team</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Head of Teacher Development</span>
+                        <span className="text-sm font-medium">R$22,000/month × 1 = R$264,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Senior Training Specialists</span>
+                        <span className="text-sm font-medium">R$15,000/month × 3 = R$540,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Curriculum Designers</span>
+                        <span className="text-sm font-medium">R$12,000/month × 2 = R$288,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Training Coordinators</span>
+                        <span className="text-sm font-medium">R$10,000/month × 2 = R$240,000/year</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="text-sm font-bold">Total Base Cost</span>
+                        <span className="text-sm font-bold">R$1,332,000/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                        <span className="text-sm font-medium">R$466,200/year</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="text-sm font-bold text-indigo-900">Total Training Staff</span>
+                        <span className="text-sm font-bold text-indigo-900">R$1,798,200/year</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    * Training cost calculation: Max(R$800K base, 10% of students × R$15K per teacher)
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

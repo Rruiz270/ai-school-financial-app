@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Users, DollarSign, Building, Edit3, RotateCcw } from 'lucide-react';
+import { Calendar, Users, DollarSign, Building, Edit3, RotateCcw, TrendingUp, BarChart3, AlertCircle, CheckCircle } from 'lucide-react';
 import { CAPEX_SCENARIOS, SCENARIO_PRESETS } from '../utils/financialModel';
 
 const YearByYearEditor = ({ parameters, onParameterChange, financialData, currentScenario, className = '' }) => {
@@ -132,6 +132,9 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
           <div className="flex items-center gap-3">
             <Calendar className="w-6 h-6 text-primary-600" />
             <h2 className="text-xl font-semibold text-gray-900">Private Sector Year-by-Year Planning</h2>
+            <div className="ml-4 px-3 py-1 bg-blue-100 border border-blue-300 rounded-full">
+              <span className="text-xs font-medium text-blue-800">Scenario: {SCENARIO_PRESETS[currentScenario]?.name || currentScenario}</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -172,7 +175,10 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
           </select>
           
           <div className="ml-4 text-sm text-gray-600">
-            Customize specific year assumptions and see immediate impact on projections
+            Customize specific year assumptions and see immediate impact on complete P&L projections
+          </div>
+          <div className="ml-4 text-xs text-blue-600">
+            📊 Now showing complete P&L with all expense categories including 10% technology allocation
           </div>
         </div>
 
@@ -181,7 +187,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
           <div className="flex items-center gap-2">
             <div className="text-sm font-medium text-blue-900">System Status:</div>
             <div className="text-sm text-blue-700">
-              ✓ Financial Model Active • ✓ {projection?.length || 0} Years Projected • ✓ Real-time Updates
+              ✓ Financial Model Active • ✓ {projection?.length || 0} Years Projected • ✓ Real-time Updates • ✓ {currentScenario.charAt(0).toUpperCase() + currentScenario.slice(1)} Scenario
             </div>
           </div>
         </div>
@@ -486,16 +492,17 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
         </div>
       </div>
 
-      {/* Instructions */}
+      {/* Enhanced Instructions */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <h4 className="font-medium text-yellow-900 mb-2">How to Use Private Sector Year-by-Year Planning:</h4>
+        <h4 className="font-medium text-yellow-900 mb-2">How to Use Enhanced Private Sector Year-by-Year Planning:</h4>
         <ul className="text-sm text-yellow-800 space-y-1">
-          <li>• <strong>Private Sector Only</strong> - This planning tool covers flagship school, franchise network, and private adoption model</li>
+          <li>• <strong>Scenario Integration</strong> - Numbers automatically reflect your selected scenario ({SCENARIO_PRESETS[currentScenario]?.name || currentScenario}) from the Private Sector tab</li>
+          <li>• <strong>Complete P&L View</strong> - See full profit & loss breakdown including all operating expenses and technology costs (10%)</li>
           <li>• <strong>Select a year</strong> from the dropdown to view or edit that year's assumptions</li>
           <li>• <strong>Toggle Edit Mode</strong> to modify student counts, pricing, or investments for specific years</li>
-          <li>• <strong>Changes update instantly</strong> - all charts and projections reflect your year-specific modifications</li>
+          <li>• <strong>Performance Indicators</strong> - Color-coded results show financial health at a glance</li>
+          <li>• <strong>Real-time Updates</strong> - all charts and projections reflect your year-specific modifications instantly</li>
           <li>• <strong>Public sector planning</strong> is available in the "Public Partnerships" and "Consolidated View" tabs</li>
-          <li>• <strong>View results</strong> in the right panel to see the financial impact of your changes</li>
         </ul>
       </div>
     </div>

@@ -39,10 +39,43 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
     const yearOverrides = parameters?.yearlyOverrides?.[year] || {};
     const currentYearData = projection?.[year] || {};
     
+    // Calculate default values based on scenario and year, ensuring it reflects the actual model
+    const getDefaultFlagshipStudents = () => {
+      if (yearOverrides.flagshipStudents !== undefined) return yearOverrides.flagshipStudents;
+      if (currentYearData.students?.flagship !== undefined) return currentYearData.students?.flagship;
+      
+      // Use the same logic as the financial model for year-by-year ramp-up
+      if (year === 0) return 0;
+      if (year === 1) return 300; // Year 1 is always 300 regardless of scenario
+      if (year === 2) return 750; // Year 2 is always 750 regardless of scenario
+      return parameters?.flagshipStudents || 1200; // Then it goes to scenario target
+    };
+    
+    const getDefaultAdoptionStudents = () => {
+      if (yearOverrides.adoptionStudents !== undefined) return yearOverrides.adoptionStudents;
+      if (currentYearData.students?.adoption !== undefined) return currentYearData.students?.adoption;
+      
+      // Use the same logic as the financial model for adoption ramp-up
+      if (year <= 1) return 0; // No adoption in first years
+      if (year === 2) return 2500; // Start small in Year 2
+      
+      // Then grow towards the scenario target
+      const targetAdoption = parameters?.adoptionStudents || 150000;
+      if (year <= 10) {
+        // Linear growth to reach target by year 10
+        const growthYears = year - 2;
+        return Math.min(
+          2500 + (targetAdoption - 2500) * (growthYears / 8),
+          targetAdoption
+        );
+      }
+      return targetAdoption;
+    };
+    
     return {
-      flagshipStudents: yearOverrides.flagshipStudents || (currentYearData.students?.flagship || 0),
-      adoptionStudents: yearOverrides.adoptionStudents || (currentYearData.students?.adoption || 0),
-      franchiseCount: yearOverrides.franchiseCount || (currentYearData.franchiseCount || 0),
+      flagshipStudents: getDefaultFlagshipStudents(),
+      adoptionStudents: getDefaultAdoptionStudents(),
+      franchiseCount: yearOverrides.franchiseCount !== undefined ? yearOverrides.franchiseCount : (currentYearData.franchiseCount || 0),
       studentsPerFranchise: yearOverrides.studentsPerFranchise || (parameters?.studentsPerFranchise || 1200),
       tuition: yearOverrides.tuition || ((parameters?.flagshipTuition || 2500) * Math.pow(1 + (parameters?.tuitionIncreaseRate || 0.08), Math.max(0, year - 1))),
       capex: yearOverrides.capex || (year === 0 ? CAPEX_SCENARIOS[parameters?.capexScenario || 'government']?.initialCapex || 8000000 : 0)
@@ -226,6 +259,16 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                     ) : (
                       <div className="text-lg font-semibold text-blue-600">{formatNumber(selectedYearData.flagshipStudents)}</div>
                     )}
+                    {selectedYear <= 2 && (
+                      <p className="text-xs text-blue-600">
+                        📈 Standardized ramp-up (same across all scenarios)
+                      </p>
+                    )}
+                    {selectedYear > 2 && (
+                      <p className="text-xs text-blue-600">
+                        🎯 Target: {formatNumber(parameters?.flagshipStudents || 1200)} students ({currentScenario} scenario)
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -244,6 +287,21 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                       />
                     ) : (
                       <div className="text-lg font-semibold text-purple-600">{formatNumber(selectedYearData.adoptionStudents)}</div>
+                    )}
+                    {selectedYear <= 1 && (
+                      <p className="text-xs text-purple-600">
+                        📈 No adoption in first year (building proven model)
+                      </p>
+                    )}
+                    {selectedYear === 2 && (
+                      <p className="text-xs text-purple-600">
+                        📈 Pilot launch: 2,500 students (same across scenarios)
+                      </p>
+                    )}
+                    {selectedYear > 2 && (
+                      <p className="text-xs text-purple-600">
+                        🎯 Target: {formatNumber(parameters?.adoptionStudents || 150000)} students ({currentScenario} scenario)
+                      </p>
                     )}
                   </div>
                 </>

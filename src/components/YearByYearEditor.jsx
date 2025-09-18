@@ -778,186 +778,410 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
               </button>
             </div>
             <div className="p-6">
-              {showStaffBreakdown === 'corporate' && (
-                <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-blue-900 mb-3">Corporate Team Structure</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">CEO / Founder</span>
-                        <span className="text-sm font-medium">R$50,000/month × 1 = R$600,000/year</span>
+              {showStaffBreakdown === 'corporate' && (() => {
+                const totalStudents = selectedYearProjection.students?.total || 0;
+                const corporateCost = selectedYearProjection.costs?.staffCorporate || 0;
+                const baseStaff = {
+                  ceo: { salary: 50000, count: 1 },
+                  cto: { salary: 35000, count: 1 },
+                  operations: { salary: 30000, count: 1 },
+                  finance: { salary: 25000, count: 1 },
+                  engineers: { salary: 18000, count: Math.max(4, Math.ceil(totalStudents / 5000)) }, // Scale engineers with students
+                  productManagers: { salary: 20000, count: Math.max(1, Math.ceil(totalStudents / 10000)) },
+                  legal: { salary: 15000, count: 1 },
+                  hr: { salary: 12000, count: Math.max(1, Math.ceil(totalStudents / 8000)) }
+                };
+                
+                const calculateStaffCost = (staff) => {
+                  return Object.values(staff).reduce((total, role) => total + (role.salary * role.count * 12), 0);
+                };
+                
+                const baseCost = calculateStaffCost(baseStaff);
+                const benefitsTaxes = baseCost * 0.35;
+                const totalCalculated = baseCost + benefitsTaxes;
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-blue-900 mb-3">Corporate Team Structure - Year {selectedYear}</h3>
+                      <div className="mb-3 text-sm text-blue-700">
+                        📊 Total Students: {formatNumber(totalStudents)} | Actual Cost: {formatCurrency(corporateCost)}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">CTO / Head of Technology</span>
-                        <span className="text-sm font-medium">R$35,000/month × 1 = R$420,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Head of Operations</span>
-                        <span className="text-sm font-medium">R$30,000/month × 1 = R$360,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Head of Finance</span>
-                        <span className="text-sm font-medium">R$25,000/month × 1 = R$300,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Software Engineers</span>
-                        <span className="text-sm font-medium">R$18,000/month × 8 = R$1,728,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Product Managers</span>
-                        <span className="text-sm font-medium">R$20,000/month × 2 = R$480,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Legal & Compliance</span>
-                        <span className="text-sm font-medium">R$15,000/month × 1 = R$180,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">HR & Admin</span>
-                        <span className="text-sm font-medium">R$12,000/month × 2 = R$288,000/year</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2 mt-2">
-                        <span className="text-sm font-bold">Total Base Cost</span>
-                        <span className="text-sm font-bold">R$4,356,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
-                        <span className="text-sm font-medium">R$1,524,600/year</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2">
-                        <span className="text-sm font-bold text-blue-900">Total Corporate Staff</span>
-                        <span className="text-sm font-bold text-blue-900">R$5,880,600/year</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">CEO / Founder</span>
+                          <span className="text-sm font-medium">R${baseStaff.ceo.salary.toLocaleString()}/month × {baseStaff.ceo.count} = {formatCurrency(baseStaff.ceo.salary * baseStaff.ceo.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">CTO / Head of Technology</span>
+                          <span className="text-sm font-medium">R${baseStaff.cto.salary.toLocaleString()}/month × {baseStaff.cto.count} = {formatCurrency(baseStaff.cto.salary * baseStaff.cto.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Head of Operations</span>
+                          <span className="text-sm font-medium">R${baseStaff.operations.salary.toLocaleString()}/month × {baseStaff.operations.count} = {formatCurrency(baseStaff.operations.salary * baseStaff.operations.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Head of Finance</span>
+                          <span className="text-sm font-medium">R${baseStaff.finance.salary.toLocaleString()}/month × {baseStaff.finance.count} = {formatCurrency(baseStaff.finance.salary * baseStaff.finance.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Software Engineers</span>
+                          <span className="text-sm font-medium">R${baseStaff.engineers.salary.toLocaleString()}/month × {baseStaff.engineers.count} = {formatCurrency(baseStaff.engineers.salary * baseStaff.engineers.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Product Managers</span>
+                          <span className="text-sm font-medium">R${baseStaff.productManagers.salary.toLocaleString()}/month × {baseStaff.productManagers.count} = {formatCurrency(baseStaff.productManagers.salary * baseStaff.productManagers.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Legal & Compliance</span>
+                          <span className="text-sm font-medium">R${baseStaff.legal.salary.toLocaleString()}/month × {baseStaff.legal.count} = {formatCurrency(baseStaff.legal.salary * baseStaff.legal.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">HR & Admin</span>
+                          <span className="text-sm font-medium">R${baseStaff.hr.salary.toLocaleString()}/month × {baseStaff.hr.count} = {formatCurrency(baseStaff.hr.salary * baseStaff.hr.count * 12)}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <span className="text-sm font-bold">Total Base Cost</span>
+                          <span className="text-sm font-bold">{formatCurrency(baseCost)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                          <span className="text-sm font-medium">{formatCurrency(benefitsTaxes)}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2">
+                          <span className="text-sm font-bold text-blue-900">Calculated Total</span>
+                          <span className="text-sm font-bold text-blue-900">{formatCurrency(totalCalculated)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-bold text-green-900">Actual Model Cost</span>
+                          <span className="text-sm font-bold text-green-900">{formatCurrency(corporateCost)}</span>
+                        </div>
                       </div>
                     </div>
+                    <p className="text-xs text-gray-600">
+                      * Corporate staff costs: Max(R$3M base, R$80 per total student). Staff count scales with student growth.
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    * Corporate staff costs are calculated as Max(R$3M base, R$80 per total student) to ensure scaling efficiency
-                  </p>
-                </div>
-              )}
+                );
+              })()}
               
-              {showStaffBreakdown === 'flagship' && (
-                <div className="space-y-4">
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-green-900 mb-3">Flagship School Team (300 students)</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">School Director</span>
-                        <span className="text-sm font-medium">R$25,000/month × 1 = R$300,000/year</span>
+              {showStaffBreakdown === 'flagship' && (() => {
+                const flagshipStudents = selectedYearProjection.students?.flagship || 0;
+                const flagshipCost = selectedYearProjection.costs?.staffFlagship || 0;
+                
+                const facilitatorsNeeded = Math.max(1, Math.ceil(flagshipStudents / 25)); // 1:25 ratio
+                const successManagersNeeded = Math.max(1, Math.ceil(flagshipStudents / 75)); // 1:75 ratio
+                const adminNeeded = Math.max(1, Math.ceil(flagshipStudents / 100)); // 1:100 ratio
+                const techSupportNeeded = Math.max(1, Math.ceil(flagshipStudents / 150)); // 1:150 ratio
+                
+                const flagshipStaff = {
+                  director: { salary: 25000, count: flagshipStudents > 0 ? 1 : 0 },
+                  coordinator: { salary: 18000, count: flagshipStudents > 0 ? 1 : 0 },
+                  facilitators: { salary: 12000, count: facilitatorsNeeded },
+                  successManagers: { salary: 10000, count: successManagersNeeded },
+                  admin: { salary: 8000, count: adminNeeded },
+                  techSupport: { salary: 10000, count: techSupportNeeded }
+                };
+                
+                const calculateStaffCost = (staff) => {
+                  return Object.values(staff).reduce((total, role) => total + (role.salary * role.count * 12), 0);
+                };
+                
+                const baseCost = calculateStaffCost(flagshipStaff);
+                const benefitsTaxes = baseCost * 0.35;
+                const totalCalculated = baseCost + benefitsTaxes;
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-green-900 mb-3">Flagship School Team - Year {selectedYear}</h3>
+                      <div className="mb-3 text-sm text-green-700">
+                        🏫 Flagship Students: {formatNumber(flagshipStudents)} | Actual Cost: {formatCurrency(flagshipCost)}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Academic Coordinator</span>
-                        <span className="text-sm font-medium">R$18,000/month × 1 = R$216,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">AI Learning Facilitators</span>
-                        <span className="text-sm font-medium">R$12,000/month × 12 = R$1,728,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Student Success Managers</span>
-                        <span className="text-sm font-medium">R$10,000/month × 4 = R$480,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Administrative Staff</span>
-                        <span className="text-sm font-medium">R$8,000/month × 3 = R$288,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Technical Support</span>
-                        <span className="text-sm font-medium">R$10,000/month × 2 = R$240,000/year</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2 mt-2">
-                        <span className="text-sm font-bold">Total Base Cost</span>
-                        <span className="text-sm font-bold">R$3,252,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
-                        <span className="text-sm font-medium">R$1,138,200/year</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2">
-                        <span className="text-sm font-bold text-green-900">Total Flagship Staff</span>
-                        <span className="text-sm font-bold text-green-900">R$4,390,200/year</span>
-                      </div>
+                      {flagshipStudents > 0 ? (
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm">School Director</span>
+                            <span className="text-sm font-medium">R${flagshipStaff.director.salary.toLocaleString()}/month × {flagshipStaff.director.count} = {formatCurrency(flagshipStaff.director.salary * flagshipStaff.director.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Academic Coordinator</span>
+                            <span className="text-sm font-medium">R${flagshipStaff.coordinator.salary.toLocaleString()}/month × {flagshipStaff.coordinator.count} = {formatCurrency(flagshipStaff.coordinator.salary * flagshipStaff.coordinator.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">AI Learning Facilitators (1:25 ratio)</span>
+                            <span className="text-sm font-medium">R${flagshipStaff.facilitators.salary.toLocaleString()}/month × {flagshipStaff.facilitators.count} = {formatCurrency(flagshipStaff.facilitators.salary * flagshipStaff.facilitators.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Student Success Managers (1:75 ratio)</span>
+                            <span className="text-sm font-medium">R${flagshipStaff.successManagers.salary.toLocaleString()}/month × {flagshipStaff.successManagers.count} = {formatCurrency(flagshipStaff.successManagers.salary * flagshipStaff.successManagers.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Administrative Staff (1:100 ratio)</span>
+                            <span className="text-sm font-medium">R${flagshipStaff.admin.salary.toLocaleString()}/month × {flagshipStaff.admin.count} = {formatCurrency(flagshipStaff.admin.salary * flagshipStaff.admin.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Technical Support (1:150 ratio)</span>
+                            <span className="text-sm font-medium">R${flagshipStaff.techSupport.salary.toLocaleString()}/month × {flagshipStaff.techSupport.count} = {formatCurrency(flagshipStaff.techSupport.salary * flagshipStaff.techSupport.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="text-sm font-bold">Total Base Cost</span>
+                            <span className="text-sm font-bold">{formatCurrency(baseCost)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                            <span className="text-sm font-medium">{formatCurrency(benefitsTaxes)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="text-sm font-bold text-green-900">Calculated Total</span>
+                            <span className="text-sm font-bold text-green-900">{formatCurrency(totalCalculated)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm font-bold text-green-900">Actual Model Cost</span>
+                            <span className="text-sm font-bold text-green-900">{formatCurrency(flagshipCost)}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <p>No flagship students in Year {selectedYear}</p>
+                          <p className="text-xs mt-2">Flagship school starts ramping up from Year 1</p>
+                        </div>
+                      )}
                     </div>
+                    <p className="text-xs text-gray-600">
+                      * Flagship staff calculation: Max(R$2.5M base, R$2,200 per student). Ratios scale with enrollment.
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    * Flagship staff ratio: 1:25 facilitator:student ratio for personalized AI-assisted learning
-                  </p>
-                </div>
-              )}
+                );
+              })()}
               
-              {showStaffBreakdown === 'franchise' && (
-                <div className="space-y-4">
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-yellow-900 mb-3">Franchise Support Team (0 franchises in Year 1)</h3>
-                    <div className="space-y-2">
-                      <div className="text-center py-4 text-gray-500">
-                        <p>No franchise support staff needed in Year 1</p>
-                        <p className="text-xs mt-2">Franchise network starts in Year 3</p>
+              {showStaffBreakdown === 'franchise' && (() => {
+                const franchiseCount = selectedYearProjection.franchiseCount || 0;
+                const franchiseCost = selectedYearProjection.costs?.staffFranchiseSupport || 0;
+                
+                const franchiseStaff = {
+                  director: { salary: 30000, count: franchiseCount > 0 ? 1 : 0 },
+                  managers: { salary: 20000, count: Math.ceil(franchiseCount / 10) || 0 }, // 1 per 10 franchises
+                  trainers: { salary: 15000, count: Math.ceil(franchiseCount / 5) || 0 }, // 1 per 5 franchises
+                  support: { salary: 12000, count: franchiseCount || 0 } // 1 per franchise
+                };
+                
+                const calculateStaffCost = (staff) => {
+                  return Object.values(staff).reduce((total, role) => total + (role.salary * role.count * 12), 0);
+                };
+                
+                const baseCost = calculateStaffCost(franchiseStaff);
+                const benefitsTaxes = baseCost * 0.35;
+                const totalCalculated = baseCost + benefitsTaxes;
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-yellow-900 mb-3">Franchise Support Team - Year {selectedYear}</h3>
+                      <div className="mb-3 text-sm text-yellow-700">
+                        🏢 Active Franchises: {formatNumber(franchiseCount)} | Actual Cost: {formatCurrency(franchiseCost)}
                       </div>
+                      {franchiseCount > 0 ? (
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm">Franchise Director</span>
+                            <span className="text-sm font-medium">R${franchiseStaff.director.salary.toLocaleString()}/month × {franchiseStaff.director.count} = {formatCurrency(franchiseStaff.director.salary * franchiseStaff.director.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Regional Managers (1:10 ratio)</span>
+                            <span className="text-sm font-medium">R${franchiseStaff.managers.salary.toLocaleString()}/month × {franchiseStaff.managers.count} = {formatCurrency(franchiseStaff.managers.salary * franchiseStaff.managers.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Training Specialists (1:5 ratio)</span>
+                            <span className="text-sm font-medium">R${franchiseStaff.trainers.salary.toLocaleString()}/month × {franchiseStaff.trainers.count} = {formatCurrency(franchiseStaff.trainers.salary * franchiseStaff.trainers.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Dedicated Support (1:1 ratio)</span>
+                            <span className="text-sm font-medium">R${franchiseStaff.support.salary.toLocaleString()}/month × {franchiseStaff.support.count} = {formatCurrency(franchiseStaff.support.salary * franchiseStaff.support.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="text-sm font-bold">Total Base Cost</span>
+                            <span className="text-sm font-bold">{formatCurrency(baseCost)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                            <span className="text-sm font-medium">{formatCurrency(benefitsTaxes)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="text-sm font-bold text-yellow-900">Calculated Total</span>
+                            <span className="text-sm font-bold text-yellow-900">{formatCurrency(totalCalculated)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm font-bold text-yellow-900">Actual Model Cost</span>
+                            <span className="text-sm font-bold text-yellow-900">{formatCurrency(franchiseCost)}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <p>No franchise support staff needed in Year {selectedYear}</p>
+                          <p className="text-xs mt-2">Franchise network starts in Year 3</p>
+                        </div>
+                      )}
                     </div>
+                    <p className="text-xs text-gray-600">
+                      * Franchise support: R$300K per franchise for training, operations, and ongoing support
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    * Franchise support: R$300K per franchise for training, operations, and ongoing support
-                  </p>
-                </div>
-              )}
+                );
+              })()}
               
-              {showStaffBreakdown === 'adoption' && (
-                <div className="space-y-4">
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-purple-900 mb-3">Adoption Support Team (0 adoption students in Year 1)</h3>
-                    <div className="space-y-2">
-                      <div className="text-center py-4 text-gray-500">
-                        <p>No adoption support staff needed in Year 1</p>
-                        <p className="text-xs mt-2">Adoption program starts in Year 2</p>
+              {showStaffBreakdown === 'adoption' && (() => {
+                const adoptionStudents = selectedYearProjection.students?.adoption || 0;
+                const adoptionCost = selectedYearProjection.costs?.staffAdoptionSupport || 0;
+                
+                const adoptionStaff = {
+                  director: { salary: 25000, count: adoptionStudents > 1000 ? 1 : 0 },
+                  customerSuccess: { salary: 15000, count: Math.ceil(adoptionStudents / 2000) || 0 }, // 1 per 2K students
+                  technicalSupport: { salary: 12000, count: Math.ceil(adoptionStudents / 3000) || 0 }, // 1 per 3K students
+                  trainers: { salary: 14000, count: Math.ceil(adoptionStudents / 2500) || 0 } // 1 per 2.5K students
+                };
+                
+                const calculateStaffCost = (staff) => {
+                  return Object.values(staff).reduce((total, role) => total + (role.salary * role.count * 12), 0);
+                };
+                
+                const baseCost = calculateStaffCost(adoptionStaff);
+                const benefitsTaxes = baseCost * 0.35;
+                const totalCalculated = baseCost + benefitsTaxes;
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-purple-900 mb-3">Adoption Support Team - Year {selectedYear}</h3>
+                      <div className="mb-3 text-sm text-purple-700">
+                        🎓 Adoption Students: {formatNumber(adoptionStudents)} | Actual Cost: {formatCurrency(adoptionCost)}
                       </div>
+                      {adoptionStudents > 0 ? (
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm">Adoption Director</span>
+                            <span className="text-sm font-medium">R${adoptionStaff.director.salary.toLocaleString()}/month × {adoptionStaff.director.count} = {formatCurrency(adoptionStaff.director.salary * adoptionStaff.director.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Customer Success Managers (1:2000 ratio)</span>
+                            <span className="text-sm font-medium">R${adoptionStaff.customerSuccess.salary.toLocaleString()}/month × {adoptionStaff.customerSuccess.count} = {formatCurrency(adoptionStaff.customerSuccess.salary * adoptionStaff.customerSuccess.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Technical Support (1:3000 ratio)</span>
+                            <span className="text-sm font-medium">R${adoptionStaff.technicalSupport.salary.toLocaleString()}/month × {adoptionStaff.technicalSupport.count} = {formatCurrency(adoptionStaff.technicalSupport.salary * adoptionStaff.technicalSupport.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Training Specialists (1:2500 ratio)</span>
+                            <span className="text-sm font-medium">R${adoptionStaff.trainers.salary.toLocaleString()}/month × {adoptionStaff.trainers.count} = {formatCurrency(adoptionStaff.trainers.salary * adoptionStaff.trainers.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="text-sm font-bold">Total Base Cost</span>
+                            <span className="text-sm font-bold">{formatCurrency(baseCost)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                            <span className="text-sm font-medium">{formatCurrency(benefitsTaxes)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="text-sm font-bold text-purple-900">Calculated Total</span>
+                            <span className="text-sm font-bold text-purple-900">{formatCurrency(totalCalculated)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm font-bold text-purple-900">Actual Model Cost</span>
+                            <span className="text-sm font-bold text-purple-900">{formatCurrency(adoptionCost)}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <p>No adoption support staff needed in Year {selectedYear}</p>
+                          <p className="text-xs mt-2">Adoption program starts in Year 2</p>
+                        </div>
+                      )}
                     </div>
+                    <p className="text-xs text-gray-600">
+                      * Adoption support: R$150 per student for customer success, training, and technical support
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    * Adoption support: R$150 per student for customer success, training, and technical support
-                  </p>
-                </div>
-              )}
+                );
+              })()}
               
-              {showStaffBreakdown === 'training' && (
-                <div className="space-y-4">
-                  <div className="bg-indigo-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-indigo-900 mb-3">Teacher Training Team</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Head of Teacher Development</span>
-                        <span className="text-sm font-medium">R$22,000/month × 1 = R$264,000/year</span>
+              {showStaffBreakdown === 'training' && (() => {
+                const totalStudents = selectedYearProjection.students?.total || 0;
+                const flagshipStudents = selectedYearProjection.students?.flagship || 0;
+                const franchiseStudents = selectedYearProjection.students?.franchise || 0;
+                const teachersToTrain = Math.ceil((flagshipStudents + franchiseStudents) * 0.1); // 10% turnover/new hires
+                const trainingCost = selectedYearProjection.costs?.teacherTraining || 0;
+                
+                const trainingStaff = {
+                  head: { salary: 22000, count: totalStudents > 500 ? 1 : 0 },
+                  specialists: { salary: 15000, count: Math.max(1, Math.ceil(teachersToTrain / 50)) }, // 1 per 50 teachers
+                  designers: { salary: 12000, count: Math.max(1, Math.ceil(teachersToTrain / 75)) }, // 1 per 75 teachers
+                  coordinators: { salary: 10000, count: Math.max(1, Math.ceil(teachersToTrain / 100)) } // 1 per 100 teachers
+                };
+                
+                const calculateStaffCost = (staff) => {
+                  return Object.values(staff).reduce((total, role) => total + (role.salary * role.count * 12), 0);
+                };
+                
+                const baseCost = calculateStaffCost(trainingStaff);
+                const benefitsTaxes = baseCost * 0.35;
+                const totalCalculated = baseCost + benefitsTaxes;
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="bg-indigo-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-indigo-900 mb-3">Teacher Training Team - Year {selectedYear}</h3>
+                      <div className="mb-3 text-sm text-indigo-700">
+                        👩‍🏫 Teachers to Train: {formatNumber(teachersToTrain)} | Total Students: {formatNumber(totalStudents)} | Actual Cost: {formatCurrency(trainingCost)}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Senior Training Specialists</span>
-                        <span className="text-sm font-medium">R$15,000/month × 3 = R$540,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Curriculum Designers</span>
-                        <span className="text-sm font-medium">R$12,000/month × 2 = R$288,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Training Coordinators</span>
-                        <span className="text-sm font-medium">R$10,000/month × 2 = R$240,000/year</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2 mt-2">
-                        <span className="text-sm font-bold">Total Base Cost</span>
-                        <span className="text-sm font-bold">R$1,332,000/year</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
-                        <span className="text-sm font-medium">R$466,200/year</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2">
-                        <span className="text-sm font-bold text-indigo-900">Total Training Staff</span>
-                        <span className="text-sm font-bold text-indigo-900">R$1,798,200/year</span>
-                      </div>
+                      {teachersToTrain > 0 ? (
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm">Head of Teacher Development</span>
+                            <span className="text-sm font-medium">R${trainingStaff.head.salary.toLocaleString()}/month × {trainingStaff.head.count} = {formatCurrency(trainingStaff.head.salary * trainingStaff.head.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Senior Training Specialists (1:50 ratio)</span>
+                            <span className="text-sm font-medium">R${trainingStaff.specialists.salary.toLocaleString()}/month × {trainingStaff.specialists.count} = {formatCurrency(trainingStaff.specialists.salary * trainingStaff.specialists.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Curriculum Designers (1:75 ratio)</span>
+                            <span className="text-sm font-medium">R${trainingStaff.designers.salary.toLocaleString()}/month × {trainingStaff.designers.count} = {formatCurrency(trainingStaff.designers.salary * trainingStaff.designers.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm">Training Coordinators (1:100 ratio)</span>
+                            <span className="text-sm font-medium">R${trainingStaff.coordinators.salary.toLocaleString()}/month × {trainingStaff.coordinators.count} = {formatCurrency(trainingStaff.coordinators.salary * trainingStaff.coordinators.count * 12)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="text-sm font-bold">Total Base Cost</span>
+                            <span className="text-sm font-bold">{formatCurrency(baseCost)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Benefits & Taxes (35%)</span>
+                            <span className="text-sm font-medium">{formatCurrency(benefitsTaxes)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="text-sm font-bold text-indigo-900">Calculated Total</span>
+                            <span className="text-sm font-bold text-indigo-900">{formatCurrency(totalCalculated)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm font-bold text-indigo-900">Actual Model Cost</span>
+                            <span className="text-sm font-bold text-indigo-900">{formatCurrency(trainingCost)}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <p>Minimal training staff needed in Year {selectedYear}</p>
+                          <p className="text-xs mt-2">Training scales with teacher count and student growth</p>
+                        </div>
+                      )}
                     </div>
+                    <p className="text-xs text-gray-600">
+                      * Training cost: Max(R$800K base, 10% of students × R$15K per teacher). Staff scales with teacher count.
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    * Training cost calculation: Max(R$800K base, 10% of students × R$15K per teacher)
-                  </p>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>

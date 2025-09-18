@@ -512,10 +512,10 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                         <span className="text-sm text-gray-600">Staff - Corporate</span>
                         <button
                           onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'corporate' ? null : 'corporate')}
-                          className="p-1 hover:bg-gray-100 rounded-full"
+                          className="p-1 hover:bg-blue-100 rounded-full border border-gray-300 hover:border-blue-400"
                           title="View staff breakdown"
                         >
-                          <Info className="w-3 h-3 text-gray-400" />
+                          <Info className="w-4 h-4 text-blue-600" />
                         </button>
                       </div>
                       <span className="font-semibold text-red-600">
@@ -527,10 +527,10 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                         <span className="text-sm text-gray-600">Staff - Flagship</span>
                         <button
                           onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'flagship' ? null : 'flagship')}
-                          className="p-1 hover:bg-gray-100 rounded-full"
+                          className="p-1 hover:bg-blue-100 rounded-full border border-gray-300 hover:border-blue-400"
                           title="View staff breakdown"
                         >
-                          <Info className="w-3 h-3 text-gray-400" />
+                          <Info className="w-4 h-4 text-blue-600" />
                         </button>
                       </div>
                       <span className="font-semibold text-red-600">
@@ -542,10 +542,10 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                         <span className="text-sm text-gray-600">Staff - Franchise Support</span>
                         <button
                           onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'franchise' ? null : 'franchise')}
-                          className="p-1 hover:bg-gray-100 rounded-full"
+                          className="p-1 hover:bg-blue-100 rounded-full border border-gray-300 hover:border-blue-400"
                           title="View staff breakdown"
                         >
-                          <Info className="w-3 h-3 text-gray-400" />
+                          <Info className="w-4 h-4 text-blue-600" />
                         </button>
                       </div>
                       <span className="font-semibold text-red-600">
@@ -557,10 +557,10 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                         <span className="text-sm text-gray-600">Staff - Adoption Support</span>
                         <button
                           onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'adoption' ? null : 'adoption')}
-                          className="p-1 hover:bg-gray-100 rounded-full"
+                          className="p-1 hover:bg-blue-100 rounded-full border border-gray-300 hover:border-blue-400"
                           title="View staff breakdown"
                         >
-                          <Info className="w-3 h-3 text-gray-400" />
+                          <Info className="w-4 h-4 text-blue-600" />
                         </button>
                       </div>
                       <span className="font-semibold text-red-600">
@@ -584,10 +584,10 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                         <span className="text-sm text-gray-600">Teacher Training</span>
                         <button
                           onClick={() => setShowStaffBreakdown(showStaffBreakdown === 'training' ? null : 'training')}
-                          className="p-1 hover:bg-gray-100 rounded-full"
+                          className="p-1 hover:bg-blue-100 rounded-full border border-gray-300 hover:border-blue-400"
                           title="View staff breakdown"
                         >
-                          <Info className="w-3 h-3 text-gray-400" />
+                          <Info className="w-4 h-4 text-blue-600" />
                         </button>
                       </div>
                       <span className="font-semibold text-red-600">

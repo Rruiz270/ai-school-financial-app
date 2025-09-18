@@ -18,7 +18,7 @@ export const DEFAULT_PARAMETERS = {
   
   // Costs (more realistic)
   technologyCapex: 3000000,
-  technologyOpexRate: 0.04, // Increased from 3% to 4%
+  technologyOpexRate: 0.10, // Increased from 4% to 10%
   marketingRate: 0.08, // Increased from 5% to 8%
   
   // CAPEX Scenarios
@@ -54,7 +54,7 @@ export const SCENARIO_PRESETS = {
       tuitionIncreaseRate: 0.054, // 10% lower than 6%
       
       // Costs (higher)
-      technologyOpexRate: 0.045, // Higher costs
+      technologyOpexRate: 0.11, // Higher costs (10% + 1%)
       marketingRate: 0.09, // Higher marketing needed
       
       // Growth rates (slower)
@@ -92,7 +92,7 @@ export const SCENARIO_PRESETS = {
       tuitionIncreaseRate: 0.08, // 8%
       
       // Costs (lower, more efficient)
-      technologyOpexRate: 0.035, // More efficient
+      technologyOpexRate: 0.09, // More efficient (10% - 1%)
       marketingRate: 0.06, // Less marketing needed
       
       // Growth rates (faster)

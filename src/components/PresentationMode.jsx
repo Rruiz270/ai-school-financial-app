@@ -1330,7 +1330,7 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
                 <div className="space-y-4">
                   <div className="border border-gray-200 p-4 rounded-lg">
                     <h3 className="font-bold text-primary-600 mb-2">1. TECHNOLOGY EXPENSES</h3>
-                    <p className="text-sm text-gray-600 mb-2">4% of total revenue</p>
+                    <p className="text-sm text-gray-600 mb-2">10% of total revenue</p>
                     <p className="text-xs text-gray-500">Cloud infrastructure, software licenses, API costs, system maintenance</p>
                   </div>
                   

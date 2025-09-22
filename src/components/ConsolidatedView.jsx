@@ -40,7 +40,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivat
     if (publicModelData && Array.isArray(publicModelData) && publicModelData.length > 0) {
       return publicModelData.map(yearData => ({
         year: yearData.year,
-        students: yearData.students,
+        students: yearData.students || 0,
         revenue: yearData.revenue?.total || yearData.revenue || 0,
         ebitda: yearData.ebitda || 0
       }));
@@ -73,22 +73,32 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivat
       
       return defaultPrivateData.map((privateYear, index) => {
         const publicYear = publicData[index] || { students: 0, revenue: 0, ebitda: 0 };
+        
+        // Ensure all values are numbers, not NaN
+        const privateStudents = Number(privateYear.students.total) || 0;
+        const privateRevenue = Number(privateYear.revenue.total) || 0;
+        const privateEbitda = Number(privateYear.ebitda) || 0;
+        
+        const publicStudents = Number(publicYear.students) || 0;
+        const publicRevenue = Number(publicYear.revenue) || 0;
+        const publicEbitdaValue = Number(publicYear.ebitda) || 0;
+        
         return {
           year: privateYear.year,
           private: {
-            students: privateYear.students.total || 0,
-            revenue: privateYear.revenue.total || 0,
-            ebitda: privateYear.ebitda || 0
+            students: privateStudents,
+            revenue: privateRevenue,
+            ebitda: privateEbitda
           },
           public: {
-            students: publicYear.students || 0,
-            revenue: publicYear.revenue || 0,
-            ebitda: publicYear.ebitda || 0
+            students: publicStudents,
+            revenue: publicRevenue,
+            ebitda: publicEbitdaValue
           },
           total: {
-            students: (privateYear.students.total || 0) + (publicYear.students || 0),
-            revenue: (privateYear.revenue.total || 0) + (publicYear.revenue || 0),
-            ebitda: (privateYear.ebitda || 0) + (publicYear.ebitda || 0)
+            students: privateStudents + publicStudents,
+            revenue: privateRevenue + publicRevenue,
+            ebitda: privateEbitda + publicEbitdaValue
           }
         };
       });
@@ -98,22 +108,31 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivat
     return privateDataSource.map((privateYear, index) => {
       const publicYear = publicData[index] || { students: 0, revenue: 0, ebitda: 0 };
       
+      // Ensure all values are numbers, not NaN
+      const privateStudents = Number(privateYear.students?.total) || 0;
+      const privateRevenue = Number(privateYear.revenue?.total) || 0;
+      const privateEbitda = Number(privateYear.ebitda) || 0;
+      
+      const publicStudents = Number(publicYear.students) || 0;
+      const publicRevenue = Number(publicYear.revenue) || 0;
+      const publicEbitdaValue = Number(publicYear.ebitda) || 0;
+      
       return {
         year: privateYear.year,
         private: {
-          students: privateYear.students?.total || 0,
-          revenue: privateYear.revenue?.total || 0,
-          ebitda: privateYear.ebitda || 0
+          students: privateStudents,
+          revenue: privateRevenue,
+          ebitda: privateEbitda
         },
         public: {
-          students: publicYear.students || 0,
-          revenue: publicYear.revenue || 0,
-          ebitda: publicYear.ebitda || 0
+          students: publicStudents,
+          revenue: publicRevenue,
+          ebitda: publicEbitdaValue
         },
         total: {
-          students: (privateYear.students?.total || 0) + (publicYear.students || 0),
-          revenue: (privateYear.revenue?.total || 0) + (publicYear.revenue || 0),
-          ebitda: (privateYear.ebitda || 0) + (publicYear.ebitda || 0)
+          students: privateStudents + publicStudents,
+          revenue: privateRevenue + publicRevenue,
+          ebitda: privateEbitda + publicEbitdaValue
         }
       };
     });
@@ -156,16 +175,26 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivat
   }
 
   const formatCurrency = (value) => {
+    // Handle NaN, null, undefined values
+    const numValue = Number(value);
+    if (isNaN(numValue) || !isFinite(numValue)) {
+      return 'R$ 0';
+    }
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(numValue);
   };
 
   const formatNumber = (value) => {
-    return new Intl.NumberFormat('pt-BR').format(value);
+    // Handle NaN, null, undefined values
+    const numValue = Number(value);
+    if (isNaN(numValue) || !isFinite(numValue)) {
+      return '0';
+    }
+    return new Intl.NumberFormat('pt-BR').format(numValue);
   };
 
   const calculateCAGR = (endValue, startValue, years) => {
@@ -299,8 +328,16 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivat
             </div>
             <Target className="w-8 h-8 text-pink-600" />
           </div>
-          <div className="mt-4 text-xs text-gray-500">
-            Of Brazil's total 55.7M K-12 students
+          <div className="mt-4 space-y-1">
+            <div className="text-xs text-blue-600 font-medium">
+              Private: {((year10Total.private.students || 0) / 55700000 * 100).toFixed(1)}%
+            </div>
+            <div className="text-xs text-emerald-600 font-medium">
+              Public: {((year10Total.public.students || 0) / 55700000 * 100).toFixed(1)}%
+            </div>
+            <div className="text-xs text-gray-500">
+              Of Brazil's total 55.7M K-12 students
+            </div>
           </div>
         </div>
 

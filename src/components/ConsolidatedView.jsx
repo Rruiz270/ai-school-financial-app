@@ -232,7 +232,7 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivat
           <div>
             <h2 className="text-2xl font-bold">Consolidated Business Model</h2>
             <p className="mt-2 opacity-90">
-              Complete view: Private Sector + Public Partnerships across Brazil's 55.7M total K-12 students
+              Complete view: Private Sector (9M students) + Public Partnerships (46.7M students) across Brazil's 55.7M total K-12 students
             Including expanded coverage in Paraná and Santa Catarina states
             </p>
           </div>
@@ -330,13 +330,13 @@ const ConsolidatedView = ({ privateFinancialData, publicModelData, currentPrivat
           </div>
           <div className="mt-4 space-y-1">
             <div className="text-xs text-blue-600 font-medium">
-              Private: {((year10Total.private.students || 0) / 55700000 * 100).toFixed(1)}%
+              Private: {((year10Total.private.students || 0) / 9000000 * 100).toFixed(1)}% of 9M private students
             </div>
             <div className="text-xs text-emerald-600 font-medium">
-              Public: {((year10Total.public.students || 0) / 55700000 * 100).toFixed(1)}%
+              Public: {((year10Total.public.students || 0) / 46700000 * 100).toFixed(1)}% of 46.7M public students
             </div>
             <div className="text-xs text-gray-500">
-              Of Brazil's total 55.7M K-12 students
+              Total: {((year10Total.total.students || 0) / 55700000 * 100).toFixed(1)}% of Brazil's 55.7M K-12 students
             </div>
           </div>
         </div>

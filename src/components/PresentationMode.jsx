@@ -918,7 +918,7 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
                   <div className="text-sm text-green-700">Payback Period</div>
                 </div>
                 <div className="mt-4 text-xs text-green-600">
-                  R$5M renovation + 30-year building use
+                  R$10M renovation + 30-year building use
                 </div>
               </div>
             </div>
@@ -1417,7 +1417,7 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
                   <div className="border border-gray-200 p-4 rounded-lg">
                     <h3 className="font-bold text-primary-600 mb-2">8. CAPITAL EXPENDITURES</h3>
                     <div className="text-xs text-gray-600 space-y-1">
-                      <p><strong>Initial CAPEX:</strong> R$5M-R$25M (by scenario)</p>
+                      <p><strong>Initial CAPEX:</strong> R$3M-R$25M (by scenario)</p>
                       <p><strong>Ongoing:</strong> 0.5% revenue (Y1-5), 0.3% (Y6+)</p>
                     </div>
                   </div>

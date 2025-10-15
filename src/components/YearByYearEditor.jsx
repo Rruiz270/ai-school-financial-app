@@ -79,7 +79,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
       franchiseCount: yearOverrides.franchiseCount !== undefined ? yearOverrides.franchiseCount : (currentYearData.franchiseCount || 0),
       studentsPerFranchise: yearOverrides.studentsPerFranchise || (parameters?.studentsPerFranchise || 1200),
       tuition: yearOverrides.tuition || ((parameters?.flagshipTuition || 2500) * Math.pow(1 + (parameters?.tuitionIncreaseRate || 0.08), Math.max(0, year - 1))),
-      capex: yearOverrides.capex || (year === 0 ? CAPEX_SCENARIOS[parameters?.capexScenario || 'government']?.initialCapex || 8000000 : 0)
+      capex: yearOverrides.capex !== undefined ? yearOverrides.capex : (year === 0 ? CAPEX_SCENARIOS[parameters?.capexScenario || 'government']?.initialCapex || 10000000 : 0)
     };
   };
 
@@ -408,6 +408,26 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                 <h4 className="font-medium text-gray-900">Investment</h4>
               </div>
 
+              {selectedYear === 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">CAPEX Scenario</label>
+                  <select
+                    value={parameters?.capexScenario || 'government'}
+                    onChange={(e) => onParameterChange({ capexScenario: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    {Object.entries(CAPEX_SCENARIOS).map(([key, scenario]) => (
+                      <option key={key} value={key}>
+                        {scenario.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500">
+                    {CAPEX_SCENARIOS[parameters?.capexScenario || 'government'].description}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
                   {selectedYear === 0 ? 'Initial CAPEX' : 'Additional CAPEX'} (R$)
@@ -428,6 +448,11 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                   <div className="text-lg font-semibold text-orange-600">
                     {formatCurrency(selectedYearData.capex || 0)}
                   </div>
+                )}
+                {selectedYear === 0 && !editMode && (
+                  <p className="text-xs text-gray-500">
+                    Annual facility cost: {formatCurrency(CAPEX_SCENARIOS[parameters?.capexScenario || 'government'].annualFacilityCost)}
+                  </p>
                 )}
               </div>
             </div>

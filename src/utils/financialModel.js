@@ -108,9 +108,9 @@ export const SCENARIO_PRESETS = {
 export const CAPEX_SCENARIOS = {
   government: {
     name: 'Government Partnership',
-    initialCapex: 5000000, // R$5M renovation only
+    initialCapex: 10000000, // R$10M renovation only
     annualFacilityCost: 800000, // licenses, maintenance, utilities
-    description: 'R$5M renovation, 30-year free building use from government'
+    description: 'R$10M renovation, 30-year free building use from government'
   },
   'built-to-suit': {
     name: 'Built-to-Suit with 30-Year Lease',

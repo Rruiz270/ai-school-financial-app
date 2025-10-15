@@ -121,7 +121,7 @@ const ParameterControl = ({ parameters, onParameterChange, className = '' }) => 
                     {scenario.replace('-', ' ')}
                   </div>
                   <div className="text-xs text-gray-600">
-                    {scenario === 'government' && 'R$5M renovation, free building use'}
+                    {scenario === 'government' && 'R$10M renovation, free building use'}
                     {scenario === 'built-to-suit' && 'R$3M tech + R$3.2M/year lease'}
                     {scenario === 'direct' && 'R$25M construction, full ownership'}
                   </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge, RotateCcw } from 'lucide-react';
 import { FinancialModel, DEFAULT_PARAMETERS, SCENARIO_PRESETS } from './utils/financialModel';
 import Dashboard from './components/Dashboard';
@@ -8,16 +8,117 @@ import YearByYearEditor from './components/YearByYearEditor';
 import PublicPartnerships from './components/PublicPartnerships';
 import ConsolidatedView from './components/ConsolidatedView';
 
+// Public Sector Scenario Presets (copied from PublicPartnerships)
+const PUBLIC_SCENARIO_PRESETS = {
+  optimistic: {
+    name: 'Optimistic',
+    description: 'Strong government partnerships, rapid adoption',
+    year1Students: 50000,
+    year5Students: 610000,
+    year10Students: 2200000,
+    pilotMunicipalities: 5,
+    year5Municipalities: 25,
+    year10Municipalities: 120,
+    revenuePerStudentMonth: 250,
+    marginsPublic: 0.75
+  },
+  realistic: {
+    name: 'Realistic',
+    description: 'Moderate government support, steady growth',
+    year1Students: 42500,
+    year5Students: 518500,
+    year10Students: 1870000,
+    pilotMunicipalities: 4,
+    year5Municipalities: 21,
+    year10Municipalities: 102,
+    revenuePerStudentMonth: 212,
+    marginsPublic: 0.64
+  },
+  pessimistic: {
+    name: 'Pessimistic',
+    description: 'Slow adoption, regulatory challenges',
+    year1Students: 35000,
+    year5Students: 427000,
+    year10Students: 1540000,
+    pilotMunicipalities: 3,
+    year5Municipalities: 17,
+    year10Municipalities: 84,
+    revenuePerStudentMonth: 175,
+    marginsPublic: 0.53
+  }
+};
+
+// Function to generate initial public financial data
+const generatePublicFinancialData = (scenario = 'optimistic') => {
+  const publicParams = {
+    setupFeePerSchool: 50000,
+    technologyLicenseFee: 25000,
+    teacherTrainingFee: 2000,
+    teachersPerSchool: 25,
+    ...PUBLIC_SCENARIO_PRESETS[scenario]
+  };
+  
+  const years = [];
+  
+  for (let year = 1; year <= 10; year++) {
+    const studentGrowth = Math.min(
+      publicParams.year1Students * Math.pow(year / 1, 1.8),
+      publicParams.year10Students
+    );
+    
+    const students = Math.floor(studentGrowth);
+    
+    const municipalities = Math.min(
+      publicParams.pilotMunicipalities * Math.pow(year / 1, 1.5),
+      publicParams.year10Municipalities
+    );
+    
+    const monthlyRevenue = students * publicParams.revenuePerStudentMonth * 12;
+    const setupRevenue = Math.floor(municipalities * 50) * publicParams.setupFeePerSchool;
+    const technologyRevenue = Math.floor(municipalities) * publicParams.technologyLicenseFee;
+    const trainingRevenue = Math.floor(municipalities * 50 * publicParams.teachersPerSchool) * publicParams.teacherTrainingFee;
+    
+    const totalRevenue = monthlyRevenue + setupRevenue + technologyRevenue + trainingRevenue;
+    const costs = totalRevenue * (1 - publicParams.marginsPublic);
+    const ebitda = totalRevenue - costs;
+    
+    years.push({
+      year,
+      students,
+      municipalities: Math.floor(municipalities),
+      revenue: {
+        monthly: monthlyRevenue,
+        setup: setupRevenue,
+        technology: technologyRevenue,
+        training: trainingRevenue,
+        total: totalRevenue
+      },
+      costs,
+      ebitda,
+      margin: ebitda / totalRevenue
+    });
+  }
+  
+  return years;
+};
+
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [parameters, setParameters] = useState(DEFAULT_PARAMETERS);
   const [currentScenario, setCurrentScenario] = useState('realistic');
   const [currentPublicScenario, setCurrentPublicScenario] = useState('optimistic');
-  const [publicModelData, setPublicModelData] = useState(null);
+  const [publicModelData, setPublicModelData] = useState(() => generatePublicFinancialData('optimistic'));
   
   // Create financial model instance and calculations
   const model = useMemo(() => new FinancialModel(parameters), [parameters]);
   const financialData = useMemo(() => model.getFinancialSummary(), [model]);
+
+  // Update public data when scenario changes but tab hasn't been visited
+  useEffect(() => {
+    if (!publicModelData || publicModelData.length === 0) {
+      setPublicModelData(generatePublicFinancialData(currentPublicScenario));
+    }
+  }, [currentPublicScenario]);
 
   const handleParameterChange = (newParams) => {
     setParameters(prev => ({ ...prev, ...newParams }));
@@ -47,6 +148,7 @@ function App() {
     
     // Reset public sector to optimistic scenario (default for public)
     setCurrentPublicScenario('optimistic');
+    setPublicModelData(generatePublicFinancialData('optimistic'));
     
     // The public sector will reset itself when it receives the new initialScenario prop
     // This will trigger a re-render and the PublicPartnerships component will initialize with optimistic

@@ -71,17 +71,14 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       const yearProjection = projection[year];
       // Add government revenue if applicable
       const privateRevenue = yearProjection.revenue.total;
-      // Add public adoption revenue if applicable (year 2 onwards)
-      // Use the government payment per student per month from scenario
-      const publicAdoptionRevenue = year >= 2 && publicModelData && publicModelData[year-1] ? 
-        (publicModelData[year-1].students || 0) * 
-        (currentPublicScenario === 'optimistic' ? 250 : 
-         currentPublicScenario === 'pessimistic' ? 175 : 212) * 12 : 0;
-      const revenue = privateRevenue + publicAdoptionRevenue;
-      // Add public sector costs if applicable (36% of public revenue for realistic scenario)
+      // Add public sector revenue if applicable (year 2 onwards)
+      // Use total public revenue from the model
+      const publicRevenue = year >= 2 && publicModelData && publicModelData[year-1] ? 
+        publicModelData[year-1].revenue.total : 0;
+      const revenue = privateRevenue + publicRevenue;
+      // Add public sector costs if applicable
       const publicCosts = year >= 2 && publicModelData && publicModelData[year-1] ? 
-        publicAdoptionRevenue * (currentPublicScenario === 'optimistic' ? 0.25 : 
-                                 currentPublicScenario === 'pessimistic' ? 0.47 : 0.36) : 0;
+        publicModelData[year-1].costs : 0;
       const operatingExpenses = yearProjection.costs.total + publicCosts;
       const capex = yearProjection.capex || 0;
       const taxes = yearProjection.taxes || 0;
@@ -179,18 +176,16 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         month,
         monthLabel: `Month ${month}`,
         inflows: {
-          flagshipTuition: (revenue.flagship || 0) / 12 * rampFactor,
+          flagshipTuition: (revenue.flagship || 0) / 12, // No ramp - students enroll in January
           franchiseFees: month === 1 || month === 7 ? (revenue.franchiseFees || 0) / 2 : 0,
           franchiseRoyalties: (revenue.franchiseRoyalty || 0) / 12,
           franchiseMarketing: (revenue.franchiseMarketing || 0) / 12,
           // Private adoption fees (monthly)
-          adoptionFeesPrivate: (revenue.adoption || 0) / 12 * rampFactor,
+          adoptionFeesPrivate: (revenue.adoption || 0) / 12, // No ramp - fixed monthly
           // Public adoption fees (monthly) - starts year 2
-          // Government pays per student per month based on scenario
+          // Use total public revenue divided by 12
           adoptionFeesPublic: year >= 2 && publicModelData && publicModelData[year-1] ? 
-            (publicModelData[year-1].students || 0) * 
-            (currentPublicScenario === 'optimistic' ? 250 : 
-             currentPublicScenario === 'pessimistic' ? 175 : 212) * rampFactor : 0,
+            publicModelData[year-1].revenue.total / 12 : 0,
           // Kit sales - ONLY flagship and franchise, ALL in January
           kitSales: month === 1 ? 
             ((students.flagship || 0) + (students.franchise || 0)) * 

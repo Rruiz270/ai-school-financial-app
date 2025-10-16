@@ -208,6 +208,7 @@ function App() {
           financialData={financialData}
           parameters={parameters}
           currentScenario={currentScenario}
+          publicModelData={publicModelData}
         />
       )
     },
@@ -377,6 +378,7 @@ function App() {
             financialData={financialData}
             parameters={parameters}
             currentScenario={currentScenario}
+            publicModelData={publicModelData}
           />
         )}
         

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle, ChevronDown, ChevronRight, Wallet, Users, Building, GraduationCap } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-const CashFlow = ({ financialData, parameters, currentScenario }) => {
+const CashFlow = ({ financialData, parameters, currentScenario, publicModelData }) => {
   const [selectedYear, setSelectedYear] = useState(null);
   const [showMonthly, setShowMonthly] = useState(false);
   
@@ -173,7 +173,9 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
           franchiseRoyalties: (revenue.franchiseRoyalty || 0) / 12,
           franchiseMarketing: (revenue.franchiseMarketing || 0) / 12,
           adoptionFees: (revenue.adoption || 0) / 12 * rampFactor,
-          kitSales: month === 1 || month === 7 ? (revenue.kits || 0) / 2 : 0,
+          kitSales: (revenue.kits || 0) / 12 * rampFactor, // Monthly kit sales, not twice yearly
+          governmentRevenue: year >= 2 && publicModelData && publicModelData[year-1] ? 
+            publicModelData[year-1].revenue.total / 12 * rampFactor : 0, // Government revenue from year 2
           total: 0
         },
         outflows: {
@@ -539,6 +541,12 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                           <span className="text-green-600">{formatCurrency(month.inflows.kitSales)}</span>
                         </div>
                       )}
+                      {month.inflows.governmentRevenue > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Government Partnerships</span>
+                          <span className="text-green-600">{formatCurrency(month.inflows.governmentRevenue)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -617,6 +625,12 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-600">Office Setup</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.officeSetup)}</span>
+                            </div>
+                          )}
+                          {month.outflows.curriculumDevelopment > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Curriculum Development</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.curriculumDevelopment)}</span>
                             </div>
                           )}
                         </>

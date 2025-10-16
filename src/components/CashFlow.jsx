@@ -182,7 +182,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
             (yearProjection.pricing?.kitCost || parameters.kitCostPerStudent) / 12 * rampFactor,
           // Government revenue only includes monthly fees, not kits
           governmentRevenue: year >= 2 && publicModelData && publicModelData[year-1] ? 
-            publicModelData[year-1].revenue.monthly / 12 * rampFactor : 0
+            publicModelData[year-1].revenue.monthly / 12 * rampFactor : 0,
           total: 0
         },
         outflows: {

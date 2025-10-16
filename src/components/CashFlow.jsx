@@ -52,21 +52,19 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
     yearlyData.push({
       year: 0,
       yearLabel: 'Pre-Launch',
-      openingCash: INITIAL_INVESTMENT,
+      openingCash: 0, // Start with zero, investment is shown separately
       investments: INITIAL_INVESTMENT,
       revenue: 0,
       operatingExpenses: -preLaunchExpenses,
       capex: -projection[0].capex,
       taxes: 0,
-      netCashFlow: year0NetCashFlow,
+      netCashFlow: INITIAL_INVESTMENT + year0NetCashFlow, // Include investment in net cash flow
       closingCash: year0ClosingCash,
-      burnRate: Math.abs(year0NetCashFlow) / 12,
-      runwayMonths: year0ClosingCash > 0 ? Math.floor(year0ClosingCash / (Math.abs(year0NetCashFlow) / 12)) : 0
+      burnRate: Math.abs(preLaunchExpenses + projection[0].capex) / 12,
+      runwayMonths: year0ClosingCash > 0 ? Math.floor(year0ClosingCash / (Math.abs(preLaunchExpenses + projection[0].capex) / 12)) : 0
     });
     
     let cumulativeCash = year0ClosingCash;
-    
-    cumulativeCash = yearlyData[0].closingCash;
     
     // Years 1-10
     for (let year = 1; year <= 10; year++) {
@@ -117,7 +115,8 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
     const yearData = cashFlowData[year];
     const monthlyData = [];
     const yearProjection = financialData.projection[year];
-    let runningCash = yearData.openingCash;
+    // For Year 0, start with 0 and add investment in month 1
+    let runningCash = year === 0 ? 0 : yearData.openingCash;
     
     // For Year 0, it's pre-launch investments
     if (year === 0) {
@@ -126,8 +125,8 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
           month,
           monthLabel: `Month ${month}`,
           inflows: {
-            // No investor funding here - it's already in opening cash
-            total: 0
+            investorFunding: month === 1 ? INITIAL_INVESTMENT : 0,
+            total: month === 1 ? INITIAL_INVESTMENT : 0
           },
           outflows: {
             techDevelopment: PRE_LAUNCH_TECH_INVESTMENT / 12, // Spread over 12 months
@@ -400,6 +399,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
                 Opening Cash
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Investment
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Revenue
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -430,6 +432,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                   {formatCurrency(yearData.openingCash)}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-blue-600">
+                  {yearData.investments > 0 ? formatCurrency(yearData.investments) : '-'}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-green-600">
                   {yearData.revenue > 0 ? formatCurrency(yearData.revenue) : '-'}
@@ -513,8 +518,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
                       <span className="text-green-600">{formatCurrency(month.inflows.total)}</span>
                     </h5>
                     <div className="space-y-2">
-                      {selectedYear === 0 && (
-                        <div className="text-sm text-gray-400 italic">Pre-revenue phase</div>
+                      {selectedYear === 0 && month.month === 1 && month.inflows.investorFunding > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Investor Funding</span>
+                          <span className="text-green-600 font-medium">{formatCurrency(month.inflows.investorFunding)}</span>
+                        </div>
                       )}
                       {month.inflows.flagshipTuition > 0 && (
                         <div className="flex justify-between text-sm">

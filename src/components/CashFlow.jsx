@@ -72,11 +72,17 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       // Add government revenue if applicable
       const privateRevenue = yearProjection.revenue.total;
       // Add public adoption revenue if applicable (year 2 onwards)
+      // Use the government payment per student per month from scenario
       const publicAdoptionRevenue = year >= 2 && publicModelData && publicModelData[year-1] ? 
         (publicModelData[year-1].students || 0) * 
-        (yearProjection.pricing?.adoptionFee || parameters.adoptionLicenseFee) * 12 : 0;
+        (currentPublicScenario === 'optimistic' ? 250 : 
+         currentPublicScenario === 'pessimistic' ? 175 : 212) * 12 : 0;
       const revenue = privateRevenue + publicAdoptionRevenue;
-      const operatingExpenses = yearProjection.costs.total;
+      // Add public sector costs if applicable (36% of public revenue for realistic scenario)
+      const publicCosts = year >= 2 && publicModelData && publicModelData[year-1] ? 
+        publicAdoptionRevenue * (currentPublicScenario === 'optimistic' ? 0.25 : 
+                                 currentPublicScenario === 'pessimistic' ? 0.47 : 0.36) : 0;
+      const operatingExpenses = yearProjection.costs.total + publicCosts;
       const capex = yearProjection.capex || 0;
       const taxes = yearProjection.taxes || 0;
       
@@ -180,9 +186,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           // Private adoption fees (monthly)
           adoptionFeesPrivate: (revenue.adoption || 0) / 12 * rampFactor,
           // Public adoption fees (monthly) - starts year 2
+          // Government pays per student per month based on scenario
           adoptionFeesPublic: year >= 2 && publicModelData && publicModelData[year-1] ? 
             (publicModelData[year-1].students || 0) * 
-            (yearProjection.pricing?.adoptionFee || parameters.adoptionLicenseFee) / 12 * rampFactor : 0,
+            (currentPublicScenario === 'optimistic' ? 250 : 
+             currentPublicScenario === 'pessimistic' ? 175 : 212) * rampFactor : 0,
           // Kit sales - ONLY flagship and franchise, ALL in January
           kitSales: month === 1 ? 
             ((students.flagship || 0) + (students.franchise || 0)) * 

@@ -73,12 +73,12 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       const privateRevenue = yearProjection.revenue.total;
       // Add public sector revenue if applicable (year 2 onwards)
       // Use total public revenue from the model
-      const publicRevenue = year >= 2 && publicModelData && publicModelData[year-1] ? 
-        publicModelData[year-1].revenue.total : 0;
+      const publicRevenue = year >= 2 && publicModelData && publicModelData[year-2] ? 
+        publicModelData[year-2].revenue.total : 0;
       const revenue = privateRevenue + publicRevenue;
       // Add public sector costs if applicable
-      const publicCosts = year >= 2 && publicModelData && publicModelData[year-1] ? 
-        publicModelData[year-1].costs : 0;
+      const publicCosts = year >= 2 && publicModelData && publicModelData[year-2] ? 
+        publicModelData[year-2].costs : 0;
       const operatingExpenses = yearProjection.costs.total + publicCosts;
       const capex = yearProjection.capex || 0;
       const taxes = yearProjection.taxes || 0;
@@ -184,8 +184,8 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           adoptionFeesPrivate: (revenue.adoption || 0) / 12, // No ramp - fixed monthly
           // Public adoption fees (monthly) - starts year 2
           // Use total public revenue divided by 12
-          adoptionFeesPublic: year >= 2 && publicModelData && publicModelData[year-1] ? 
-            publicModelData[year-1].revenue.total / 12 : 0,
+          adoptionFeesPublic: year >= 2 && publicModelData && publicModelData[year-2] ? 
+            publicModelData[year-2].revenue.total / 12 : 0,
           // Kit sales - ONLY flagship and franchise, ALL in January
           kitSales: month === 1 ? 
             ((students.flagship || 0) + (students.franchise || 0)) * 

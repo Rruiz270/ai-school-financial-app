@@ -35,23 +35,36 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
   const cashFlowData = useMemo(() => {
     const { projection } = financialData;
     const yearlyData = [];
-    let cumulativeCash = INITIAL_INVESTMENT - PRE_LAUNCH_TECH_INVESTMENT;
+    
+    // Calculate pre-launch year expenses
+    const preLaunchExpenses = PRE_LAUNCH_TECH_INVESTMENT + // Tech: R$3M
+                              (100000 * 12) + // Founder salaries: R$1.2M
+                              (200000 * 10) + // Curriculum: R$2M (months 3-12)
+                              50000 + // Legal setup
+                              150000 + // Market research (2 months)
+                              200000 + // Branding (2 months)
+                              150000; // Office setup
     
     // Year 0 - Pre-launch
+    const year0NetCashFlow = -preLaunchExpenses - projection[0].capex;
+    const year0ClosingCash = INITIAL_INVESTMENT + year0NetCashFlow;
+    
     yearlyData.push({
       year: 0,
       yearLabel: 'Pre-Launch',
       openingCash: INITIAL_INVESTMENT,
-      investments: -PRE_LAUNCH_TECH_INVESTMENT,
+      investments: INITIAL_INVESTMENT,
       revenue: 0,
-      operatingExpenses: 0,
+      operatingExpenses: -preLaunchExpenses,
       capex: -projection[0].capex,
       taxes: 0,
-      netCashFlow: -PRE_LAUNCH_TECH_INVESTMENT - projection[0].capex,
-      closingCash: cumulativeCash - projection[0].capex,
-      burnRate: (PRE_LAUNCH_TECH_INVESTMENT + projection[0].capex) / 12,
-      runwayMonths: cumulativeCash > 0 ? Math.floor((cumulativeCash - projection[0].capex) / ((PRE_LAUNCH_TECH_INVESTMENT + projection[0].capex) / 12)) : 0
+      netCashFlow: year0NetCashFlow,
+      closingCash: year0ClosingCash,
+      burnRate: Math.abs(year0NetCashFlow) / 12,
+      runwayMonths: year0ClosingCash > 0 ? Math.floor(year0ClosingCash / (Math.abs(year0NetCashFlow) / 12)) : 0
     });
+    
+    let cumulativeCash = year0ClosingCash;
     
     cumulativeCash = yearlyData[0].closingCash;
     
@@ -109,12 +122,13 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
           month,
           monthLabel: `Month ${month}`,
           inflows: {
-            investorFunding: month === 1 ? INITIAL_INVESTMENT : 0,
-            total: month === 1 ? INITIAL_INVESTMENT : 0
+            // No investor funding here - it's already in opening cash
+            total: 0
           },
           outflows: {
-            techDevelopment: month <= 6 ? PRE_LAUNCH_TECH_INVESTMENT / 6 : 0,
-            founderSalaries: month >= 7 ? 100000 : 0, // R$100k/month
+            techDevelopment: PRE_LAUNCH_TECH_INVESTMENT / 12, // Spread over 12 months
+            founderSalaries: 100000, // R$100k/month throughout
+            curriculumDevelopment: month >= 3 ? 200000 : 0, // R$200k/month starting month 3
             legalSetup: month === 2 ? 50000 : 0,
             marketResearch: month >= 3 && month <= 4 ? 75000 : 0,
             brandingDesign: month >= 5 && month <= 6 ? 100000 : 0,
@@ -199,11 +213,13 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
           total: 0
         },
         
-        // Headcount estimates
+        // Headcount estimates (scenario-adjusted)
         headcount: {
           flagship: {
-            teachers: students.flagship ? Math.ceil(students.flagship / 25) : 0,
-            support: students.flagship ? Math.ceil(students.flagship / 200) : 0
+            // Teacher ratio varies by scenario: pessimistic 1:30, realistic 1:25, optimistic 1:20
+            teachers: students.flagship ? Math.ceil(students.flagship * rampFactor / 
+              (currentScenario === 'pessimistic' ? 30 : currentScenario === 'optimistic' ? 20 : 25)) : 0,
+            support: students.flagship ? Math.ceil(students.flagship * rampFactor / 200) : 0
           },
           corporate: {
             executives: year === 1 ? 3 : Math.min(5, 3 + Math.floor(year / 3)),
@@ -488,11 +504,8 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                       <span className="text-green-600">{formatCurrency(month.inflows.total)}</span>
                     </h5>
                     <div className="space-y-2">
-                      {selectedYear === 0 && month.month === 1 && month.inflows.investorFunding > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Investor Funding</span>
-                          <span className="text-green-600 font-medium">{formatCurrency(month.inflows.investorFunding)}</span>
-                        </div>
+                      {selectedYear === 0 && (
+                        <div className="text-sm text-gray-400 italic">Pre-revenue phase</div>
                       )}
                       {month.inflows.flagshipTuition > 0 && (
                         <div className="flex justify-between text-sm">

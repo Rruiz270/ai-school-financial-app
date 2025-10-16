@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle, ChevronDown, ChevronRight, Wallet, Users, Building, GraduationCap } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-const CashFlow = ({ financialData, parameters, currentScenario, publicModelData }) => {
+const CashFlow = ({ financialData, parameters, currentScenario, publicModelData, currentPublicScenario }) => {
   const [selectedYear, setSelectedYear] = useState(null);
   const [showMonthly, setShowMonthly] = useState(false);
   
@@ -71,8 +71,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
       const yearProjection = projection[year];
       // Add government revenue if applicable
       const privateRevenue = yearProjection.revenue.total;
+      // Government revenue is student fees only (not setup, tech licenses, or training)
       const governmentRevenue = year >= 2 && publicModelData && publicModelData[year-1] ? 
-        publicModelData[year-1].revenue.monthly : 0;
+        (publicModelData[year-1].students || 0) * 
+        (currentPublicScenario === 'optimistic' ? 250 : 
+         currentPublicScenario === 'pessimistic' ? 175 : 212) * 12 : 0;
       const revenue = privateRevenue + governmentRevenue;
       const operatingExpenses = yearProjection.costs.total;
       const capex = yearProjection.capex || 0;
@@ -176,12 +179,19 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
           franchiseRoyalties: (revenue.franchiseRoyalty || 0) / 12,
           franchiseMarketing: (revenue.franchiseMarketing || 0) / 12,
           adoptionFees: (revenue.adoption || 0) / 12 * rampFactor,
-          // Kit sales only from private sector (flagship + franchise)
-          kitSales: ((students.flagship || 0) + (students.franchise || 0)) * 
-            (yearProjection.pricing?.kitCost || parameters.kitCostPerStudent) / 12 * rampFactor,
-          // Government revenue only includes monthly fees, not kits
-          governmentRevenue: year >= 2 && publicModelData && publicModelData[year-1] ? 
-            publicModelData[year-1].revenue.monthly / 12 * rampFactor : 0,
+          // Private sector kit sales - ALL in January
+          privateKitSales: month === 1 ? 
+            ((students.flagship || 0) + (students.franchise || 0)) * 
+            (yearProjection.pricing?.kitCost || parameters.kitCostPerStudent) : 0,
+          // Public sector kit sales - monthly like adoption
+          publicKitSales: year >= 2 && publicModelData && publicModelData[year-1] ? 
+            (publicModelData[year-1].students || 0) * 
+            (yearProjection.pricing?.kitCost || parameters.kitCostPerStudent) / 12 * rampFactor : 0,
+          // Government monthly revenue (student fees only)
+          governmentRevenue: year >= 2 && publicModelData && publicModelData[year-1] && currentPublicScenario ? 
+            (publicModelData[year-1].students || 0) * 
+            (currentPublicScenario === 'optimistic' ? 250 : 
+             currentPublicScenario === 'pessimistic' ? 175 : 212) * rampFactor : 0,
           total: 0
         },
         outflows: {
@@ -550,10 +560,16 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData 
                           <span className="text-green-600">{formatCurrency(month.inflows.adoptionFees)}</span>
                         </div>
                       )}
-                      {month.inflows.kitSales > 0 && (
+                      {month.inflows.privateKitSales > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Educational Kit Sales</span>
-                          <span className="text-green-600">{formatCurrency(month.inflows.kitSales)}</span>
+                          <span className="text-gray-600">Private Sector Kit Sales (Annual)</span>
+                          <span className="text-green-600">{formatCurrency(month.inflows.privateKitSales)}</span>
+                        </div>
+                      )}
+                      {month.inflows.publicKitSales > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Public Sector Kit Sales</span>
+                          <span className="text-green-600">{formatCurrency(month.inflows.publicKitSales)}</span>
                         </div>
                       )}
                       {month.inflows.governmentRevenue > 0 && (

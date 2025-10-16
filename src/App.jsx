@@ -209,6 +209,7 @@ function App() {
           parameters={parameters}
           currentScenario={currentScenario}
           publicModelData={publicModelData}
+          currentPublicScenario={currentPublicScenario}
         />
       )
     },
@@ -379,6 +380,7 @@ function App() {
             parameters={parameters}
             currentScenario={currentScenario}
             publicModelData={publicModelData}
+            currentPublicScenario={currentPublicScenario}
           />
         )}
         

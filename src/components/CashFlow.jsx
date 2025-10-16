@@ -71,12 +71,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       const yearProjection = projection[year];
       // Add government revenue if applicable
       const privateRevenue = yearProjection.revenue.total;
-      // Government revenue is student fees only (not setup, tech licenses, or training)
-      const governmentRevenue = year >= 2 && publicModelData && publicModelData[year-1] ? 
+      // Add public adoption revenue if applicable (year 2 onwards)
+      const publicAdoptionRevenue = year >= 2 && publicModelData && publicModelData[year-1] ? 
         (publicModelData[year-1].students || 0) * 
-        (currentPublicScenario === 'optimistic' ? 250 : 
-         currentPublicScenario === 'pessimistic' ? 175 : 212) * 12 : 0;
-      const revenue = privateRevenue + governmentRevenue;
+        (yearProjection.pricing?.adoptionFee || parameters.adoptionLicenseFee) * 12 : 0;
+      const revenue = privateRevenue + publicAdoptionRevenue;
       const operatingExpenses = yearProjection.costs.total;
       const capex = yearProjection.capex || 0;
       const taxes = yearProjection.taxes || 0;
@@ -178,20 +177,16 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           franchiseFees: month === 1 || month === 7 ? (revenue.franchiseFees || 0) / 2 : 0,
           franchiseRoyalties: (revenue.franchiseRoyalty || 0) / 12,
           franchiseMarketing: (revenue.franchiseMarketing || 0) / 12,
-          adoptionFees: (revenue.adoption || 0) / 12 * rampFactor,
-          // Private sector kit sales - ALL in January
-          privateKitSales: month === 1 ? 
+          // Private adoption fees (monthly)
+          adoptionFeesPrivate: (revenue.adoption || 0) / 12 * rampFactor,
+          // Public adoption fees (monthly) - starts year 2
+          adoptionFeesPublic: year >= 2 && publicModelData && publicModelData[year-1] ? 
+            (publicModelData[year-1].students || 0) * 
+            (yearProjection.pricing?.adoptionFee || parameters.adoptionLicenseFee) / 12 * rampFactor : 0,
+          // Kit sales - ONLY flagship and franchise, ALL in January
+          kitSales: month === 1 ? 
             ((students.flagship || 0) + (students.franchise || 0)) * 
             (yearProjection.pricing?.kitCost || parameters.kitCostPerStudent) : 0,
-          // Public sector kit sales - monthly like adoption
-          publicKitSales: year >= 2 && publicModelData && publicModelData[year-1] ? 
-            (publicModelData[year-1].students || 0) * 
-            (yearProjection.pricing?.kitCost || parameters.kitCostPerStudent) / 12 * rampFactor : 0,
-          // Government monthly revenue (student fees only)
-          governmentRevenue: year >= 2 && publicModelData && publicModelData[year-1] && currentPublicScenario ? 
-            (publicModelData[year-1].students || 0) * 
-            (currentPublicScenario === 'optimistic' ? 250 : 
-             currentPublicScenario === 'pessimistic' ? 175 : 212) * rampFactor : 0,
           total: 0
         },
         outflows: {
@@ -554,28 +549,22 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                           </span>
                         </div>
                       )}
-                      {month.inflows.adoptionFees > 0 && (
+                      {month.inflows.adoptionFeesPrivate > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Adoption License Fees</span>
-                          <span className="text-green-600">{formatCurrency(month.inflows.adoptionFees)}</span>
+                          <span className="text-gray-600">Adoption License Fees (Private)</span>
+                          <span className="text-green-600">{formatCurrency(month.inflows.adoptionFeesPrivate)}</span>
                         </div>
                       )}
-                      {month.inflows.privateKitSales > 0 && (
+                      {month.inflows.adoptionFeesPublic > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Private Sector Kit Sales (Annual)</span>
-                          <span className="text-green-600">{formatCurrency(month.inflows.privateKitSales)}</span>
+                          <span className="text-gray-600">Adoption License Fees (Public)</span>
+                          <span className="text-green-600">{formatCurrency(month.inflows.adoptionFeesPublic)}</span>
                         </div>
                       )}
-                      {month.inflows.publicKitSales > 0 && (
+                      {month.inflows.kitSales > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Public Sector Kit Sales</span>
-                          <span className="text-green-600">{formatCurrency(month.inflows.publicKitSales)}</span>
-                        </div>
-                      )}
-                      {month.inflows.governmentRevenue > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Government Partnerships</span>
-                          <span className="text-green-600">{formatCurrency(month.inflows.governmentRevenue)}</span>
+                          <span className="text-gray-600">Kit Sales (Flagship & Franchise)</span>
+                          <span className="text-green-600">{formatCurrency(month.inflows.kitSales)}</span>
                         </div>
                       )}
                     </div>

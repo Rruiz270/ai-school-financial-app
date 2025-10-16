@@ -3,7 +3,7 @@ import { DollarSign, TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircl
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const CashFlow = ({ financialData, parameters, currentScenario }) => {
-  const [selectedYear, setSelectedYear] = useState(null); // null for yearly view, 0-10 for monthly drill-down
+  const [selectedYear, setSelectedYear] = useState(null);
   const [showMonthly, setShowMonthly] = useState(false);
   
   const INITIAL_INVESTMENT = 30000000; // R$30M initial cash
@@ -93,38 +93,34 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
     return yearlyData;
   }, [financialData]);
 
-  // Calculate detailed monthly cash flow for a specific year
+  // Calculate detailed monthly cash flow
   const getMonthlyDetailedData = (year) => {
     if (!showMonthly || selectedYear === null) return [];
     
     const yearData = cashFlowData[year];
     const monthlyData = [];
     const yearProjection = financialData.projection[year];
-    const costs = yearProjection?.costs || {};
     let runningCash = yearData.openingCash;
     
-    // For Year 0, it's pre-launch investments and preparations
+    // For Year 0, it's pre-launch investments
     if (year === 0) {
       for (let month = 1; month <= 12; month++) {
         const details = {
           month,
           monthLabel: `Month ${month}`,
-          // Inflows
           inflows: {
             investorFunding: month === 1 ? INITIAL_INVESTMENT : 0,
-            revenue: 0,
             total: month === 1 ? INITIAL_INVESTMENT : 0
           },
-          // Outflows broken down
           outflows: {
             techDevelopment: month <= 6 ? PRE_LAUNCH_TECH_INVESTMENT / 6 : 0,
-            foundersalaries: month >= 7 ? 100000 : 0, // R$100k/month founder salaries starting month 7
-            legalSetup: month === 2 ? 50000 : 0, // One-time legal setup
-            marketResearch: month >= 3 && month <= 4 ? 75000 : 0, // Market research
-            brandingDesign: month >= 5 && month <= 6 ? 100000 : 0, // Branding work
-            officeSetup: month === 9 ? 150000 : 0, // Office preparation
+            founderSalaries: month >= 7 ? 100000 : 0, // R$100k/month
+            legalSetup: month === 2 ? 50000 : 0,
+            marketResearch: month >= 3 && month <= 4 ? 75000 : 0,
+            brandingDesign: month >= 5 && month <= 6 ? 100000 : 0,
+            officeSetup: month === 9 ? 150000 : 0,
             capex: month === 12 ? yearProjection.capex : 0,
-            total: 0 // calculated below
+            total: 0
           }
         };
         
@@ -139,110 +135,92 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
       return monthlyData;
     }
     
-    // For operational years
-    // Get base monthly values
-    const yearlyRevenue = yearProjection?.revenue || {};
-    const yearlyCosts = yearProjection?.costs || {};
+    // For operational years - use actual cost breakdown from model
+    const students = yearProjection?.students || {};
+    const revenue = yearProjection?.revenue || {};
+    const costs = yearProjection?.costs || {};
     
-    // Apply ramp-up factors for early years
+    // Apply ramp-up for early years
     const revenueRampFactors = year === 1 ? 
       [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1] :
       year === 2 ?
       [0.8, 0.85, 0.9, 0.95, 0.95, 1, 1, 1, 1, 1, 1, 1] :
       Array(12).fill(1);
     
-    // Hiring schedule - when different roles come onboard
-    const getStaffCount = (month, year) => {
-      if (year === 1) {
-        return {
-          executives: month >= 1 ? 3 : 0, // CEO, CFO, COO from start
-          teachers: month >= 6 ? Math.ceil(month - 5) * 5 : 0, // Ramp teachers for students
-          techTeam: month >= 1 ? 5 + (month >= 6 ? 5 : 0) : 0, // 5 initial, +5 at month 6
-          salesMarketing: month >= 3 ? 2 + Math.floor((month - 3) / 3) : 0, // Start with 2, add 1 every 3 months
-          operations: month >= 2 ? 2 + Math.floor((month - 2) / 4) : 0, // Start with 2, grow slowly
-          support: month >= 9 ? 2 : 0 // Customer support starts month 9
-        };
-      } else if (year === 2) {
-        return {
-          executives: 4, // Add VP Sales
-          teachers: 20 + Math.floor(month / 2) * 5, // Add 5 every 2 months
-          techTeam: 15 + Math.floor(month / 4), // Slower growth
-          salesMarketing: 8 + Math.floor(month / 3),
-          operations: 6 + Math.floor(month / 6),
-          support: 4 + Math.floor(month / 4)
-        };
-      } else {
-        // Steady state staffing based on student numbers
-        const totalStudents = yearProjection?.students?.total || 0;
-        return {
-          executives: Math.min(6, 4 + Math.floor(year / 3)),
-          teachers: Math.ceil(totalStudents / 50), // 1:50 teacher ratio
-          techTeam: Math.min(30, 15 + year * 2),
-          salesMarketing: Math.min(25, 10 + year),
-          operations: Math.min(20, 8 + year),
-          support: Math.ceil(totalStudents / 500) // 1:500 support ratio
-        };
-      }
-    };
-    
-    // Monthly salary costs
-    const getMonthlySalaries = (month, year) => {
-      const staff = getStaffCount(month, year);
-      return {
-        executives: staff.executives * 40000, // R$40k/month per executive
-        teachers: staff.teachers * 8000, // R$8k/month per teacher
-        techTeam: staff.techTeam * 15000, // R$15k/month per tech
-        salesMarketing: staff.salesMarketing * 10000, // R$10k/month
-        operations: staff.operations * 6000, // R$6k/month
-        support: staff.support * 4000, // R$4k/month
-        benefits: 0 // calculated as 40% of base
-      };
-    };
-    
     for (let month = 1; month <= 12; month++) {
       const rampFactor = revenueRampFactors[month - 1];
-      const salaries = getMonthlySalaries(month, year);
-      salaries.benefits = Object.values(salaries).reduce((sum, val) => sum + val, 0) * 0.4;
       
       const details = {
         month,
         monthLabel: `Month ${month}`,
-        // Detailed Inflows
         inflows: {
-          flagshipTuition: (yearlyRevenue.flagship || 0) / 12 * rampFactor,
-          franchiseFees: month === 1 || month === 7 ? (yearlyRevenue.franchiseFees || 0) / 2 : 0, // Twice yearly
-          franchiseRoyalties: (yearlyRevenue.franchiseRoyalty || 0) / 12,
-          adoptionFees: (yearlyRevenue.adoption || 0) / 12 * rampFactor,
-          kitSales: month === 1 || month === 7 ? (yearlyRevenue.kits || 0) / 2 : 0, // Semester kit sales
+          flagshipTuition: (revenue.flagship || 0) / 12 * rampFactor,
+          franchiseFees: month === 1 || month === 7 ? (revenue.franchiseFees || 0) / 2 : 0,
+          franchiseRoyalties: (revenue.franchiseRoyalty || 0) / 12,
+          franchiseMarketing: (revenue.franchiseMarketing || 0) / 12,
+          adoptionFees: (revenue.adoption || 0) / 12 * rampFactor,
+          kitSales: month === 1 || month === 7 ? (revenue.kits || 0) / 2 : 0,
           total: 0
         },
-        // Detailed Outflows
         outflows: {
-          // Salaries & Benefits
-          executiveSalaries: salaries.executives,
-          teacherSalaries: salaries.teachers,
-          techSalaries: salaries.techTeam,
-          salesSalaries: salaries.salesMarketing,
-          operationsSalaries: salaries.operations,
-          supportSalaries: salaries.support,
-          benefitsCosts: salaries.benefits,
+          // Staff costs from model
+          corporateStaff: (costs.staffCorporate || 0) / 12,
+          flagshipStaff: (costs.staffFlagship || 0) / 12,
+          franchiseSupport: (costs.staffFranchiseSupport || 0) / 12,
+          adoptionSupport: (costs.staffAdoptionSupport || 0) / 12,
           
-          // Operating Expenses
-          techInfrastructure: ((yearlyCosts.technologyOpex || 0) / 12),
-          marketing: ((yearlyCosts.marketing || 0) / 12) * (month <= 6 ? 1.5 : 1), // Higher in early months
-          facilities: ((yearlyCosts.facilities || 0) / 12),
-          curriculum: month === 3 || month === 9 ? (yearlyCosts.curriculum || 0) / 2 : 0, // Twice yearly
+          // Operating expenses
+          technology: (costs.technologyOpex || 0) / 12,
+          marketing: (costs.marketing || 0) / 12 * (month <= 6 && year === 1 ? 1.5 : 1),
+          facilities: (costs.facilities || 0) / 12,
           
-          // Other periodic expenses
-          insurance: month === 1 ? (yearlyCosts.insurance || 0) : 0, // Annual payment
-          legal: ((yearlyCosts.legal || 0) / 12),
-          travel: ((yearlyCosts.travel || 0) / 12),
+          // Educational costs
+          curriculum: (costs.curriculum || 0) / 12,
+          studentSupport: (costs.studentSupport || 0) / 12,
+          parentEngagement: (costs.parentEngagement || 0) / 12,
+          teacherTraining: (costs.teacherTraining || 0) / 12,
+          
+          // Compliance & Quality
+          qualityAssurance: (costs.qualityAssurance || 0) / 12,
+          regulatory: (costs.regulatoryCompliance || 0) / 12,
+          dataManagement: (costs.dataManagement || 0) / 12,
+          legal: (costs.legal || 0) / 12,
+          
+          // Other
+          insurance: month === 1 ? (costs.insurance || 0) : 0,
+          travel: (costs.travel || 0) / 12,
+          workingCapital: (costs.workingCapital || 0) / 12,
+          contingency: (costs.contingency || 0) / 12,
           
           // Taxes and CAPEX
-          taxes: ((yearProjection.taxes || 0) / 12) * rampFactor,
-          capex: month === 6 && yearData.capex ? Math.abs(yearData.capex) : 0,
+          taxes: (yearProjection.taxes || 0) / 12 * rampFactor,
+          capex: month === 6 && yearProjection.capex ? yearProjection.capex : 0,
           
           total: 0
+        },
+        
+        // Headcount estimates
+        headcount: {
+          flagship: {
+            teachers: students.flagship ? Math.ceil(students.flagship / 25) : 0,
+            support: students.flagship ? Math.ceil(students.flagship / 200) : 0
+          },
+          corporate: {
+            executives: year === 1 ? 3 : Math.min(5, 3 + Math.floor(year / 3)),
+            tech: Math.min(20, 5 + year * 1.5),
+            sales: Math.min(15, 3 + yearProjection.franchiseCount * 0.2),
+            operations: Math.min(10, 3 + year)
+          },
+          franchiseTeam: yearProjection.franchiseCount ? Math.max(2, Math.ceil(yearProjection.franchiseCount / 10)) : 0,
+          adoptionTeam: students.adoption ? Math.max(3, Math.ceil(students.adoption / 25000)) : 0
+        },
+        
+        // Student numbers
+        students: {
+          flagship: students.flagship || 0,
+          franchise: (students.franchise || 0),
+          adoption: students.adoption || 0,
+          total: students.total || 0
         }
       };
       
@@ -255,39 +233,34 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
       
       details.netCashFlow = netFlow;
       details.closingCash = runningCash;
-      details.staffCount = getStaffCount(month, year);
       monthlyData.push(details);
     }
     
     return monthlyData;
   };
   
-  // Calculate monthly cash flow for a specific year (simplified view)
-  const getMonthlyData = (year) => {
-    const detailedData = getMonthlyDetailedData(year);
-    if (!detailedData || detailedData.length === 0) return [];
+  const monthlyData = useMemo(() => {
+    const detailed = getMonthlyDetailedData(selectedYear);
+    if (!detailed || detailed.length === 0) return [];
     
-    // Convert detailed data to simple format for charts
-    return detailedData.map(month => ({
+    return detailed.map(month => ({
       month: month.month,
       monthLabel: month.monthLabel,
       revenue: month.inflows.total,
-      expenses: -month.outflows.total + month.outflows.taxes + month.outflows.capex, // Exclude taxes and capex for separate display
+      expenses: -month.outflows.total + (month.outflows.taxes || 0) + (month.outflows.capex || 0),
       taxes: month.outflows.taxes ? -month.outflows.taxes : 0,
       capex: month.outflows.capex ? -month.outflows.capex : 0,
       netCashFlow: month.netCashFlow,
       closingCash: month.closingCash
     }));
-  };
-
-  const monthlyData = getMonthlyData(selectedYear);
+  }, [selectedYear, showMonthly]);
   
   // Key metrics
   const finalYearData = cashFlowData[cashFlowData.length - 1];
   const cashPositive = cashFlowData.find(d => d.netCashFlow > 0);
   const lowestCash = Math.min(...cashFlowData.map(d => d.closingCash));
   const peakFunding = INITIAL_INVESTMENT - lowestCash;
-  
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       {/* Header */}
@@ -425,7 +398,7 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {cashFlowData.map((yearData, index) => (
+            {cashFlowData.map((yearData) => (
               <tr key={yearData.year} className="hover:bg-gray-50">
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {yearData.yearLabel}
@@ -456,17 +429,15 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                   {formatCurrency(yearData.closingCash)}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-center">
-                  {yearData.year > 0 && (
-                    <button
-                      onClick={() => {
-                        setSelectedYear(yearData.year);
-                        setShowMonthly(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setSelectedYear(yearData.year);
+                      setShowMonthly(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-900"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -474,7 +445,7 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
         </table>
       </div>
 
-      {/* Monthly Detail (if selected) */}
+      {/* Monthly Detail */}
       {showMonthly && selectedYear !== null && getMonthlyDetailedData(selectedYear).length > 0 && (
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
@@ -492,7 +463,6 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
             </button>
           </div>
           
-          {/* Detailed Monthly Cash Flow Table */}
           <div className="space-y-6">
             {getMonthlyDetailedData(selectedYear).map((month) => (
               <div key={month.month} className="border border-gray-200 rounded-lg overflow-hidden">
@@ -536,10 +506,12 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                           <span className="text-green-600">{formatCurrency(month.inflows.franchiseFees)}</span>
                         </div>
                       )}
-                      {month.inflows.franchiseRoyalties > 0 && (
+                      {(month.inflows.franchiseRoyalties > 0 || month.inflows.franchiseMarketing > 0) && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Franchise Royalties</span>
-                          <span className="text-green-600">{formatCurrency(month.inflows.franchiseRoyalties)}</span>
+                          <span className="text-gray-600">Franchise Royalties & Marketing</span>
+                          <span className="text-green-600">
+                            {formatCurrency((month.inflows.franchiseRoyalties || 0) + (month.inflows.franchiseMarketing || 0))}
+                          </span>
                         </div>
                       )}
                       {month.inflows.adoptionFees > 0 && (
@@ -554,9 +526,6 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                           <span className="text-green-600">{formatCurrency(month.inflows.kitSales)}</span>
                         </div>
                       )}
-                      {month.inflows.total === 0 && (
-                        <div className="text-sm text-gray-400 italic">No revenue this month</div>
-                      )}
                     </div>
                   </div>
                   
@@ -567,62 +536,55 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                       <span className="text-red-600">{formatCurrency(month.outflows.total)}</span>
                     </h5>
                     <div className="space-y-2">
-                      {/* Staff Costs Section */}
-                      {(month.outflows.executiveSalaries > 0 || month.outflows.teacherSalaries > 0 || 
-                        month.outflows.techSalaries > 0 || month.outflows.salesSalaries > 0) && (
+                      {/* Staff Costs */}
+                      {selectedYear > 0 && (month.outflows.corporateStaff > 0 || month.outflows.flagshipStaff > 0) && (
                         <div className="border-t border-gray-100 pt-2">
                           <div className="text-sm font-medium text-gray-700 mb-1">Staff Costs:</div>
-                          {month.outflows.executiveSalaries > 0 && (
+                          {month.outflows.corporateStaff > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Executives ({month.staffCount?.executives || 0})</span>
-                              <span className="text-red-600">{formatCurrency(month.outflows.executiveSalaries)}</span>
+                              <span className="text-gray-600">Corporate Team</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.corporateStaff)}</span>
                             </div>
                           )}
-                          {month.outflows.teacherSalaries > 0 && (
+                          {month.outflows.flagshipStaff > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Teachers ({month.staffCount?.teachers || 0})</span>
-                              <span className="text-red-600">{formatCurrency(month.outflows.teacherSalaries)}</span>
+                              <span className="text-gray-600">Flagship Staff</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.flagshipStaff)}</span>
                             </div>
                           )}
-                          {month.outflows.techSalaries > 0 && (
+                          {month.outflows.franchiseSupport > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Tech Team ({month.staffCount?.techTeam || 0})</span>
-                              <span className="text-red-600">{formatCurrency(month.outflows.techSalaries)}</span>
+                              <span className="text-gray-600">Franchise Support</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.franchiseSupport)}</span>
                             </div>
                           )}
-                          {month.outflows.salesSalaries > 0 && (
+                          {month.outflows.adoptionSupport > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Sales & Marketing ({month.staffCount?.salesMarketing || 0})</span>
-                              <span className="text-red-600">{formatCurrency(month.outflows.salesSalaries)}</span>
-                            </div>
-                          )}
-                          {month.outflows.benefitsCosts > 0 && (
-                            <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Benefits & Payroll Taxes</span>
-                              <span className="text-red-600">{formatCurrency(month.outflows.benefitsCosts)}</span>
+                              <span className="text-gray-600">Adoption Support</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.adoptionSupport)}</span>
                             </div>
                           )}
                         </div>
                       )}
                       
-                      {/* Pre-launch expenses for Year 0 */}
+                      {/* Pre-launch expenses */}
                       {selectedYear === 0 && (
                         <>
                           {month.outflows.techDevelopment > 0 && (
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Tech Platform Development</span>
+                              <span className="text-gray-600">Tech Development</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.techDevelopment)}</span>
                             </div>
                           )}
-                          {month.outflows.foundersalaries > 0 && (
+                          {month.outflows.founderSalaries > 0 && (
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-600">Founder Salaries</span>
-                              <span className="text-red-600">{formatCurrency(month.outflows.foundersalaries)}</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.founderSalaries)}</span>
                             </div>
                           )}
                           {month.outflows.legalSetup > 0 && (
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Legal & Company Setup</span>
+                              <span className="text-gray-600">Legal Setup</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.legalSetup)}</span>
                             </div>
                           )}
@@ -651,15 +613,15 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                       {selectedYear > 0 && (
                         <div className="border-t border-gray-100 pt-2">
                           <div className="text-sm font-medium text-gray-700 mb-1">Operating:</div>
-                          {month.outflows.techInfrastructure > 0 && (
+                          {month.outflows.technology > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Tech Infrastructure</span>
-                              <span className="text-red-600">{formatCurrency(month.outflows.techInfrastructure)}</span>
+                              <span className="text-gray-600">Technology (10%)</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.technology)}</span>
                             </div>
                           )}
                           {month.outflows.marketing > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Marketing & Growth</span>
+                              <span className="text-gray-600">Marketing (8%)</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.marketing)}</span>
                             </div>
                           )}
@@ -671,14 +633,14 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                           )}
                           {month.outflows.curriculum > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Curriculum Updates</span>
+                              <span className="text-gray-600">Curriculum</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.curriculum)}</span>
                             </div>
                           )}
                         </div>
                       )}
                       
-                      {/* Other Expenses */}
+                      {/* Taxes & CAPEX */}
                       {month.outflows.taxes > 0 && (
                         <div className="flex justify-between text-sm border-t border-gray-100 pt-2">
                           <span className="text-gray-600">Corporate Taxes</span>
@@ -687,7 +649,7 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                       )}
                       {month.outflows.capex > 0 && (
                         <div className="flex justify-between text-sm border-t border-gray-100 pt-2">
-                          <span className="text-gray-600 font-medium">CAPEX Investment</span>
+                          <span className="text-gray-600 font-medium">CAPEX</span>
                           <span className="text-blue-600 font-medium">{formatCurrency(month.outflows.capex)}</span>
                         </div>
                       )}
@@ -695,15 +657,20 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
                   </div>
                 </div>
                 
-                {/* Staff Summary for operational years */}
-                {selectedYear > 0 && month.staffCount && (
+                {/* Summary */}
+                {selectedYear > 0 && month.students && (
                   <div className="bg-blue-50 px-4 py-2 border-t border-blue-100">
-                    <div className="text-xs text-blue-700">
-                      <span className="font-medium">Total Staff: </span>
-                      {Object.values(month.staffCount).reduce((sum, count) => sum + count, 0)} employees
-                      ({month.staffCount.executives} exec, {month.staffCount.teachers} teachers, 
-                      {month.staffCount.techTeam} tech, {month.staffCount.salesMarketing} sales, 
-                      {month.staffCount.operations} ops, {month.staffCount.support} support)
+                    <div className="flex justify-between text-xs text-blue-700">
+                      <span>
+                        <span className="font-medium">Students:</span> {month.students.flagship} flagship, 
+                        {month.students.franchise} franchise, {month.students.adoption} adoption
+                      </span>
+                      <span>
+                        <span className="font-medium">Staff:</span> ~{month.headcount.corporate.executives + 
+                        month.headcount.corporate.tech + month.headcount.corporate.sales + 
+                        month.headcount.corporate.operations} corporate, 
+                        {month.headcount.flagship.teachers} teachers
+                      </span>
                     </div>
                   </div>
                 )}
@@ -712,38 +679,6 @@ const CashFlow = ({ financialData, parameters, currentScenario }) => {
           </div>
         </div>
       )}
-
-      {/* Insights */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <div className="flex items-start space-x-3">
-            <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-blue-900">Investment Analysis</h4>
-              <p className="text-sm text-blue-700 mt-1">
-                Initial investment of {formatCurrency(INITIAL_INVESTMENT)} reaches cash flow positive in 
-                {cashPositive ? ` Year ${cashPositive.year}` : ' the projection period'}.
-                Peak funding requirement is {formatCurrency(peakFunding)}.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-green-50 p-4 rounded-lg">
-          <div className="flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-green-900">Return Profile</h4>
-              <p className="text-sm text-green-700 mt-1">
-                By Year 10, cash balance of {formatCurrency(finalYearData.closingCash)} represents a 
-                {finalYearData.closingCash > INITIAL_INVESTMENT 
-                  ? ` ${((finalYearData.closingCash / INITIAL_INVESTMENT - 1) * 100).toFixed(0)}% cash return` 
-                  : ' strong value creation opportunity'}.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

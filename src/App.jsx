@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge, RotateCcw } from 'lucide-react';
+import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge, RotateCcw, Wallet } from 'lucide-react';
 import { FinancialModel, DEFAULT_PARAMETERS, SCENARIO_PRESETS } from './utils/financialModel';
 import Dashboard from './components/Dashboard';
 import ParameterControl from './components/ParameterControl';
@@ -7,6 +7,7 @@ import PresentationMode from './components/PresentationMode';
 import YearByYearEditor from './components/YearByYearEditor';
 import PublicPartnerships from './components/PublicPartnerships';
 import ConsolidatedView from './components/ConsolidatedView';
+import CashFlow from './components/CashFlow';
 
 // Public Sector Scenario Presets (copied from PublicPartnerships)
 const PUBLIC_SCENARIO_PRESETS = {
@@ -199,6 +200,18 @@ function App() {
       )
     },
     {
+      id: 'cashflow',
+      name: 'Cash Flow',
+      icon: <Wallet className="w-5 h-5" />,
+      component: (
+        <CashFlow 
+          financialData={financialData}
+          parameters={parameters}
+          currentScenario={currentScenario}
+        />
+      )
+    },
+    {
       id: 'parameters',
       name: 'Model Parameters',
       icon: <Settings className="w-5 h-5" />,
@@ -355,6 +368,14 @@ function App() {
             parameters={parameters} 
             onParameterChange={handleParameterChange}
             financialData={financialData}
+            currentScenario={currentScenario}
+          />
+        )}
+        
+        {activeTab === 'cashflow' && (
+          <CashFlow 
+            financialData={financialData}
+            parameters={parameters}
             currentScenario={currentScenario}
           />
         )}

@@ -16,10 +16,10 @@ export const DEFAULT_PARAMETERS = {
   kitCostPerStudent: 1200, // Educational materials
   tuitionIncreaseRate: 0.06, // 6% - above inflation
   
-  // Costs (more realistic)
+  // Costs
   technologyCapex: 3000000,
-  technologyOpexRate: 0.10, // Increased from 4% to 10%
-  marketingRate: 0.08, // Increased from 5% to 8%
+  technologyOpexRate: 0.04, // 4% of revenue
+  marketingRate: 0.05, // 5% of revenue
   
   // CAPEX Scenarios
   capexScenario: 'government', // government, built-to-suit, direct
@@ -55,8 +55,8 @@ export const SCENARIO_PRESETS = {
       tuitionIncreaseRate: 0.054, // 10% lower than 6%
       
       // Costs (higher)
-      technologyOpexRate: 0.11, // Higher costs (10% + 1%)
-      marketingRate: 0.09, // Higher marketing needed
+      technologyOpexRate: 0.05, // Higher costs (4% + 1%)
+      marketingRate: 0.06, // Higher marketing needed
       
       // Growth rates (slower)
       franchiseGrowthRate: 2, // Slower than 3
@@ -94,8 +94,8 @@ export const SCENARIO_PRESETS = {
       tuitionIncreaseRate: 0.08, // 8%
       
       // Costs (lower, more efficient)
-      technologyOpexRate: 0.09, // More efficient (10% - 1%)
-      marketingRate: 0.06, // Less marketing needed
+      technologyOpexRate: 0.03, // More efficient (4% - 1%)
+      marketingRate: 0.04, // Less marketing needed
       
       // Growth rates (faster)
       franchiseGrowthRate: 5, // Original faster growth
@@ -240,34 +240,9 @@ export class FinancialModel {
     const totalRevenue = flagshipRevenue + franchiseRoyaltyRevenue + franchiseMarketingRevenue + 
                         franchiseFeeRevenue + adoptionRevenue + kitRevenue;
     
-    // Cost calculations with more realistic expenses
+    // Cost calculations
     const technologyOpex = totalRevenue * this.params.technologyOpexRate;
     const marketingCosts = totalRevenue * this.params.marketingRate;
-    
-    // Customer Acquisition Costs (CAC)
-    const cacFlagship = flagshipStudents * 0.3 * 1000; // 30% new students × R$1,000 CAC
-    const cacFranchise = newFranchises * 75000; // R$75k per new franchise
-    const cacAdoption = adoptionStudents * 0.4 * 200; // 40% new × R$200 CAC
-    const totalCAC = cacFlagship + cacFranchise + cacAdoption;
-    
-    // Bad debt and payment processing
-    const badDebt = totalRevenue * 0.04; // 4% bad debt
-    const paymentProcessing = totalRevenue * 0.025; // 2.5% payment fees
-    
-    // R&D and Product Development
-    const rdCosts = totalRevenue * 0.15; // 15% for AI/tech development
-    const contentDevelopment = totalRevenue * 0.06; // 6% for curriculum
-    
-    // Sales infrastructure
-    const salesCommissions = (franchiseFeeRevenue + adoptionRevenue) * 0.08; // 8% on new sales
-    const salesInfrastructure = Math.max(1000000, totalRevenue * 0.02); // CRM, tools, etc.
-    
-    // Franchise support and risk provisions
-    const franchiseRiskProvision = franchiseCount * 50000; // R$50k per franchise for failures
-    
-    // Cybersecurity and compliance
-    const cybersecurity = Math.max(500000, totalRevenue * 0.025); // 2.5% for security
-    const auditProfessionalServices = Math.max(800000, totalRevenue * 0.01); // Audit, legal, consulting
     
     // Staff costs with annual increases
     // Base costs before annual increases
@@ -290,14 +265,9 @@ export class FinancialModel {
     const staffFranchiseSupport = baseStaffFranchiseSupport * staffIncreaseMultiplier;
     const staffAdoptionSupport = baseStaffAdoptionSupport * staffIncreaseMultiplier;
     
-    // Additional operational costs that were missing
-    const curriculum = Math.max(500000, totalStudents * 200); // Curriculum development and updates
-    const studentSupport = totalStudents * 300; // Student services, counseling, tech support
-    const parentEngagement = Math.max(200000, totalStudents * 100); // Parent communication systems
-    const qualityAssurance = Math.max(400000, totalRevenue * 0.015); // Quality control and assessment
-    const regulatoryCompliance = Math.max(600000, totalRevenue * 0.008); // Education regulations, audits
-    const dataManagement = Math.max(300000, totalStudents * 50); // Student data systems, privacy
-    const teacherTraining = Math.max(800000, (flagshipStudents + franchiseStudents) * 0.1 * 15000) * staffIncreaseMultiplier; // Ongoing teacher development with annual increases
+    // Operational costs
+    const curriculum = Math.max(500000, totalStudents * 50); // Curriculum materials
+    const teacherTraining = Math.max(200000, (flagshipStudents + franchiseStudents) * 250) * staffIncreaseMultiplier; // Teacher development
     
     // Facility costs
     const capexScenario = CAPEX_SCENARIOS[this.params.capexScenario];
@@ -313,11 +283,7 @@ export class FinancialModel {
     const totalCosts = technologyOpex + marketingCosts + staffCorporate + staffFlagship + 
                       staffFranchiseSupport + staffAdoptionSupport + facilityCosts + 
                       legalCompliance + insurance + travel + workingCapital + contingency +
-                      curriculum + studentSupport + parentEngagement + qualityAssurance + 
-                      regulatoryCompliance + dataManagement + teacherTraining +
-                      totalCAC + badDebt + paymentProcessing + rdCosts + contentDevelopment +
-                      salesCommissions + salesInfrastructure + franchiseRiskProvision +
-                      cybersecurity + auditProfessionalServices;
+                      curriculum + teacherTraining;
     
     const ebitda = totalRevenue - totalCosts;
     const ebitdaMargin = totalRevenue > 0 ? ebitda / totalRevenue : 0;
@@ -367,23 +333,7 @@ export class FinancialModel {
         workingCapital,
         contingency,
         curriculum,
-        studentSupport,
-        parentEngagement,
-        qualityAssurance,
-        regulatoryCompliance,
-        dataManagement,
         teacherTraining,
-        // New realistic costs
-        customerAcquisition: totalCAC,
-        badDebt,
-        paymentProcessing,
-        researchDevelopment: rdCosts,
-        contentDevelopment,
-        salesCommissions,
-        salesInfrastructure,
-        franchiseRiskProvision,
-        cybersecurity,
-        auditProfessionalServices,
         total: totalCosts
       },
       capex,

@@ -253,7 +253,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           franchise: (students.franchise || 0),
           adoption: students.adoption || 0,
           total: students.total || 0
-        }
+        },
+        
+        // Public students (for display)
+        publicStudents: year >= 2 && publicModelData && publicModelData[year-2] ? 
+          publicModelData[year-2].students : 0
       };
       
       // Calculate totals
@@ -534,7 +538,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                       )}
                       {month.inflows.flagshipTuition > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Flagship Tuition</span>
+                          <span className="text-gray-600">
+                            Flagship Tuition
+                            <span className="text-gray-400 ml-1">({month.students?.flagship || 0} students)</span>
+                          </span>
                           <span className="text-green-600">{formatCurrency(month.inflows.flagshipTuition)}</span>
                         </div>
                       )}
@@ -546,7 +553,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                       )}
                       {(month.inflows.franchiseRoyalties > 0 || month.inflows.franchiseMarketing > 0) && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Franchise Royalties & Marketing</span>
+                          <span className="text-gray-600">
+                            Franchise Royalties & Marketing
+                            <span className="text-gray-400 ml-1">({month.students?.franchise || 0} students)</span>
+                          </span>
                           <span className="text-green-600">
                             {formatCurrency((month.inflows.franchiseRoyalties || 0) + (month.inflows.franchiseMarketing || 0))}
                           </span>
@@ -554,13 +564,19 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                       )}
                       {month.inflows.adoptionFeesPrivate > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Adoption License Fees (Private)</span>
+                          <span className="text-gray-600">
+                            Adoption License Fees (Private)
+                            <span className="text-gray-400 ml-1">({month.students?.adoption || 0} students)</span>
+                          </span>
                           <span className="text-green-600">{formatCurrency(month.inflows.adoptionFeesPrivate)}</span>
                         </div>
                       )}
                       {month.inflows.adoptionFeesPublic > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Adoption License Fees (Public)</span>
+                          <span className="text-gray-600">
+                            Adoption License Fees (Public)
+                            <span className="text-gray-400 ml-1">({month.publicStudents || 0} students)</span>
+                          </span>
                           <span className="text-green-600">{formatCurrency(month.inflows.adoptionFeesPublic)}</span>
                         </div>
                       )}
@@ -586,25 +602,45 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                           <div className="text-sm font-medium text-gray-700 mb-1">Staff Costs:</div>
                           {month.outflows.corporateStaff > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Corporate Team</span>
+                              <span className="text-gray-600">
+                                Corporate Team
+                                <span className="text-gray-400 ml-1">
+                                  ({(month.headcount?.corporate?.executives || 0) + 
+                                    (month.headcount?.corporate?.tech || 0) + 
+                                    (month.headcount?.corporate?.sales || 0) + 
+                                    (month.headcount?.corporate?.operations || 0)} employees)
+                                </span>
+                              </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.corporateStaff)}</span>
                             </div>
                           )}
                           {month.outflows.flagshipStaff > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Flagship Staff</span>
+                              <span className="text-gray-600">
+                                Flagship Staff
+                                <span className="text-gray-400 ml-1">
+                                  ({month.headcount?.flagship?.teachers || 0} teachers, 
+                                   {month.headcount?.flagship?.support || 0} support)
+                                </span>
+                              </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.flagshipStaff)}</span>
                             </div>
                           )}
                           {month.outflows.franchiseSupport > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Franchise Support</span>
+                              <span className="text-gray-600">
+                                Franchise Support
+                                <span className="text-gray-400 ml-1">({month.headcount?.franchiseTeam || 0} employees)</span>
+                              </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.franchiseSupport)}</span>
                             </div>
                           )}
                           {month.outflows.adoptionSupport > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Adoption Support</span>
+                              <span className="text-gray-600">
+                                Adoption Support
+                                <span className="text-gray-400 ml-1">({month.headcount?.adoptionTeam || 0} employees)</span>
+                              </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.adoptionSupport)}</span>
                             </div>
                           )}

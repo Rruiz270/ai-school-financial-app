@@ -8,13 +8,13 @@ export const DEFAULT_PARAMETERS = {
   adoptionStudents: 150000, // Reduced from 250000
   
   // Pricing (more competitive and realistic)
-  flagshipTuition: 2100, // Further reduced for market reality
-  adoptionLicenseFee: 150, // More competitive for scale
+  flagshipTuition: 2300, // Balanced pricing for profitability
+  adoptionLicenseFee: 180, // Competitive for scale
   franchiseRoyaltyRate: 0.06, // 6% royalty
   marketingFeeRate: 0.005, // 0.5%
-  franchiseFee: 150000, // More accessible franchise fee
+  franchiseFee: 180000, // Accessible franchise fee
   kitCostPerStudent: 1200, // Educational materials
-  tuitionIncreaseRate: 0.045, // 4.5% - closer to inflation
+  tuitionIncreaseRate: 0.06, // 6% - above inflation
   
   // Costs (more realistic)
   technologyCapex: 3000000,

@@ -207,11 +207,26 @@ export class FinancialModel {
     const technologyOpex = totalRevenue * this.params.technologyOpexRate;
     const marketingCosts = totalRevenue * this.params.marketingRate;
     
-    // Staff costs (more realistic scaling with students and operations)
-    const staffCorporate = Math.max(3000000, totalStudents * 80); // Higher base + per student
-    const staffFlagship = flagshipStudents > 0 ? Math.max(2500000, flagshipStudents * 2200) : 0; // Higher teacher/student costs
-    const staffFranchiseSupport = franchiseCount * 300000; // Higher franchise support costs
-    const staffAdoptionSupport = adoptionStudents * 150; // Higher adoption support costs
+    // Staff costs with annual increases
+    // Base costs before annual increases
+    const baseStaffCorporate = Math.max(3000000, totalStudents * 80);
+    const baseStaffFlagship = flagshipStudents > 0 ? Math.max(2500000, flagshipStudents * 2200) : 0;
+    const baseStaffFranchiseSupport = franchiseCount * 300000;
+    const baseStaffAdoptionSupport = adoptionStudents * 150;
+    
+    // Apply annual increases: 20% in first year, then 10% year-over-year
+    let staffIncreaseMultiplier = 1;
+    if (year === 1) {
+      staffIncreaseMultiplier = 1.20; // 20% increase in first year
+    } else if (year > 1) {
+      // Compound 10% increases: 1.20 * (1.10)^(year-1)
+      staffIncreaseMultiplier = 1.20 * Math.pow(1.10, year - 1);
+    }
+    
+    const staffCorporate = baseStaffCorporate * staffIncreaseMultiplier;
+    const staffFlagship = baseStaffFlagship * staffIncreaseMultiplier;
+    const staffFranchiseSupport = baseStaffFranchiseSupport * staffIncreaseMultiplier;
+    const staffAdoptionSupport = baseStaffAdoptionSupport * staffIncreaseMultiplier;
     
     // Additional operational costs that were missing
     const curriculum = Math.max(500000, totalStudents * 200); // Curriculum development and updates
@@ -220,7 +235,7 @@ export class FinancialModel {
     const qualityAssurance = Math.max(400000, totalRevenue * 0.015); // Quality control and assessment
     const regulatoryCompliance = Math.max(600000, totalRevenue * 0.008); // Education regulations, audits
     const dataManagement = Math.max(300000, totalStudents * 50); // Student data systems, privacy
-    const teacherTraining = Math.max(800000, (flagshipStudents + franchiseStudents) * 0.1 * 15000); // Ongoing teacher development
+    const teacherTraining = Math.max(800000, (flagshipStudents + franchiseStudents) * 0.1 * 15000) * staffIncreaseMultiplier; // Ongoing teacher development with annual increases
     
     // Facility costs
     const capexScenario = CAPEX_SCENARIOS[this.params.capexScenario];

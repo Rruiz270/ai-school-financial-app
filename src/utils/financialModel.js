@@ -27,6 +27,7 @@ export const DEFAULT_PARAMETERS = {
   // Growth rates (more conservative)
   franchiseGrowthRate: 2.5, // Even more conservative - 2-3 new franchises per year
   adoptionGrowthRate: 0.3, // 30% growth - more sustainable
+  franchiseStartingStudents: 300, // Franchises start with 300 students
   
   // Year-by-year overrides (optional)
   yearlyOverrides: {}, // Format: { year: { parameter: value } }
@@ -60,6 +61,7 @@ export const SCENARIO_PRESETS = {
       // Growth rates (slower)
       franchiseGrowthRate: 2, // Slower than 3
       adoptionGrowthRate: 0.3, // Slower than 40%
+      franchiseStartingStudents: 300,
       
       capexScenario: 'government',
       yearlyOverrides: {}
@@ -98,6 +100,7 @@ export const SCENARIO_PRESETS = {
       // Growth rates (faster)
       franchiseGrowthRate: 5, // Original faster growth
       adoptionGrowthRate: 0.5, // 50% growth
+      franchiseStartingStudents: 300,
       
       capexScenario: 'government',
       yearlyOverrides: {}
@@ -151,8 +154,32 @@ export class FinancialModel {
     // Franchises only start after Year 2 (need proven model first)
     const franchiseCount = yearOverrides.franchiseCount !== undefined ? yearOverrides.franchiseCount :
       (year <= 2 ? 0 : Math.min((year - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount));
-    const studentsPerFranchise = yearOverrides.studentsPerFranchise !== undefined ? yearOverrides.studentsPerFranchise : this.params.studentsPerFranchise;
-    const franchiseStudents = franchiseCount * studentsPerFranchise;
+    
+    // Calculate franchise students with ramp-up period
+    let franchiseStudents = 0;
+    if (franchiseCount > 0 && year > 2) {
+      // Each franchise starts with 300 students and ramps up over 4 years
+      const targetPerFranchise = yearOverrides.studentsPerFranchise || this.params.studentsPerFranchise;
+      
+      // Simple ramp-up: 25% Year 1, 50% Year 2, 75% Year 3, 100% Year 4+
+      const rampUpPercentages = [0.25, 0.50, 0.75, 1.0];
+      
+      // Calculate students for each franchise cohort
+      for (let cohortStartYear = 3; cohortStartYear <= year; cohortStartYear++) {
+        // How many franchises started this year?
+        const previousCount = cohortStartYear === 3 ? 0 : 
+          Math.min((cohortStartYear - 3) * this.params.franchiseGrowthRate, this.params.franchiseCount);
+        const currentCount = Math.min((cohortStartYear - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount);
+        const newFranchisesThisYear = currentCount - previousCount;
+        
+        if (newFranchisesThisYear > 0) {
+          const franchiseAge = year - cohortStartYear; // 0-based age
+          const rampUpFactor = franchiseAge >= 3 ? 1.0 : rampUpPercentages[franchiseAge];
+          const studentsInThisCohort = newFranchisesThisYear * targetPerFranchise * rampUpFactor;
+          franchiseStudents += studentsInThisCohort;
+        }
+      }
+    }
     
     // Adoption students start small in Year 2, grow gradually
     let adoptionStudents;

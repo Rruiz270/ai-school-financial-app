@@ -160,9 +160,7 @@ export class FinancialModel {
     if (franchiseCount > 0 && year > 2) {
       // Each franchise starts with 300 students and ramps up over 4 years
       const targetPerFranchise = yearOverrides.studentsPerFranchise || this.params.studentsPerFranchise;
-      
-      // Simple ramp-up: 25% Year 1, 50% Year 2, 75% Year 3, 100% Year 4+
-      const rampUpPercentages = [0.25, 0.50, 0.75, 1.0];
+      const startingStudents = this.params.franchiseStartingStudents || 300;
       
       // Calculate students for each franchise cohort
       for (let cohortStartYear = 3; cohortStartYear <= year; cohortStartYear++) {
@@ -174,8 +172,20 @@ export class FinancialModel {
         
         if (newFranchisesThisYear > 0) {
           const franchiseAge = year - cohortStartYear; // 0-based age
-          const rampUpFactor = franchiseAge >= 3 ? 1.0 : rampUpPercentages[franchiseAge];
-          const studentsInThisCohort = newFranchisesThisYear * targetPerFranchise * rampUpFactor;
+          
+          // Ramp-up: Year 1 = 300, Year 2 = 50% between start and target, Year 3 = 75%, Year 4+ = 100%
+          let studentsPerFranchise;
+          if (franchiseAge === 0) {
+            studentsPerFranchise = startingStudents; // 300 students in first year
+          } else if (franchiseAge === 1) {
+            studentsPerFranchise = startingStudents + (targetPerFranchise - startingStudents) * 0.33; // ~33% progress
+          } else if (franchiseAge === 2) {
+            studentsPerFranchise = startingStudents + (targetPerFranchise - startingStudents) * 0.67; // ~67% progress
+          } else {
+            studentsPerFranchise = targetPerFranchise; // Full capacity from year 4+
+          }
+          
+          const studentsInThisCohort = newFranchisesThisYear * studentsPerFranchise;
           franchiseStudents += studentsInThisCohort;
         }
       }

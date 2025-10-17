@@ -7,14 +7,14 @@ export const DEFAULT_PARAMETERS = {
   studentsPerFranchise: 1200, // Reduced from 1500
   adoptionStudents: 150000, // Reduced from 250000
   
-  // Pricing (more competitive)
-  flagshipTuition: 2300, // Reduced from 2500
-  adoptionLicenseFee: 180, // Reduced from 200
-  franchiseRoyaltyRate: 0.06, // Reduced from 7% to 6%
+  // Pricing (more competitive and realistic)
+  flagshipTuition: 2100, // Further reduced for market reality
+  adoptionLicenseFee: 150, // More competitive for scale
+  franchiseRoyaltyRate: 0.06, // 6% royalty
   marketingFeeRate: 0.005, // 0.5%
-  franchiseFee: 180000, // Reduced from 200000
-  kitCostPerStudent: 1200, // Reduced from 1500
-  tuitionIncreaseRate: 0.06, // Reduced from 8% to 6%
+  franchiseFee: 150000, // More accessible franchise fee
+  kitCostPerStudent: 1200, // Educational materials
+  tuitionIncreaseRate: 0.045, // 4.5% - closer to inflation
   
   // Costs (more realistic)
   technologyCapex: 3000000,
@@ -25,8 +25,8 @@ export const DEFAULT_PARAMETERS = {
   capexScenario: 'government', // government, built-to-suit, direct
   
   // Growth rates (more conservative)
-  franchiseGrowthRate: 3, // Reduced from 5 to 3 new franchises per year
-  adoptionGrowthRate: 0.4, // Reduced from 50% to 40% growth annually
+  franchiseGrowthRate: 2.5, // Even more conservative - 2-3 new franchises per year
+  adoptionGrowthRate: 0.3, // 30% growth - more sustainable
   
   // Year-by-year overrides (optional)
   yearlyOverrides: {}, // Format: { year: { parameter: value } }
@@ -207,6 +207,31 @@ export class FinancialModel {
     const technologyOpex = totalRevenue * this.params.technologyOpexRate;
     const marketingCosts = totalRevenue * this.params.marketingRate;
     
+    // Customer Acquisition Costs (CAC)
+    const cacFlagship = flagshipStudents * 0.3 * 1000; // 30% new students × R$1,000 CAC
+    const cacFranchise = newFranchises * 75000; // R$75k per new franchise
+    const cacAdoption = adoptionStudents * 0.4 * 200; // 40% new × R$200 CAC
+    const totalCAC = cacFlagship + cacFranchise + cacAdoption;
+    
+    // Bad debt and payment processing
+    const badDebt = totalRevenue * 0.04; // 4% bad debt
+    const paymentProcessing = totalRevenue * 0.025; // 2.5% payment fees
+    
+    // R&D and Product Development
+    const rdCosts = totalRevenue * 0.15; // 15% for AI/tech development
+    const contentDevelopment = totalRevenue * 0.06; // 6% for curriculum
+    
+    // Sales infrastructure
+    const salesCommissions = (franchiseFeeRevenue + adoptionRevenue) * 0.08; // 8% on new sales
+    const salesInfrastructure = Math.max(1000000, totalRevenue * 0.02); // CRM, tools, etc.
+    
+    // Franchise support and risk provisions
+    const franchiseRiskProvision = franchiseCount * 50000; // R$50k per franchise for failures
+    
+    // Cybersecurity and compliance
+    const cybersecurity = Math.max(500000, totalRevenue * 0.025); // 2.5% for security
+    const auditProfessionalServices = Math.max(800000, totalRevenue * 0.01); // Audit, legal, consulting
+    
     // Staff costs with annual increases
     // Base costs before annual increases
     const baseStaffCorporate = Math.max(3000000, totalStudents * 80);
@@ -252,7 +277,10 @@ export class FinancialModel {
                       staffFranchiseSupport + staffAdoptionSupport + facilityCosts + 
                       legalCompliance + insurance + travel + workingCapital + contingency +
                       curriculum + studentSupport + parentEngagement + qualityAssurance + 
-                      regulatoryCompliance + dataManagement + teacherTraining;
+                      regulatoryCompliance + dataManagement + teacherTraining +
+                      totalCAC + badDebt + paymentProcessing + rdCosts + contentDevelopment +
+                      salesCommissions + salesInfrastructure + franchiseRiskProvision +
+                      cybersecurity + auditProfessionalServices;
     
     const ebitda = totalRevenue - totalCosts;
     const ebitdaMargin = totalRevenue > 0 ? ebitda / totalRevenue : 0;
@@ -308,6 +336,17 @@ export class FinancialModel {
         regulatoryCompliance,
         dataManagement,
         teacherTraining,
+        // New realistic costs
+        customerAcquisition: totalCAC,
+        badDebt,
+        paymentProcessing,
+        researchDevelopment: rdCosts,
+        contentDevelopment,
+        salesCommissions,
+        salesInfrastructure,
+        franchiseRiskProvision,
+        cybersecurity,
+        auditProfessionalServices,
         total: totalCosts
       },
       capex,

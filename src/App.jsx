@@ -21,7 +21,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 25,
     year10Municipalities: 120,
     revenuePerStudentMonth: 250,
-    marginsPublic: 0.75
+    marginsPublic: 0.25
   },
   realistic: {
     name: 'Realistic',
@@ -33,7 +33,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 21,
     year10Municipalities: 102,
     revenuePerStudentMonth: 212,
-    marginsPublic: 0.64
+    marginsPublic: 0.20
   },
   pessimistic: {
     name: 'Pessimistic',
@@ -45,7 +45,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 17,
     year10Municipalities: 84,
     revenuePerStudentMonth: 175,
-    marginsPublic: 0.53
+    marginsPublic: 0.15
   }
 };
 

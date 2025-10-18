@@ -265,9 +265,20 @@ export class FinancialModel {
     const staffFranchiseSupport = baseStaffFranchiseSupport * staffIncreaseMultiplier;
     const staffAdoptionSupport = baseStaffAdoptionSupport * staffIncreaseMultiplier;
     
-    // Operational costs
+    // Educational & Operational costs
     const curriculum = Math.max(500000, totalStudents * 50); // Curriculum materials
     const teacherTraining = Math.max(200000, (flagshipStudents + franchiseStudents) * 250) * staffIncreaseMultiplier; // Teacher development
+    const studentSupport = totalStudents * 200; // Student services, counseling, tech support
+    const qualityAssurance = Math.max(300000, totalRevenue * 0.01); // Quality control and assessment
+    const regulatoryCompliance = Math.max(400000, totalRevenue * 0.005); // Education regulations, audits
+    const dataManagement = Math.max(200000, totalStudents * 40); // Student data systems, privacy
+    const parentEngagement = Math.max(150000, totalStudents * 60); // Parent communication systems
+    
+    // Business costs
+    const badDebt = totalRevenue * 0.02; // 2% bad debt (realistic for education)
+    const paymentProcessing = totalRevenue * 0.025; // 2.5% payment fees
+    const platformRD = totalRevenue * 0.06; // 6% for platform improvements (not excessive)
+    const contentDevelopment = totalRevenue * 0.04; // 4% for ongoing curriculum updates
     
     // Facility costs
     const capexScenario = CAPEX_SCENARIOS[this.params.capexScenario];
@@ -283,7 +294,9 @@ export class FinancialModel {
     const totalCosts = technologyOpex + marketingCosts + staffCorporate + staffFlagship + 
                       staffFranchiseSupport + staffAdoptionSupport + facilityCosts + 
                       legalCompliance + insurance + travel + workingCapital + contingency +
-                      curriculum + teacherTraining;
+                      curriculum + teacherTraining + studentSupport + qualityAssurance + 
+                      regulatoryCompliance + dataManagement + parentEngagement + badDebt + 
+                      paymentProcessing + platformRD + contentDevelopment;
     
     const ebitda = totalRevenue - totalCosts;
     const ebitdaMargin = totalRevenue > 0 ? ebitda / totalRevenue : 0;
@@ -334,6 +347,15 @@ export class FinancialModel {
         contingency,
         curriculum,
         teacherTraining,
+        studentSupport,
+        qualityAssurance,
+        regulatoryCompliance,
+        dataManagement,
+        parentEngagement,
+        badDebt,
+        paymentProcessing,
+        platformRD,
+        contentDevelopment,
         total: totalCosts
       },
       capex,

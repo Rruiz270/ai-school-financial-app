@@ -13,7 +13,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 25,
     year10Municipalities: 120,
     revenuePerStudentMonth: 250,
-    marginsPublic: 0.25
+    marginsPublic: 0.40
   },
   realistic: {
     name: 'Realistic',
@@ -25,7 +25,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 21, // -15%
     year10Municipalities: 102, // -15%
     revenuePerStudentMonth: 212, // -15%
-    marginsPublic: 0.20 // Realistic for government partnerships
+    marginsPublic: 0.35 // Higher than private due to lower operational costs
   },
   pessimistic: {
     name: 'Pessimistic',
@@ -37,7 +37,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     year5Municipalities: 17, // -30%
     year10Municipalities: 84, // -30%
     revenuePerStudentMonth: 175, // -30%
-    marginsPublic: 0.15 // Challenging government partnerships with low margins
+    marginsPublic: 0.30 // Still higher than private despite challenges
   }
 };
 

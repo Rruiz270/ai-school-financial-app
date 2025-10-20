@@ -5,6 +5,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 const CashFlow = ({ financialData, parameters, currentScenario, publicModelData, currentPublicScenario }) => {
   const [selectedYear, setSelectedYear] = useState(null);
   const [showMonthly, setShowMonthly] = useState(false);
+  const [showEmployeeBreakdown, setShowEmployeeBreakdown] = useState(false);
   
   const INITIAL_INVESTMENT = 30000000; // R$30M initial cash
   const PRE_LAUNCH_TECH_INVESTMENT = 3000000; // R$3M tech investment before Year 1
@@ -79,7 +80,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       // Add public sector costs if applicable
       const publicCosts = year >= 2 && publicModelData && publicModelData[year-2] ? 
         publicModelData[year-2].costs : 0;
-      const operatingExpenses = yearProjection.costs.total + publicCosts;
+      // Add franchising team costs
+      const franchisingTeamCosts = (yearProjection.franchiseCount || 0) * 15000 * 12; // R$15k per franchise per month
+      const operatingExpenses = yearProjection.costs.total + publicCosts + franchisingTeamCosts;
       const capex = yearProjection.capex || 0;
       const taxes = yearProjection.taxes || 0;
       
@@ -197,6 +200,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           corporateStaff: (costs.staffCorporate || 0) / 12,
           flagshipStaff: (costs.staffFlagship || 0) / 12,
           franchiseSupport: (costs.staffFranchiseSupport || 0) / 12,
+          franchiseTeam: (yearProjection.franchiseCount || 0) * 15000, // R$15k per franchise per month for franchising team
           adoptionSupport: (costs.staffAdoptionSupport || 0) / 12,
           
           // Operating expenses
@@ -309,19 +313,32 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
               {currentScenario} Scenario
             </span>
           </div>
-          <button
-            onClick={() => {
-              setShowMonthly(false);
-              setSelectedYear(null);
-            }}
-            className={`px-4 py-2 text-sm font-medium rounded-lg ${
-              !showMonthly 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Yearly View
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowEmployeeBreakdown(!showEmployeeBreakdown)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 ${
+                showEmployeeBreakdown 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              Employee Breakdown
+            </button>
+            <button
+              onClick={() => {
+                setShowMonthly(false);
+                setSelectedYear(null);
+              }}
+              className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                !showMonthly 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Yearly View
+            </button>
+          </div>
         </div>
         
         {/* Key Metrics */}
@@ -351,6 +368,111 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
             <div className="text-xs text-orange-500 mt-1">Maximum capital deployed</div>
           </div>
         </div>
+        
+        {/* Employee Breakdown */}
+        {showEmployeeBreakdown && (
+          <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Monthly Employee Costs by Year
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-green-200">
+                <thead className="bg-green-100">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Year
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Corporate Staff
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Flagship Staff
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Franchise Support
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Franchising Team
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Adoption Support
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Total Monthly
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-green-700 uppercase tracking-wider">
+                      Total Employees
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-green-200">
+                  {cashFlowData.slice(1).map((yearData) => {
+                    const yearProjection = financialData.projection[yearData.year];
+                    const costs = yearProjection?.costs || {};
+                    const monthlyCorporate = (costs.staffCorporate || 0) / 12;
+                    const monthlyFlagship = (costs.staffFlagship || 0) / 12;
+                    const monthlyFranchiseSupport = (costs.staffFranchiseSupport || 0) / 12;
+                    const monthlyFranchisingTeam = (yearProjection?.franchiseCount || 0) * 15000;
+                    const monthlyAdoption = (costs.staffAdoptionSupport || 0) / 12;
+                    const totalMonthly = monthlyCorporate + monthlyFlagship + monthlyFranchiseSupport + monthlyFranchisingTeam + monthlyAdoption;
+                    
+                    // Calculate employee counts
+                    const corporateCount = Math.min(5, 3 + Math.floor(yearData.year / 3)) + 
+                                         Math.min(20, 5 + yearData.year * 1.5) + 
+                                         Math.min(15, 3 + (yearProjection?.franchiseCount || 0) * 0.2) + 
+                                         Math.min(10, 3 + yearData.year);
+                    const flagshipCount = yearProjection?.students?.flagship ? 
+                      Math.ceil(yearProjection.students.flagship / (currentScenario === 'pessimistic' ? 30 : currentScenario === 'optimistic' ? 20 : 25)) +
+                      Math.ceil(yearProjection.students.flagship / 200) : 0;
+                    const franchiseCount = yearProjection?.franchiseCount ? Math.max(2, Math.ceil(yearProjection.franchiseCount / 10)) : 0;
+                    const franchisingTeamCount = yearProjection?.franchiseCount ? Math.ceil(yearProjection.franchiseCount / 5) : 0;
+                    const adoptionCount = yearProjection?.students?.adoption ? Math.max(3, Math.ceil(yearProjection.students.adoption / 25000)) : 0;
+                    const totalEmployees = corporateCount + flagshipCount + franchiseCount + franchisingTeamCount + adoptionCount;
+                    
+                    return (
+                      <tr key={yearData.year} className="hover:bg-green-50">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          Year {yearData.year}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                          <div className="text-green-600 font-medium">{formatCurrency(monthlyCorporate)}</div>
+                          <div className="text-xs text-gray-500">{Math.round(corporateCount)} employees</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                          <div className="text-green-600 font-medium">{formatCurrency(monthlyFlagship)}</div>
+                          <div className="text-xs text-gray-500">{Math.round(flagshipCount)} employees</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                          <div className="text-green-600 font-medium">{formatCurrency(monthlyFranchiseSupport)}</div>
+                          <div className="text-xs text-gray-500">{Math.round(franchiseCount)} employees</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                          <div className="text-green-600 font-medium">{formatCurrency(monthlyFranchisingTeam)}</div>
+                          <div className="text-xs text-gray-500">{Math.round(franchisingTeamCount)} employees</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                          <div className="text-green-600 font-medium">{formatCurrency(monthlyAdoption)}</div>
+                          <div className="text-xs text-gray-500">{Math.round(adoptionCount)} employees</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                          <div className="text-green-700 font-bold text-base">{formatCurrency(totalMonthly)}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                          <div className="text-gray-700 font-bold">{Math.round(totalEmployees)}</div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 text-sm text-green-700">
+              <strong>Note:</strong> Franchising Team costs are calculated at R$15,000 per franchise per month, 
+              covering dedicated franchise development, support, and quality assurance staff.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Cash Flow Chart */}
@@ -633,6 +755,15 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                                 <span className="text-gray-400 ml-1">({month.headcount?.franchiseTeam || 0} employees)</span>
                               </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.franchiseSupport)}</span>
+                            </div>
+                          )}
+                          {month.outflows.franchiseTeam > 0 && (
+                            <div className="flex justify-between text-sm ml-2">
+                              <span className="text-gray-600">
+                                Franchising Team
+                                <span className="text-gray-400 ml-1">(Development & QA)</span>
+                              </span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.franchiseTeam)}</span>
                             </div>
                           )}
                           {month.outflows.adoptionSupport > 0 && (

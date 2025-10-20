@@ -1,14 +1,94 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle, ChevronDown, ChevronRight, Wallet, Users, Building, GraduationCap } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle, ChevronDown, ChevronRight, Wallet, Users, Building, GraduationCap, Info } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const CashFlow = ({ financialData, parameters, currentScenario, publicModelData, currentPublicScenario }) => {
   const [selectedYear, setSelectedYear] = useState(null);
   const [showMonthly, setShowMonthly] = useState(false);
   const [showEmployeeBreakdown, setShowEmployeeBreakdown] = useState(false);
+  const [showExpenseTooltip, setShowExpenseTooltip] = useState(null);
   
   const INITIAL_INVESTMENT = 30000000; // R$30M initial cash
   const PRE_LAUNCH_TECH_INVESTMENT = 3000000; // R$3M tech investment before Year 1
+  
+  // Expense category definitions matching presentation
+  const expenseCategories = {
+    technology: {
+      title: "Technology Expenses",
+      percentage: "10% of total revenue",
+      description: "Cloud infrastructure, software licenses, API costs, system maintenance"
+    },
+    marketing: {
+      title: "Marketing & Growth", 
+      percentage: "8% of total revenue",
+      description: "Customer acquisition, brand building, digital marketing, advertising, events"
+    },
+    corporateStaff: {
+      title: "Corporate Staff",
+      formula: "Max(R$3M OR R$80/student)",
+      description: "Executives, tech team, sales, operations staff"
+    },
+    flagshipStaff: {
+      title: "Flagship Staff",
+      formula: "Max(R$2.5M OR R$2,200/student)", 
+      description: "Teachers, support staff, campus operations"
+    },
+    franchiseSupport: {
+      title: "Franchise Support",
+      formula: "R$300K per franchise",
+      description: "Franchise operations and support team"
+    },
+    franchiseTeam: {
+      title: "Franchising Team",
+      formula: "R$15K per franchise per month",
+      description: "Dedicated franchise development, support, and quality assurance staff"
+    },
+    adoptionSupport: {
+      title: "Adoption Support",
+      formula: "R$150 per student",
+      description: "Support for adoption licensing program"
+    },
+    facilities: {
+      title: "Facilities & Infrastructure",
+      options: "R$800K (Gov) / R$3.2M (Lease) / R$1.2M (Direct)",
+      description: "Building costs, utilities, maintenance"
+    },
+    curriculum: {
+      title: "Curriculum Development",
+      formula: "Max(R$500K OR R$200/student)",
+      description: "Educational content development and updates"
+    },
+    teacherTraining: {
+      title: "Teacher Training",
+      formula: "Max(R$800K OR 10% x R$15K)",
+      description: "Professional development and AI system training"
+    },
+    qualityAssurance: {
+      title: "Quality & Compliance",
+      formula: "Max(R$400K OR 1.5% revenue)",
+      description: "Quality assurance, regulatory compliance, data privacy"
+    },
+    insurance: {
+      title: "Insurance",
+      percentage: "0.2% of revenue",
+      description: "Business insurance, liability coverage"
+    },
+    travel: {
+      title: "Travel & Business",
+      formula: "Max(R$300K OR R$50K x locations)",
+      description: "Business travel, client meetings, training"
+    },
+    workingCapital: {
+      title: "Working Capital",
+      percentage: "1% of revenue", 
+      description: "Cash flow management and operational buffer"
+    },
+    contingency: {
+      title: "Contingency",
+      percentage: "0.5% of revenue",
+      description: "Unexpected expenses and risk mitigation"
+    }
+  };
   
   const formatCurrency = (value) => {
     const absValue = Math.abs(value);
@@ -616,15 +696,28 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
             <h3 className="text-lg font-semibold text-gray-900">
               Year {selectedYear} Monthly Breakdown
             </h3>
-            <button
-              onClick={() => {
-                setShowMonthly(false);
-                setSelectedYear(null);
-              }}
-              className="text-sm text-blue-600 hover:text-blue-900"
-            >
-              ← Back to Yearly View
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowEmployeeBreakdown(!showEmployeeBreakdown)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 ${
+                  showEmployeeBreakdown 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Employee Details
+              </button>
+              <button
+                onClick={() => {
+                  setShowMonthly(false);
+                  setSelectedYear(null);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-900"
+              >
+                ← Back to Yearly View
+              </button>
+            </div>
           </div>
           
           <div className="space-y-6">
@@ -723,9 +816,16 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                         <div className="border-t border-gray-100 pt-2">
                           <div className="text-sm font-medium text-gray-700 mb-1">Staff Costs:</div>
                           {month.outflows.corporateStaff > 0 && (
-                            <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">
+                            <div className="flex justify-between text-sm ml-2 relative">
+                              <span className="text-gray-600 flex items-center gap-1">
                                 Corporate Team
+                                <button
+                                  onMouseEnter={() => setShowExpenseTooltip('corporateStaff')}
+                                  onMouseLeave={() => setShowExpenseTooltip(null)}
+                                  className="text-blue-500 hover:text-blue-700"
+                                >
+                                  <Info className="w-3 h-3" />
+                                </button>
                                 <span className="text-gray-400 ml-1">
                                   ({(month.headcount?.corporate?.executives || 0) + 
                                     (month.headcount?.corporate?.tech || 0) + 
@@ -734,18 +834,39 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                                 </span>
                               </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.corporateStaff)}</span>
+                              {showExpenseTooltip === 'corporateStaff' && (
+                                <div className="absolute left-0 top-6 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-10 w-64">
+                                  <div className="font-semibold text-gray-900">{expenseCategories.corporateStaff.title}</div>
+                                  <div className="text-sm text-blue-600 mt-1">{expenseCategories.corporateStaff.formula}</div>
+                                  <div className="text-xs text-gray-600 mt-1">{expenseCategories.corporateStaff.description}</div>
+                                </div>
+                              )}
                             </div>
                           )}
                           {month.outflows.flagshipStaff > 0 && (
-                            <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">
+                            <div className="flex justify-between text-sm ml-2 relative">
+                              <span className="text-gray-600 flex items-center gap-1">
                                 Flagship Staff
+                                <button
+                                  onMouseEnter={() => setShowExpenseTooltip('flagshipStaff')}
+                                  onMouseLeave={() => setShowExpenseTooltip(null)}
+                                  className="text-blue-500 hover:text-blue-700"
+                                >
+                                  <Info className="w-3 h-3" />
+                                </button>
                                 <span className="text-gray-400 ml-1">
                                   ({month.headcount?.flagship?.teachers || 0} teachers, 
                                    {month.headcount?.flagship?.support || 0} support)
                                 </span>
                               </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.flagshipStaff)}</span>
+                              {showExpenseTooltip === 'flagshipStaff' && (
+                                <div className="absolute left-0 top-6 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-10 w-64">
+                                  <div className="font-semibold text-gray-900">{expenseCategories.flagshipStaff.title}</div>
+                                  <div className="text-sm text-blue-600 mt-1">{expenseCategories.flagshipStaff.formula}</div>
+                                  <div className="text-xs text-gray-600 mt-1">{expenseCategories.flagshipStaff.description}</div>
+                                </div>
+                              )}
                             </div>
                           )}
                           {month.outflows.franchiseSupport > 0 && (
@@ -829,29 +950,97 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                       {/* Operating Expenses */}
                       {selectedYear > 0 && (
                         <div className="border-t border-gray-100 pt-2">
-                          <div className="text-sm font-medium text-gray-700 mb-1">Operating:</div>
+                          <div className="text-sm font-medium text-gray-700 mb-1">Operating Expenses:</div>
                           {month.outflows.technology > 0 && (
-                            <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Technology (10%)</span>
+                            <div className="flex justify-between text-sm ml-2 relative">
+                              <span className="text-gray-600 flex items-center gap-1">
+                                Technology OPEX (10%)
+                                <button
+                                  onMouseEnter={() => setShowExpenseTooltip('technology')}
+                                  onMouseLeave={() => setShowExpenseTooltip(null)}
+                                  className="text-blue-500 hover:text-blue-700"
+                                >
+                                  <Info className="w-3 h-3" />
+                                </button>
+                              </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.technology)}</span>
+                              {showExpenseTooltip === 'technology' && (
+                                <div className="absolute left-0 top-6 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-10 w-64">
+                                  <div className="font-semibold text-gray-900">{expenseCategories.technology.title}</div>
+                                  <div className="text-sm text-blue-600 mt-1">{expenseCategories.technology.percentage}</div>
+                                  <div className="text-xs text-gray-600 mt-1">{expenseCategories.technology.description}</div>
+                                </div>
+                              )}
                             </div>
                           )}
                           {month.outflows.marketing > 0 && (
-                            <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Marketing (8%)</span>
+                            <div className="flex justify-between text-sm ml-2 relative">
+                              <span className="text-gray-600 flex items-center gap-1">
+                                Marketing & Growth (8%)
+                                <button
+                                  onMouseEnter={() => setShowExpenseTooltip('marketing')}
+                                  onMouseLeave={() => setShowExpenseTooltip(null)}
+                                  className="text-blue-500 hover:text-blue-700"
+                                >
+                                  <Info className="w-3 h-3" />
+                                </button>
+                              </span>
                               <span className="text-red-600">{formatCurrency(month.outflows.marketing)}</span>
+                              {showExpenseTooltip === 'marketing' && (
+                                <div className="absolute left-0 top-6 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-10 w-64">
+                                  <div className="font-semibold text-gray-900">{expenseCategories.marketing.title}</div>
+                                  <div className="text-sm text-blue-600 mt-1">{expenseCategories.marketing.percentage}</div>
+                                  <div className="text-xs text-gray-600 mt-1">{expenseCategories.marketing.description}</div>
+                                </div>
+                              )}
                             </div>
                           )}
                           {month.outflows.facilities > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Facilities</span>
+                              <span className="text-gray-600">Facilities & Infrastructure</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.facilities)}</span>
                             </div>
                           )}
                           {month.outflows.curriculum > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Curriculum</span>
+                              <span className="text-gray-600">Curriculum Development</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.curriculum)}</span>
+                            </div>
+                          )}
+                          {month.outflows.teacherTraining > 0 && (
+                            <div className="flex justify-between text-sm ml-2">
+                              <span className="text-gray-600">Teacher Training</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.teacherTraining)}</span>
+                            </div>
+                          )}
+                          {month.outflows.qualityAssurance > 0 && (
+                            <div className="flex justify-between text-sm ml-2">
+                              <span className="text-gray-600">Quality & Compliance</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.qualityAssurance)}</span>
+                            </div>
+                          )}
+                          {month.outflows.insurance > 0 && (
+                            <div className="flex justify-between text-sm ml-2">
+                              <span className="text-gray-600">Insurance (0.2%)</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.insurance)}</span>
+                            </div>
+                          )}
+                          {month.outflows.travel > 0 && (
+                            <div className="flex justify-between text-sm ml-2">
+                              <span className="text-gray-600">Travel & Business</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.travel)}</span>
+                            </div>
+                          )}
+                          {month.outflows.workingCapital > 0 && (
+                            <div className="flex justify-between text-sm ml-2">
+                              <span className="text-gray-600">Working Capital (1%)</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.workingCapital)}</span>
+                            </div>
+                          )}
+                          {month.outflows.contingency > 0 && (
+                            <div className="flex justify-between text-sm ml-2">
+                              <span className="text-gray-600">Contingency (0.5%)</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.contingency)}</span>
                             </div>
                           )}
                         </div>

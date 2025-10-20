@@ -8,6 +8,7 @@ import YearByYearEditor from './components/YearByYearEditor';
 import PublicPartnerships from './components/PublicPartnerships';
 import ConsolidatedView from './components/ConsolidatedView';
 import CashFlow from './components/CashFlow';
+import UnitEconomics from './components/UnitEconomics';
 
 // Public Sector Scenario Presets (copied from PublicPartnerships)
 const PUBLIC_SCENARIO_PRESETS = {
@@ -214,6 +215,19 @@ function App() {
       )
     },
     {
+      id: 'uniteconomics',
+      name: 'Unit Economics',
+      icon: <Calculator className="w-5 h-5" />,
+      component: (
+        <UnitEconomics 
+          financialData={financialData}
+          parameters={parameters}
+          currentScenario={currentScenario}
+          publicModelData={publicModelData}
+        />
+      )
+    },
+    {
       id: 'parameters',
       name: 'Model Parameters',
       icon: <Settings className="w-5 h-5" />,
@@ -381,6 +395,15 @@ function App() {
             currentScenario={currentScenario}
             publicModelData={publicModelData}
             currentPublicScenario={currentPublicScenario}
+          />
+        )}
+        
+        {activeTab === 'uniteconomics' && (
+          <UnitEconomics 
+            financialData={financialData}
+            parameters={parameters}
+            currentScenario={currentScenario}
+            publicModelData={publicModelData}
           />
         )}
         

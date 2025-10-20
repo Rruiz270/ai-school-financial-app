@@ -1,0 +1,18 @@
+{
+  "claude_config": {
+    "skills": [
+      {
+        "name": "cfo-agent", 
+        "path": ".claude/skills/cfo-agent.md",
+        "description": "Expert CFO for financial strategy, analysis, fundraising, and executive financial management",
+        "tags": ["finance", "cfo", "strategy", "fundraising", "executive"]
+      },
+      {
+        "name": "financial-planner-agent",
+        "path": ".claude/skills/financial-planner-agent.md", 
+        "description": "Strategic financial planner for operational finance, budgeting, modeling, and business planning",
+        "tags": ["finance", "planning", "budgeting", "modeling", "operations"]
+      }
+    ]
+  }
+}

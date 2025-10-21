@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle, ChevronDown, ChevronRight, Wallet, Users, Building, GraduationCap, Info } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Calendar, AlertCircle, CheckCircle, ChevronDown, ChevronRight, Wallet, Users, Building, GraduationCap, Info, X } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const CashFlow = ({ financialData, parameters, currentScenario, publicModelData, currentPublicScenario }) => {
@@ -7,6 +7,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
   const [showMonthly, setShowMonthly] = useState(false);
   const [showEmployeeBreakdown, setShowEmployeeBreakdown] = useState(false);
   const [showExpenseTooltip, setShowExpenseTooltip] = useState(null);
+  const [employeeDetailModal, setEmployeeDetailModal] = useState(null);
   
   const INITIAL_INVESTMENT = 30000000; // R$30M initial cash
   const PRE_LAUNCH_TECH_INVESTMENT = 3000000; // R$3M tech investment before Year 1
@@ -375,6 +376,101 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     }));
   }, [selectedYear, showMonthly]);
   
+  // Employee detail breakdown function
+  const getEmployeeDetails = (year, category) => {
+    const yearProjection = financialData.projection[year];
+    const costs = yearProjection?.costs || {};
+    
+    const details = {
+      year,
+      category,
+      categoryTitle: '',
+      employees: [],
+      totalCount: 0,
+      totalMonthlyCost: 0,
+      totalAnnualCost: 0
+    };
+    
+    switch (category) {
+      case 'corporate':
+        details.categoryTitle = 'Corporate Staff';
+        const executiveCount = Math.min(5, 3 + Math.floor(year / 3));
+        const techCount = Math.min(20, 5 + year * 1.5);
+        const salesCount = Math.min(15, 3 + (yearProjection?.franchiseCount || 0) * 0.2);
+        const operationsCount = Math.min(10, 3 + year);
+        
+        details.employees = [
+          { role: 'Executive Team', count: Math.round(executiveCount), avgSalary: 25000, totalSalary: Math.round(executiveCount) * 25000 },
+          { role: 'Technology Team', count: Math.round(techCount), avgSalary: 12000, totalSalary: Math.round(techCount) * 12000 },
+          { role: 'Sales Team', count: Math.round(salesCount), avgSalary: 8000, totalSalary: Math.round(salesCount) * 8000 },
+          { role: 'Operations Team', count: Math.round(operationsCount), avgSalary: 7000, totalSalary: Math.round(operationsCount) * 7000 }
+        ];
+        details.totalCount = Math.round(executiveCount + techCount + salesCount + operationsCount);
+        details.totalMonthlyCost = (costs.staffCorporate || 0) / 12;
+        details.totalAnnualCost = costs.staffCorporate || 0;
+        break;
+        
+      case 'flagship':
+        details.categoryTitle = 'Flagship School Staff';
+        const studentCount = yearProjection?.students?.flagship || 0;
+        const teacherCount = studentCount ? Math.ceil(studentCount / (currentScenario === 'pessimistic' ? 30 : currentScenario === 'optimistic' ? 20 : 25)) : 0;
+        const supportCount = studentCount ? Math.ceil(studentCount / 200) : 0;
+        
+        details.employees = [
+          { role: 'Teachers', count: teacherCount, avgSalary: 6500, totalSalary: teacherCount * 6500 },
+          { role: 'Support Staff', count: supportCount, avgSalary: 4500, totalSalary: supportCount * 4500 },
+          { role: 'Campus Management', count: studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0, avgSalary: 8000, totalSalary: (studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0) * 8000 }
+        ];
+        details.totalCount = teacherCount + supportCount + (studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0);
+        details.totalMonthlyCost = (costs.staffFlagship || 0) / 12;
+        details.totalAnnualCost = costs.staffFlagship || 0;
+        break;
+        
+      case 'franchise':
+        details.categoryTitle = 'Franchise Support';
+        const franchiseCount = yearProjection?.franchiseCount || 0;
+        const supportManagerCount = franchiseCount ? Math.max(2, Math.ceil(franchiseCount / 10)) : 0;
+        
+        details.employees = [
+          { role: 'Franchise Support Managers', count: supportManagerCount, avgSalary: 9000, totalSalary: supportManagerCount * 9000 },
+          { role: 'Quality Assurance', count: franchiseCount > 5 ? Math.ceil(franchiseCount / 15) : 0, avgSalary: 8000, totalSalary: (franchiseCount > 5 ? Math.ceil(franchiseCount / 15) : 0) * 8000 }
+        ];
+        details.totalCount = supportManagerCount + (franchiseCount > 5 ? Math.ceil(franchiseCount / 15) : 0);
+        details.totalMonthlyCost = (costs.staffFranchiseSupport || 0) / 12;
+        details.totalAnnualCost = costs.staffFranchiseSupport || 0;
+        break;
+        
+      case 'franchising':
+        details.categoryTitle = 'Franchising Development Team';
+        const franchisingTeamCount = yearProjection?.franchiseCount ? Math.ceil(yearProjection.franchiseCount / 5) : 0;
+        
+        details.employees = [
+          { role: 'Franchise Development Specialists', count: franchisingTeamCount, avgSalary: 15000, totalSalary: franchisingTeamCount * 15000 },
+          { role: 'Regional Coordinators', count: yearProjection?.franchiseCount > 10 ? Math.ceil(yearProjection.franchiseCount / 20) : 0, avgSalary: 12000, totalSalary: (yearProjection?.franchiseCount > 10 ? Math.ceil(yearProjection.franchiseCount / 20) : 0) * 12000 }
+        ];
+        details.totalCount = franchisingTeamCount + (yearProjection?.franchiseCount > 10 ? Math.ceil(yearProjection.franchiseCount / 20) : 0);
+        details.totalMonthlyCost = (yearProjection?.franchiseCount || 0) * 15000;
+        details.totalAnnualCost = details.totalMonthlyCost * 12;
+        break;
+        
+      case 'adoption':
+        details.categoryTitle = 'Adoption Support';
+        const adoptionStudents = yearProjection?.students?.adoption || 0;
+        const adoptionSupportCount = adoptionStudents ? Math.max(3, Math.ceil(adoptionStudents / 25000)) : 0;
+        
+        details.employees = [
+          { role: 'Adoption Support Specialists', count: adoptionSupportCount, avgSalary: 6000, totalSalary: adoptionSupportCount * 6000 },
+          { role: 'Training Coordinators', count: adoptionStudents > 50000 ? Math.ceil(adoptionStudents / 50000) : 0, avgSalary: 7000, totalSalary: (adoptionStudents > 50000 ? Math.ceil(adoptionStudents / 50000) : 0) * 7000 }
+        ];
+        details.totalCount = adoptionSupportCount + (adoptionStudents > 50000 ? Math.ceil(adoptionStudents / 50000) : 0);
+        details.totalMonthlyCost = (costs.staffAdoptionSupport || 0) / 12;
+        details.totalAnnualCost = costs.staffAdoptionSupport || 0;
+        break;
+    }
+    
+    return details;
+  };
+  
   // Key metrics
   const finalYearData = cashFlowData[cashFlowData.length - 1];
   const cashPositive = cashFlowData.find(d => d.netCashFlow > 0);
@@ -517,23 +613,48 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                           <div className="text-green-600 font-medium">{formatCurrency(monthlyCorporate)}</div>
-                          <div className="text-xs text-gray-500">{Math.round(corporateCount)} employees</div>
+                          <button 
+                            onClick={() => setEmployeeDetailModal(getEmployeeDetails(yearData.year, 'corporate'))}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          >
+                            {Math.round(corporateCount)} employees
+                          </button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                           <div className="text-green-600 font-medium">{formatCurrency(monthlyFlagship)}</div>
-                          <div className="text-xs text-gray-500">{Math.round(flagshipCount)} employees</div>
+                          <button 
+                            onClick={() => setEmployeeDetailModal(getEmployeeDetails(yearData.year, 'flagship'))}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          >
+                            {Math.round(flagshipCount)} employees
+                          </button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                           <div className="text-green-600 font-medium">{formatCurrency(monthlyFranchiseSupport)}</div>
-                          <div className="text-xs text-gray-500">{Math.round(franchiseCount)} employees</div>
+                          <button 
+                            onClick={() => setEmployeeDetailModal(getEmployeeDetails(yearData.year, 'franchise'))}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          >
+                            {Math.round(franchiseCount)} employees
+                          </button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                           <div className="text-green-600 font-medium">{formatCurrency(monthlyFranchisingTeam)}</div>
-                          <div className="text-xs text-gray-500">{Math.round(franchisingTeamCount)} employees</div>
+                          <button 
+                            onClick={() => setEmployeeDetailModal(getEmployeeDetails(yearData.year, 'franchising'))}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          >
+                            {Math.round(franchisingTeamCount)} employees
+                          </button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                           <div className="text-green-600 font-medium">{formatCurrency(monthlyAdoption)}</div>
-                          <div className="text-xs text-gray-500">{Math.round(adoptionCount)} employees</div>
+                          <button 
+                            onClick={() => setEmployeeDetailModal(getEmployeeDetails(yearData.year, 'adoption'))}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          >
+                            {Math.round(adoptionCount)} employees
+                          </button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                           <div className="text-green-700 font-bold text-base">{formatCurrency(totalMonthly)}</div>
@@ -1082,6 +1203,102 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Employee Detail Modal */}
+      {employeeDetailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                  {employeeDetailModal.categoryTitle} - Year {employeeDetailModal.year}
+                </h3>
+                <button
+                  onClick={() => setEmployeeDetailModal(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{employeeDetailModal.totalCount}</div>
+                    <div className="text-sm text-gray-600">Total Employees</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(employeeDetailModal.totalMonthlyCost)}
+                    </div>
+                    <div className="text-sm text-gray-600">Monthly Cost</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(employeeDetailModal.totalAnnualCost)}
+                    </div>
+                    <div className="text-sm text-gray-600">Annual Cost</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900">Employee Breakdown by Role</h4>
+                {employeeDetailModal.employees.map((employee, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-medium text-gray-900">{employee.role}</h5>
+                      <span className="text-sm font-medium text-gray-600">{employee.count} employees</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Average Salary:</span>
+                        <span className="ml-2 font-medium">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          }).format(employee.avgSalary)}/month
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Total Monthly Cost:</span>
+                        <span className="ml-2 font-medium text-green-600">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          }).format(employee.totalSalary)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="text-sm text-gray-600">
+                  <strong>Note:</strong> Employee counts and salaries are calculated based on student enrollment, 
+                  franchise locations, and operational requirements for Year {employeeDetailModal.year}.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

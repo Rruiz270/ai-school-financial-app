@@ -25,14 +25,23 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
     const { projection } = financialData;
     const yearData = projection[selectedYear] || projection[5];
     
+    // More realistic CAC calculation based on new student growth
+    const prevYearData = selectedYear > 1 ? projection[selectedYear - 1] : { students: { flagship: 0, franchise: 0, adoption: 0 } };
+    const newStudents = {
+      flagship: Math.max(0, (yearData.students?.flagship || 0) - (prevYearData.students?.flagship || 0)),
+      franchise: Math.max(0, (yearData.students?.franchise || 0) - (prevYearData.students?.franchise || 0)), 
+      adoption: Math.max(0, (yearData.students?.adoption || 0) - (prevYearData.students?.adoption || 0))
+    };
+    
     // Flagship School Unit Economics
     const flagship = {
       students: yearData.students?.flagship || 0,
+      newStudents: newStudents.flagship,
       monthlyTuition: 2300, // R$2,300/month
       annualRevenue: (yearData.students?.flagship || 0) * 2300 * 12,
       marketingCosts: (yearData.costs?.marketing || 0) * 0.4, // 40% allocated to flagship
-      acquisitionCost: yearData.students?.flagship > 0 ? 
-        ((yearData.costs?.marketing || 0) * 0.4) / (yearData.students?.flagship * 0.2) : 0, // Assume 20% new students
+      acquisitionCost: newStudents.flagship > 0 ? 
+        ((yearData.costs?.marketing || 0) * 0.4) / newStudents.flagship : 0, // Based on actual new students
       lifetimeValue: 2300 * 12 * 3.5, // Average 3.5 years retention
       contributionMargin: 0.75, // 75% contribution margin
       paybackMonths: 0,
@@ -42,15 +51,19 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
       flagship.acquisitionCost / (flagship.monthlyTuition * flagship.contributionMargin) : 0;
 
     // Franchise Unit Economics  
+    const prevFranchises = selectedYear > 1 ? (projection[selectedYear - 1].franchiseCount || 0) : 0;
+    const newFranchises = Math.max(0, (yearData.franchiseCount || 0) - prevFranchises);
+    
     const franchise = {
       locations: yearData.franchiseCount || 0,
+      newFranchises: newFranchises,
       studentsPerLocation: yearData.students?.franchise > 0 ? 
         (yearData.students?.franchise / (yearData.franchiseCount || 1)) : 0,
       franchiseFee: 225000, // R$225,000 initial fee
       monthlyRoyalty: 606, // 5% of R$12,120 average monthly revenue per location
       marketingCosts: (yearData.costs?.marketing || 0) * 0.3, // 30% allocated to franchise
-      acquisitionCost: yearData.franchiseCount > 0 ? 
-        ((yearData.costs?.marketing || 0) * 0.3) / (yearData.franchiseCount * 0.15) : 0, // Assume 15% new franchises
+      acquisitionCost: newFranchises > 0 ? 
+        ((yearData.costs?.marketing || 0) * 0.3) / newFranchises : 0, // Based on actual new franchises
       lifetimeValue: (225000 + (606 * 12 * 8)), // 8-year average franchise life
       contributionMargin: 0.85, // 85% contribution margin
       paybackMonths: 0,
@@ -62,11 +75,12 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
     // Adoption Licensing Unit Economics
     const adoption = {
       students: yearData.students?.adoption || 0,
+      newStudents: newStudents.adoption,
       monthlyFee: 250, // R$250/student/month
       annualRevenue: (yearData.students?.adoption || 0) * 250 * 12,
       marketingCosts: (yearData.costs?.marketing || 0) * 0.2, // 20% allocated to adoption
-      acquisitionCost: yearData.students?.adoption > 0 ? 
-        ((yearData.costs?.marketing || 0) * 0.2) / (yearData.students?.adoption * 0.25) : 0, // Assume 25% new students
+      acquisitionCost: newStudents.adoption > 0 ? 
+        ((yearData.costs?.marketing || 0) * 0.2) / newStudents.adoption : 0, // Based on actual new students
       lifetimeValue: 250 * 12 * 4, // Average 4 years retention
       contributionMargin: 0.90, // 90% contribution margin
       paybackMonths: 0,
@@ -76,19 +90,28 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
       adoption.acquisitionCost / (adoption.monthlyFee * adoption.contributionMargin) : 0;
 
     // Public Partnerships (Year 2+)
+    const prevPublicStudents = selectedYear >= 3 && publicModelData && publicModelData[selectedYear-3] ? 
+      publicModelData[selectedYear-3].students : 0;
+    const currentPublicStudents = selectedYear >= 2 && publicModelData && publicModelData[selectedYear-2] ? 
+      publicModelData[selectedYear-2].students : 0;
+    const newPublicStudents = Math.max(0, currentPublicStudents - prevPublicStudents);
+    
     const publicPartnerships = {
-      students: selectedYear >= 2 && publicModelData && publicModelData[selectedYear-2] ? 
-        publicModelData[selectedYear-2].students : 0,
+      students: currentPublicStudents,
+      newStudents: newPublicStudents,
       monthlyFee: 250, // R$250/student/month
       annualRevenue: selectedYear >= 2 && publicModelData && publicModelData[selectedYear-2] ? 
         publicModelData[selectedYear-2].revenue.total : 0,
       marketingCosts: (yearData.costs?.marketing || 0) * 0.1, // 10% allocated to public
-      acquisitionCost: 1500, // Lower acquisition cost for government partnerships
+      acquisitionCost: newPublicStudents > 0 ? 
+        ((yearData.costs?.marketing || 0) * 0.1) / newPublicStudents : 1500, // Based on new students or default
       lifetimeValue: 250 * 12 * 5, // 5-year government contracts
       contributionMargin: 0.75, // 75% contribution margin (higher support costs)
-      paybackMonths: 1500 / (250 * 0.75),
+      paybackMonths: 0,
       churnRate: 0.05 // 5% annual churn (government stability)
     };
+    publicPartnerships.paybackMonths = publicPartnerships.acquisitionCost > 0 ? 
+      publicPartnerships.acquisitionCost / (publicPartnerships.monthlyFee * publicPartnerships.contributionMargin) : 0;
 
     return { flagship, franchise, adoption, publicPartnerships };
   }, [financialData, selectedYear, publicModelData]);
@@ -135,14 +158,20 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
       const students = year.students || {};
       const costs = year.costs || {};
       
-      // Calculate blended CAC for this year
-      const totalStudents = (students.flagship || 0) + (students.franchise || 0) + (students.adoption || 0);
+      // Calculate blended CAC for this year using actual new students
+      const prevYear = index > 0 ? financialData.projection[index] : { students: { flagship: 0, franchise: 0, adoption: 0 } };
+      const newStudentsForYear = {
+        flagship: Math.max(0, (students.flagship || 0) - (prevYear.students?.flagship || 0)),
+        franchise: Math.max(0, (students.franchise || 0) - (prevYear.students?.franchise || 0)),
+        adoption: Math.max(0, (students.adoption || 0) - (prevYear.students?.adoption || 0))
+      };
+      const totalNewStudents = newStudentsForYear.flagship + newStudentsForYear.franchise + newStudentsForYear.adoption;
       const marketingCost = costs.marketing || 0;
-      const newStudentRate = 0.2; // Assume 20% of students are new each year
-      const cac = totalStudents > 0 ? marketingCost / (totalStudents * newStudentRate) : 0;
+      const cac = totalNewStudents > 0 ? marketingCost / totalNewStudents : 0;
       
       // Calculate blended LTV
-      const avgRevPerStudent = totalStudents > 0 ? year.revenue.total / totalStudents : 0;
+      const totalCurrentStudents = (students.flagship || 0) + (students.franchise || 0) + (students.adoption || 0);
+      const avgRevPerStudent = totalCurrentStudents > 0 ? year.revenue.total / totalCurrentStudents : 0;
       const ltv = avgRevPerStudent * 3.5; // 3.5 year average retention
 
       return {
@@ -151,7 +180,7 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
         cac: cac,
         ltv: ltv,
         ltvCacRatio: cac > 0 ? ltv / cac : 0,
-        totalStudents: totalStudents,
+        totalStudents: totalCurrentStudents,
         revenue: year.revenue.total
       };
     });
@@ -267,10 +296,10 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
           <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-orange-600 font-medium">Payback Period</div>
+                <div className="text-sm text-orange-600 font-medium">CAC Payback Period</div>
                 <div className="text-2xl font-bold text-orange-900">{blendedMetrics.paybackMonths.toFixed(1)}mo</div>
                 <div className="text-xs text-orange-600 mt-1">
-                  {blendedMetrics.paybackMonths <= 12 ? 'Excellent' : blendedMetrics.paybackMonths <= 18 ? 'Good' : 'High Risk'}
+                  Time to recover customer acquisition cost
                 </div>
               </div>
               <ArrowUpRight className="w-8 h-8 text-orange-500" />
@@ -331,7 +360,7 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
             </div>
             
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Payback Period</span>
+              <span className="text-gray-600">CAC Payback Period</span>
               <span className="font-semibold">{selectedSegmentData.paybackMonths.toFixed(1)} months</span>
             </div>
             

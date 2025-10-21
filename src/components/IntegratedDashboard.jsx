@@ -5,6 +5,7 @@ import {
   ArrowRight, Activity, Database, RefreshCw
 } from 'lucide-react';
 import { integrationService } from '../utils/integrationService';
+import { createConnectionBridge, getDemoLaunchControlData } from '../utils/connectionBridge';
 
 const IntegratedDashboard = ({ financialData, parameters, currentScenario, publicModelData }) => {
   const [launchControlData, setLaunchControlData] = useState(null);
@@ -25,64 +26,24 @@ const IntegratedDashboard = ({ financialData, parameters, currentScenario, publi
       }
     });
 
-    // Initial data load
-    const loadData = () => {
+    // Initial data load with connection bridge
+    const loadData = async () => {
       try {
-        const lcData = integrationService.getLaunchControlData();
+        const bridge = createConnectionBridge();
+        const lcData = await bridge.attemptConnection();
+        
         if (lcData) {
           setLaunchControlData(lcData);
           setSyncStatus('connected');
         } else {
-          // Fallback demo data
-          setLaunchControlData({
-            workstreams: [
-              {
-                id: 'funding',
-                name: 'Funding & Finance',
-                color: '#10B981',
-                lead: 'Raphael Ruiz',
-                status: 'active',
-                tasks: [
-                  { id: 'f1', title: 'Finalize investor pitch deck', status: 'in-progress', priority: 'critical', progress: 75 },
-                  { id: 'f2', title: 'Series A roadshow', status: 'not-started', priority: 'critical', progress: 0 },
-                  { id: 'f3', title: 'Close R$20M funding', status: 'not-started', priority: 'critical', progress: 0 }
-                ]
-              },
-              {
-                id: 'construction',
-                name: 'Construction & Infrastructure',
-                color: '#F59E0B',
-                lead: 'TBD - Head of Operations',
-                status: 'planning',
-                tasks: [
-                  { id: 'c1', title: 'Architect selection process', status: 'urgent', priority: 'critical', progress: 20 },
-                  { id: 'c2', title: 'Finalize Rio government building', status: 'in-progress', priority: 'critical', progress: 60 }
-                ]
-              },
-              {
-                id: 'technology',
-                name: 'Technology & Platform',
-                color: '#3B82F6',
-                lead: 'Jay (Harvard)',
-                status: 'active',
-                tasks: [
-                  { id: 't1', title: 'Assemble tech team', status: 'in-progress', priority: 'critical', progress: 40 },
-                  { id: 't2', title: 'Platform architecture design', status: 'in-progress', priority: 'critical', progress: 25 }
-                ]
-              }
-            ],
-            kpis: [
-              { id: 'kpi1', name: 'Series A Funding Progress', current: 0, target: 20000000, unit: 'R$' },
-              { id: 'kpi2', name: 'Year 1 Students Enrolled', current: 0, target: 750, unit: 'students' },
-              { id: 'kpi3', name: 'Core Team Hired', current: 3, target: 70, unit: 'people' },
-              { id: 'kpi4', name: 'Construction Progress', current: 0, target: 100, unit: '%' },
-              { id: 'kpi5', name: 'INCEPT Platform Development', current: 15, target: 100, unit: '%' }
-            ]
-          });
+          // Fallback to demo data
+          setLaunchControlData(getDemoLaunchControlData());
           setSyncStatus('demo');
         }
       } catch (error) {
         console.error('Error loading launch control data:', error);
+        // Final fallback
+        setLaunchControlData(getDemoLaunchControlData());
         setSyncStatus('error');
       }
     };

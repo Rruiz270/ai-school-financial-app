@@ -87,7 +87,14 @@ export class IntegrationService {
 
   // Calculate integration metrics
   calculateIntegrationMetrics(launchControlData, financialData) {
-    if (!launchControlData || !financialData) return null;
+    if (!launchControlData || !financialData || !Array.isArray(financialData) || financialData.length === 0) {
+      console.log('Integration metrics: Missing data', { 
+        hasLaunchControl: !!launchControlData, 
+        hasFinancial: !!financialData,
+        financialDataLength: financialData ? financialData.length : 0 
+      });
+      return null;
+    }
 
     const year1Data = financialData[0];
     const year10Data = financialData[9];

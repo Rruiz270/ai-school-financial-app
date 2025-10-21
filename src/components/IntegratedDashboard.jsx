@@ -93,7 +93,7 @@ const IntegratedDashboard = ({ financialData, parameters, currentScenario, publi
     integrationService.syncData();
 
     return unsubscribe;
-  }, []);
+  }, [financialData]);
 
   // Calculate integrated metrics using integration service
   const integratedMetrics = useMemo(() => {
@@ -112,11 +112,14 @@ const IntegratedDashboard = ({ financialData, parameters, currentScenario, publi
   const currentSyncConfig = syncStatusConfig[syncStatus];
   const SyncIcon = currentSyncConfig.icon;
 
-  if (!integratedMetrics.operational) {
+  if (!integratedMetrics || !integratedMetrics.operational) {
     return (
       <div className="p-8 text-center">
         <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
         <p className="text-gray-600">Loading integrated dashboard...</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Status: {syncStatus} | Data: {launchControlData ? 'Available' : 'Loading'} | Financial: {financialData ? 'Available' : 'Loading'}
+        </p>
       </div>
     );
   }

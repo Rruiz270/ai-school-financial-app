@@ -399,17 +399,20 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const salesCount = Math.min(15, 3 + (yearProjection?.franchiseCount || 0) * 0.2);
         const operationsCount = Math.min(10, 3 + year);
         
+        // Apply 50% increase + 8% year-over-year growth
+        const salaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
+        
         details.employees = [
-          { role: 'CEO / Founder', count: 1, avgSalary: 75000, totalSalary: 75000 },
-          { role: 'CTO / Head of Technology', count: 1, avgSalary: 50000, totalSalary: 50000 },
-          { role: 'Head of Operations', count: 1, avgSalary: 30000, totalSalary: 30000 },
-          { role: 'Head of Finance', count: 1, avgSalary: 25000, totalSalary: 25000 },
-          { role: 'Software Engineers', count: Math.round(techCount - 1), avgSalary: 18000, totalSalary: (Math.round(techCount - 1)) * 18000 },
-          { role: 'Product Managers', count: Math.min(2, Math.round(year / 2) + 1), avgSalary: 20000, totalSalary: Math.min(2, Math.round(year / 2) + 1) * 20000 },
-          { role: 'Legal & Compliance', count: 1, avgSalary: 15000, totalSalary: 15000 },
-          { role: 'HR & Admin', count: 1, avgSalary: 12000, totalSalary: 12000 },
-          { role: 'Sales Team', count: Math.round(salesCount), avgSalary: 8000, totalSalary: Math.round(salesCount) * 8000 },
-          { role: 'Operations Support', count: Math.max(0, Math.round(operationsCount - 1)), avgSalary: 7000, totalSalary: Math.max(0, Math.round(operationsCount - 1)) * 7000 }
+          { role: 'CEO / Founder', count: 1, avgSalary: Math.round(75000 * salaryMultiplier), totalSalary: Math.round(75000 * salaryMultiplier) },
+          { role: 'CTO / Head of Technology', count: 1, avgSalary: Math.round(50000 * salaryMultiplier), totalSalary: Math.round(50000 * salaryMultiplier) },
+          { role: 'Head of Operations', count: 1, avgSalary: Math.round(30000 * salaryMultiplier), totalSalary: Math.round(30000 * salaryMultiplier) },
+          { role: 'Head of Finance', count: 1, avgSalary: Math.round(25000 * salaryMultiplier), totalSalary: Math.round(25000 * salaryMultiplier) },
+          { role: 'Software Engineers', count: Math.round(techCount - 1), avgSalary: Math.round(18000 * salaryMultiplier), totalSalary: Math.round(techCount - 1) * Math.round(18000 * salaryMultiplier) },
+          { role: 'Product Managers', count: Math.min(2, Math.round(year / 2) + 1), avgSalary: Math.round(20000 * salaryMultiplier), totalSalary: Math.min(2, Math.round(year / 2) + 1) * Math.round(20000 * salaryMultiplier) },
+          { role: 'Legal & Compliance', count: 1, avgSalary: Math.round(15000 * salaryMultiplier), totalSalary: Math.round(15000 * salaryMultiplier) },
+          { role: 'HR & Admin', count: 1, avgSalary: Math.round(12000 * salaryMultiplier), totalSalary: Math.round(12000 * salaryMultiplier) },
+          { role: 'Sales Team', count: Math.round(salesCount), avgSalary: Math.round(8000 * salaryMultiplier), totalSalary: Math.round(salesCount) * Math.round(8000 * salaryMultiplier) },
+          { role: 'Operations Support', count: Math.max(0, Math.round(operationsCount - 1)), avgSalary: Math.round(7000 * salaryMultiplier), totalSalary: Math.max(0, Math.round(operationsCount - 1)) * Math.round(7000 * salaryMultiplier) }
         ];
         details.totalCount = Math.round(executiveCount + techCount + salesCount + operationsCount);
         details.totalMonthlyCost = (costs.staffCorporate || 0) / 12;
@@ -422,10 +425,16 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const teacherCount = studentCount ? Math.ceil(studentCount / (currentScenario === 'pessimistic' ? 30 : currentScenario === 'optimistic' ? 20 : 25)) : 0;
         const supportCount = studentCount ? Math.ceil(studentCount / 200) : 0;
         
+        // Apply 50% increase + 8% year-over-year growth
+        const salaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
+        const teacherSalary = Math.round(6500 * salaryMultiplier);
+        const supportSalary = Math.round(4500 * salaryMultiplier);
+        const managementSalary = Math.round(8000 * salaryMultiplier);
+        
         details.employees = [
-          { role: 'Teachers', count: teacherCount, avgSalary: 6500, totalSalary: teacherCount * 6500 },
-          { role: 'Support Staff', count: supportCount, avgSalary: 4500, totalSalary: supportCount * 4500 },
-          { role: 'Campus Management', count: studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0, avgSalary: 8000, totalSalary: (studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0) * 8000 }
+          { role: 'Teachers', count: teacherCount, avgSalary: teacherSalary, totalSalary: teacherCount * teacherSalary },
+          { role: 'Support Staff', count: supportCount, avgSalary: supportSalary, totalSalary: supportCount * supportSalary },
+          { role: 'Campus Management', count: studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0, avgSalary: managementSalary, totalSalary: (studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0) * managementSalary }
         ];
         details.totalCount = teacherCount + supportCount + (studentCount > 0 ? Math.max(2, Math.ceil(studentCount / 1000)) : 0);
         details.totalMonthlyCost = (costs.staffFlagship || 0) / 12;
@@ -435,26 +444,44 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       case 'franchise':
         details.categoryTitle = 'Franchise Support';
         const franchiseCount = yearProjection?.franchiseCount || 0;
-        const supportManagerCount = franchiseCount ? Math.max(2, Math.ceil(franchiseCount / 10)) : 0;
+        const totalBudget = (costs.staffFranchiseSupport || 0) / 12; // Monthly budget
+        
+        // Apply 50% increase + 8% year-over-year growth
+        const salaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
+        const supportManagerSalary = Math.round(9000 * salaryMultiplier);
+        const qaSalary = Math.round(8000 * salaryMultiplier);
+        
+        // Calculate employee counts based on actual budget
+        const supportManagerCount = Math.max(2, Math.round(totalBudget * 0.7 / supportManagerSalary));
+        const qaCount = Math.max(1, Math.round(totalBudget * 0.3 / qaSalary));
         
         details.employees = [
-          { role: 'Franchise Support Managers', count: supportManagerCount, avgSalary: 9000, totalSalary: supportManagerCount * 9000 },
-          { role: 'Quality Assurance', count: franchiseCount > 5 ? Math.ceil(franchiseCount / 15) : 0, avgSalary: 8000, totalSalary: (franchiseCount > 5 ? Math.ceil(franchiseCount / 15) : 0) * 8000 }
+          { role: 'Franchise Support Managers', count: supportManagerCount, avgSalary: supportManagerSalary, totalSalary: supportManagerCount * supportManagerSalary },
+          { role: 'Quality Assurance', count: qaCount, avgSalary: qaSalary, totalSalary: qaCount * qaSalary }
         ];
-        details.totalCount = supportManagerCount + (franchiseCount > 5 ? Math.ceil(franchiseCount / 15) : 0);
+        details.totalCount = supportManagerCount + qaCount;
         details.totalMonthlyCost = (costs.staffFranchiseSupport || 0) / 12;
         details.totalAnnualCost = costs.staffFranchiseSupport || 0;
         break;
         
       case 'franchising':
         details.categoryTitle = 'Franchising Development Team';
-        const franchisingTeamCount = yearProjection?.franchiseCount ? Math.ceil(yearProjection.franchiseCount / 5) : 0;
+        const franchisingBudget = (yearProjection?.franchiseCount || 0) * 15000; // Monthly budget
+        
+        // Apply 50% increase + 8% year-over-year growth
+        const salaryMultiplier2 = 1.5 * Math.pow(1.08, year - 1);
+        const devSpecialistSalary = Math.round(15000 * salaryMultiplier2);
+        const coordinatorSalary = Math.round(12000 * salaryMultiplier2);
+        
+        // Calculate employee counts based on actual budget
+        const devSpecialistCount = Math.max(1, Math.round(franchisingBudget * 0.75 / devSpecialistSalary));
+        const coordinatorCount = franchisingBudget > devSpecialistSalary ? Math.round(franchisingBudget * 0.25 / coordinatorSalary) : 0;
         
         details.employees = [
-          { role: 'Franchise Development Specialists', count: franchisingTeamCount, avgSalary: 15000, totalSalary: franchisingTeamCount * 15000 },
-          { role: 'Regional Coordinators', count: yearProjection?.franchiseCount > 10 ? Math.ceil(yearProjection.franchiseCount / 20) : 0, avgSalary: 12000, totalSalary: (yearProjection?.franchiseCount > 10 ? Math.ceil(yearProjection.franchiseCount / 20) : 0) * 12000 }
+          { role: 'Franchise Development Specialists', count: devSpecialistCount, avgSalary: devSpecialistSalary, totalSalary: devSpecialistCount * devSpecialistSalary },
+          { role: 'Regional Coordinators', count: coordinatorCount, avgSalary: coordinatorSalary, totalSalary: coordinatorCount * coordinatorSalary }
         ];
-        details.totalCount = franchisingTeamCount + (yearProjection?.franchiseCount > 10 ? Math.ceil(yearProjection.franchiseCount / 20) : 0);
+        details.totalCount = devSpecialistCount + coordinatorCount;
         details.totalMonthlyCost = (yearProjection?.franchiseCount || 0) * 15000;
         details.totalAnnualCost = details.totalMonthlyCost * 12;
         break;
@@ -462,13 +489,23 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       case 'adoption':
         details.categoryTitle = 'Adoption Support';
         const adoptionStudents = yearProjection?.students?.adoption || 0;
-        const adoptionSupportCount = adoptionStudents ? Math.max(3, Math.ceil(adoptionStudents / 25000)) : 0;
+        const adoptionBudget = (costs.staffAdoptionSupport || 0) / 12; // Monthly budget
+        
+        // Apply 50% increase + 8% year-over-year growth
+        const salaryMultiplier3 = 1.5 * Math.pow(1.08, year - 1);
+        const adoptionSpecialistSalary = Math.round(6000 * salaryMultiplier3);
+        const trainingCoordinatorSalary = Math.round(7000 * salaryMultiplier3);
+        
+        // Calculate employee counts based on actual budget
+        const adoptionSpecialistCount = Math.max(3, Math.round(adoptionBudget * 0.8 / adoptionSpecialistSalary));
+        const trainingCoordinatorCount = adoptionBudget > (adoptionSpecialistCount * adoptionSpecialistSalary) ? 
+          Math.round((adoptionBudget - adoptionSpecialistCount * adoptionSpecialistSalary) / trainingCoordinatorSalary) : 0;
         
         details.employees = [
-          { role: 'Adoption Support Specialists', count: adoptionSupportCount, avgSalary: 6000, totalSalary: adoptionSupportCount * 6000 },
-          { role: 'Training Coordinators', count: adoptionStudents > 50000 ? Math.ceil(adoptionStudents / 50000) : 0, avgSalary: 7000, totalSalary: (adoptionStudents > 50000 ? Math.ceil(adoptionStudents / 50000) : 0) * 7000 }
+          { role: 'Adoption Support Specialists', count: adoptionSpecialistCount, avgSalary: adoptionSpecialistSalary, totalSalary: adoptionSpecialistCount * adoptionSpecialistSalary },
+          { role: 'Training Coordinators', count: trainingCoordinatorCount, avgSalary: trainingCoordinatorSalary, totalSalary: trainingCoordinatorCount * trainingCoordinatorSalary }
         ];
-        details.totalCount = adoptionSupportCount + (adoptionStudents > 50000 ? Math.ceil(adoptionStudents / 50000) : 0);
+        details.totalCount = adoptionSpecialistCount + trainingCoordinatorCount;
         details.totalMonthlyCost = (costs.staffAdoptionSupport || 0) / 12;
         details.totalAnnualCost = costs.staffAdoptionSupport || 0;
         break;

@@ -10,6 +10,8 @@ import ConsolidatedView from './components/ConsolidatedView';
 import CashFlow from './components/CashFlow';
 import UnitEconomics from './components/UnitEconomics';
 import IntegratedDashboard from './components/IntegratedDashboard';
+import SimpleIntegrated from './components/SimpleIntegrated';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Public Sector Scenario Presets (copied from PublicPartnerships)
 const PUBLIC_SCENARIO_PRESETS = {
@@ -162,12 +164,16 @@ function App() {
       id: 'integrated',
       name: 'Integrated Command',
       icon: <GitMerge className="w-5 h-5" />,
-      component: <IntegratedDashboard 
-        financialData={financialData}
-        parameters={parameters}
-        currentScenario={currentScenario}
-        publicModelData={publicModelData}
-      />
+      component: (
+        <ErrorBoundary>
+          <SimpleIntegrated 
+            financialData={financialData}
+            parameters={parameters}
+            currentScenario={currentScenario}
+            publicModelData={publicModelData}
+          />
+        </ErrorBoundary>
+      )
     },
     {
       id: 'dashboard',

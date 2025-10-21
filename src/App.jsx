@@ -108,7 +108,7 @@ const generatePublicFinancialData = (scenario = 'optimistic') => {
 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState('integrated');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [parameters, setParameters] = useState(DEFAULT_PARAMETERS);
   const [currentScenario, setCurrentScenario] = useState('realistic');
   const [currentPublicScenario, setCurrentPublicScenario] = useState('optimistic');
@@ -160,21 +160,6 @@ function App() {
   };
 
   const tabs = [
-    {
-      id: 'integrated',
-      name: 'Integrated Command',
-      icon: <GitMerge className="w-5 h-5" />,
-      component: (
-        <ErrorBoundary>
-          <SimpleIntegrated 
-            financialData={financialData}
-            parameters={parameters}
-            currentScenario={currentScenario}
-            publicModelData={publicModelData}
-          />
-        </ErrorBoundary>
-      )
-    },
     {
       id: 'dashboard',
       name: 'Private Sector',

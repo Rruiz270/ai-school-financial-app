@@ -636,17 +636,18 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                     const monthlyAdoption = (costs.staffAdoptionSupport || 0) / 12;
                     const totalMonthly = monthlyCorporate + monthlyFlagship + monthlyFranchiseSupport + monthlyFranchisingTeam + monthlyAdoption;
                     
-                    // Calculate employee counts
-                    const corporateCount = Math.min(5, 3 + Math.floor(yearData.year / 3)) + 
-                                         Math.min(20, 5 + yearData.year * 1.5) + 
-                                         Math.min(15, 3 + (yearProjection?.franchiseCount || 0) * 0.2) + 
-                                         Math.min(10, 3 + yearData.year);
-                    const flagshipCount = yearProjection?.students?.flagship ? 
-                      Math.ceil(yearProjection.students.flagship / (currentScenario === 'pessimistic' ? 30 : currentScenario === 'optimistic' ? 20 : 25)) +
-                      Math.ceil(yearProjection.students.flagship / 200) : 0;
-                    const franchiseCount = yearProjection?.franchiseCount ? Math.max(2, Math.ceil(yearProjection.franchiseCount / 10)) : 0;
-                    const franchisingTeamCount = yearProjection?.franchiseCount ? Math.ceil(yearProjection.franchiseCount / 5) : 0;
-                    const adoptionCount = yearProjection?.students?.adoption ? Math.max(3, Math.ceil(yearProjection.students.adoption / 25000)) : 0;
+                    // Calculate employee counts using same logic as detailed modal
+                    const corporateDetails = getEmployeeDetails(yearData.year, 'corporate');
+                    const flagshipDetails = getEmployeeDetails(yearData.year, 'flagship');
+                    const franchiseDetails = getEmployeeDetails(yearData.year, 'franchise');
+                    const franchisingDetails = getEmployeeDetails(yearData.year, 'franchising');
+                    const adoptionDetails = getEmployeeDetails(yearData.year, 'adoption');
+                    
+                    const corporateCount = corporateDetails.totalCount;
+                    const flagshipCount = flagshipDetails.totalCount;
+                    const franchiseCount = franchiseDetails.totalCount;
+                    const franchisingTeamCount = franchisingDetails.totalCount;
+                    const adoptionCount = adoptionDetails.totalCount;
                     const totalEmployees = corporateCount + flagshipCount + franchiseCount + franchisingTeamCount + adoptionCount;
                     
                     return (

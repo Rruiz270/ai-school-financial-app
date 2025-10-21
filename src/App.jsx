@@ -9,6 +9,7 @@ import PublicPartnerships from './components/PublicPartnerships';
 import ConsolidatedView from './components/ConsolidatedView';
 import CashFlow from './components/CashFlow';
 import UnitEconomics from './components/UnitEconomics';
+import IntegratedDashboard from './components/IntegratedDashboard';
 
 // Public Sector Scenario Presets (copied from PublicPartnerships)
 const PUBLIC_SCENARIO_PRESETS = {
@@ -105,7 +106,7 @@ const generatePublicFinancialData = (scenario = 'optimistic') => {
 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('integrated');
   const [parameters, setParameters] = useState(DEFAULT_PARAMETERS);
   const [currentScenario, setCurrentScenario] = useState('realistic');
   const [currentPublicScenario, setCurrentPublicScenario] = useState('optimistic');
@@ -158,6 +159,17 @@ function App() {
 
   const tabs = [
     {
+      id: 'integrated',
+      name: 'Integrated Command',
+      icon: <GitMerge className="w-5 h-5" />,
+      component: <IntegratedDashboard 
+        financialData={financialData}
+        parameters={parameters}
+        currentScenario={currentScenario}
+        publicModelData={publicModelData}
+      />
+    },
+    {
       id: 'dashboard',
       name: 'Private Sector',
       icon: <School className="w-5 h-5" />,
@@ -179,7 +191,7 @@ function App() {
     {
       id: 'consolidated',
       name: 'Consolidated View',
-      icon: <GitMerge className="w-5 h-5" />,
+      icon: <TrendingUp className="w-5 h-5" />,
       component: <ConsolidatedView 
         privateFinancialData={financialData}
         publicModelData={publicModelData}

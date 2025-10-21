@@ -400,10 +400,16 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const operationsCount = Math.min(10, 3 + year);
         
         details.employees = [
-          { role: 'Executive Team', count: Math.round(executiveCount), avgSalary: 25000, totalSalary: Math.round(executiveCount) * 25000 },
-          { role: 'Technology Team', count: Math.round(techCount), avgSalary: 12000, totalSalary: Math.round(techCount) * 12000 },
+          { role: 'CEO / Founder', count: 1, avgSalary: 75000, totalSalary: 75000 },
+          { role: 'CTO / Head of Technology', count: 1, avgSalary: 50000, totalSalary: 50000 },
+          { role: 'Head of Operations', count: 1, avgSalary: 30000, totalSalary: 30000 },
+          { role: 'Head of Finance', count: 1, avgSalary: 25000, totalSalary: 25000 },
+          { role: 'Software Engineers', count: Math.round(techCount - 1), avgSalary: 18000, totalSalary: (Math.round(techCount - 1)) * 18000 },
+          { role: 'Product Managers', count: Math.min(2, Math.round(year / 2) + 1), avgSalary: 20000, totalSalary: Math.min(2, Math.round(year / 2) + 1) * 20000 },
+          { role: 'Legal & Compliance', count: 1, avgSalary: 15000, totalSalary: 15000 },
+          { role: 'HR & Admin', count: 1, avgSalary: 12000, totalSalary: 12000 },
           { role: 'Sales Team', count: Math.round(salesCount), avgSalary: 8000, totalSalary: Math.round(salesCount) * 8000 },
-          { role: 'Operations Team', count: Math.round(operationsCount), avgSalary: 7000, totalSalary: Math.round(operationsCount) * 7000 }
+          { role: 'Operations Support', count: Math.max(0, Math.round(operationsCount - 1)), avgSalary: 7000, totalSalary: Math.max(0, Math.round(operationsCount - 1)) * 7000 }
         ];
         details.totalCount = Math.round(executiveCount + techCount + salesCount + operationsCount);
         details.totalMonthlyCost = (costs.staffCorporate || 0) / 12;

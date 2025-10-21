@@ -399,20 +399,26 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const salesCount = Math.min(15, 3 + (yearProjection?.franchiseCount || 0) * 0.2);
         const operationsCount = Math.min(10, 3 + year);
         
-        // Apply 50% increase + 8% year-over-year growth for corporate
-        const corporateSalaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
+        // Apply market-realistic salary structure with 5% annual growth
+        const corporateGrowthRate = Math.pow(1.05, year - 1);
+        
+        // Executive salary caps for Brazilian market realism
+        const ceoSalary = Math.min(75000, Math.round(50000 * corporateGrowthRate)); // Cap at R$75K
+        const ctoSalary = Math.min(60000, Math.round(40000 * corporateGrowthRate)); // Cap at R$60K
+        const headOpsSalary = Math.min(35000, Math.round(25000 * corporateGrowthRate)); // Cap at R$35K
+        const headFinanceSalary = Math.min(30000, Math.round(20000 * corporateGrowthRate)); // Cap at R$30K
         
         details.employees = [
-          { role: 'CEO / Founder', count: 1, avgSalary: Math.round(75000 * corporateSalaryMultiplier), totalSalary: Math.round(75000 * corporateSalaryMultiplier) },
-          { role: 'CTO / Head of Technology', count: 1, avgSalary: Math.round(50000 * corporateSalaryMultiplier), totalSalary: Math.round(50000 * corporateSalaryMultiplier) },
-          { role: 'Head of Operations', count: 1, avgSalary: Math.round(30000 * corporateSalaryMultiplier), totalSalary: Math.round(30000 * corporateSalaryMultiplier) },
-          { role: 'Head of Finance', count: 1, avgSalary: Math.round(25000 * corporateSalaryMultiplier), totalSalary: Math.round(25000 * corporateSalaryMultiplier) },
-          { role: 'Software Engineers', count: Math.round(techCount - 1), avgSalary: Math.round(18000 * corporateSalaryMultiplier), totalSalary: Math.round(techCount - 1) * Math.round(18000 * corporateSalaryMultiplier) },
-          { role: 'Product Managers', count: Math.min(2, Math.round(year / 2) + 1), avgSalary: Math.round(20000 * corporateSalaryMultiplier), totalSalary: Math.min(2, Math.round(year / 2) + 1) * Math.round(20000 * corporateSalaryMultiplier) },
-          { role: 'Legal & Compliance', count: 1, avgSalary: Math.round(15000 * corporateSalaryMultiplier), totalSalary: Math.round(15000 * corporateSalaryMultiplier) },
-          { role: 'HR & Admin', count: 1, avgSalary: Math.round(12000 * corporateSalaryMultiplier), totalSalary: Math.round(12000 * corporateSalaryMultiplier) },
-          { role: 'Sales Team', count: Math.round(salesCount), avgSalary: Math.round(8000 * corporateSalaryMultiplier), totalSalary: Math.round(salesCount) * Math.round(8000 * corporateSalaryMultiplier) },
-          { role: 'Operations Support', count: Math.max(0, Math.round(operationsCount - 1)), avgSalary: Math.round(7000 * corporateSalaryMultiplier), totalSalary: Math.max(0, Math.round(operationsCount - 1)) * Math.round(7000 * corporateSalaryMultiplier) }
+          { role: 'CEO / Founder', count: 1, avgSalary: ceoSalary, totalSalary: ceoSalary },
+          { role: 'CTO / Head of Technology', count: 1, avgSalary: ctoSalary, totalSalary: ctoSalary },
+          { role: 'Head of Operations', count: 1, avgSalary: headOpsSalary, totalSalary: headOpsSalary },
+          { role: 'Head of Finance', count: 1, avgSalary: headFinanceSalary, totalSalary: headFinanceSalary },
+          { role: 'Software Engineers', count: Math.round(techCount - 1), avgSalary: Math.round(15000 * corporateGrowthRate), totalSalary: Math.round(techCount - 1) * Math.round(15000 * corporateGrowthRate) },
+          { role: 'Product Managers', count: Math.min(2, Math.round(year / 2) + 1), avgSalary: Math.round(18000 * corporateGrowthRate), totalSalary: Math.min(2, Math.round(year / 2) + 1) * Math.round(18000 * corporateGrowthRate) },
+          { role: 'Legal & Compliance', count: 1, avgSalary: Math.round(12000 * corporateGrowthRate), totalSalary: Math.round(12000 * corporateGrowthRate) },
+          { role: 'HR & Admin', count: 1, avgSalary: Math.round(9000 * corporateGrowthRate), totalSalary: Math.round(9000 * corporateGrowthRate) },
+          { role: 'Sales Team', count: Math.round(salesCount), avgSalary: Math.round(7000 * corporateGrowthRate), totalSalary: Math.round(salesCount) * Math.round(7000 * corporateGrowthRate) },
+          { role: 'Operations Support', count: Math.max(0, Math.round(operationsCount - 1)), avgSalary: Math.round(6000 * corporateGrowthRate), totalSalary: Math.max(0, Math.round(operationsCount - 1)) * Math.round(6000 * corporateGrowthRate) }
         ];
         details.totalCount = Math.round(executiveCount + techCount + salesCount + operationsCount);
         details.totalMonthlyCost = (costs.staffCorporate || 0) / 12;
@@ -425,11 +431,14 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const teacherCount = studentCount ? Math.ceil(studentCount / (currentScenario === 'pessimistic' ? 30 : currentScenario === 'optimistic' ? 20 : 25)) : 0;
         const supportCount = studentCount ? Math.ceil(studentCount / 200) : 0;
         
-        // Apply 50% increase + 8% year-over-year growth for flagship
-        const flagshipSalaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
-        const teacherSalary = Math.round(6500 * flagshipSalaryMultiplier);
-        const supportSalary = Math.round(4500 * flagshipSalaryMultiplier);
-        const managementSalary = Math.round(8000 * flagshipSalaryMultiplier);
+        // Keep premium teacher salaries with 8% growth - our competitive advantage!
+        // Adjust support staff to market-realistic 5% growth
+        const teacherGrowthRate = Math.pow(1.08, year - 1); // Premium teacher growth
+        const supportGrowthRate = Math.pow(1.05, year - 1); // Market-realistic support growth
+        
+        const teacherSalary = Math.round(6500 * 1.5 * teacherGrowthRate); // Keep premium teacher pay
+        const supportSalary = Math.round(4000 * supportGrowthRate); // Market-realistic support
+        const managementSalary = Math.round(6500 * supportGrowthRate); // Market-realistic management
         
         details.employees = [
           { role: 'Teachers', count: teacherCount, avgSalary: teacherSalary, totalSalary: teacherCount * teacherSalary },
@@ -446,10 +455,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const franchiseCount = yearProjection?.franchiseCount || 0;
         const totalBudget = (costs.staffFranchiseSupport || 0) / 12; // Monthly budget
         
-        // Apply 50% increase + 8% year-over-year growth for franchise support
-        const franchiseSalaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
-        const supportManagerSalary = Math.round(9000 * franchiseSalaryMultiplier);
-        const qaSalary = Math.round(8000 * franchiseSalaryMultiplier);
+        // Apply market-realistic 5% annual growth for franchise support
+        const franchiseGrowthRate = Math.pow(1.05, year - 1);
+        const supportManagerSalary = Math.round(9000 * franchiseGrowthRate);
+        const qaSalary = Math.round(7000 * franchiseGrowthRate);
         
         // Calculate employee counts based on actual budget
         const supportManagerCount = Math.max(2, Math.round(totalBudget * 0.7 / supportManagerSalary));
@@ -468,10 +477,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         details.categoryTitle = 'Franchising Development Team';
         const franchisingBudget = (yearProjection?.franchiseCount || 0) * 15000; // Monthly budget
         
-        // Apply 50% increase + 8% year-over-year growth for franchising team
-        const franchisingTeamSalaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
-        const devSpecialistSalary = Math.round(15000 * franchisingTeamSalaryMultiplier);
-        const coordinatorSalary = Math.round(12000 * franchisingTeamSalaryMultiplier);
+        // Apply market-realistic 5% annual growth for franchising team
+        const franchisingTeamGrowthRate = Math.pow(1.05, year - 1);
+        const devSpecialistSalary = Math.round(12000 * franchisingTeamGrowthRate);
+        const coordinatorSalary = Math.round(10000 * franchisingTeamGrowthRate);
         
         // Calculate employee counts based on actual budget
         const devSpecialistCount = Math.max(1, Math.round(franchisingBudget * 0.75 / devSpecialistSalary));
@@ -491,10 +500,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const adoptionStudents = yearProjection?.students?.adoption || 0;
         const adoptionBudget = (costs.staffAdoptionSupport || 0) / 12; // Monthly budget
         
-        // Apply 50% increase + 8% year-over-year growth for adoption support
-        const adoptionSalaryMultiplier = 1.5 * Math.pow(1.08, year - 1);
-        const adoptionSpecialistSalary = Math.round(6000 * adoptionSalaryMultiplier);
-        const trainingCoordinatorSalary = Math.round(7000 * adoptionSalaryMultiplier);
+        // Apply market-realistic 5% annual growth for adoption support
+        const adoptionGrowthRate = Math.pow(1.05, year - 1);
+        const adoptionSpecialistSalary = Math.round(6000 * adoptionGrowthRate);
+        const trainingCoordinatorSalary = Math.round(7000 * adoptionGrowthRate);
         
         // Calculate employee counts based on actual budget
         const adoptionSpecialistCount = Math.max(3, Math.round(adoptionBudget * 0.8 / adoptionSpecialistSalary));

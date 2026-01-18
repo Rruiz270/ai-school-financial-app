@@ -95,13 +95,17 @@ const ExportButton = ({
   };
 
   const handleExport = () => {
+    console.log('ExportButton handleExport clicked, selectedOptions:', selectedOptions);
     if (selectedOptions.length === 0) {
       alert('Please select at least one item to export');
       return;
     }
 
     if (onExport) {
+      console.log('Calling onExport with:', selectedOptions);
       onExport(selectedOptions);
+    } else {
+      console.error('onExport callback is not defined!');
     }
     setIsOpen(false);
     setSelectedOptions([]);
@@ -252,28 +256,52 @@ const ExportButton = ({
 
 // Excel Export Utility Functions
 export const exportToExcel = (sheets, filename = 'export') => {
-  const workbook = XLSX.utils.book_new();
+  try {
+    console.log('exportToExcel called with sheets:', sheets);
 
-  sheets.forEach(({ name, data }) => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    if (!sheets || sheets.length === 0) {
+      console.error('No sheets to export');
+      alert('No data to export. Please select at least one option.');
+      return;
+    }
 
-    // Auto-size columns
-    const colWidths = data.length > 0
-      ? Object.keys(data[0]).map(key => ({
-          wch: Math.max(
-            key.length,
-            ...data.map(row => String(row[key] || '').length)
-          ) + 2
-        }))
-      : [];
-    worksheet['!cols'] = colWidths;
+    const workbook = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, name.substring(0, 31)); // Excel sheet names max 31 chars
-  });
+    sheets.forEach(({ name, data }) => {
+      console.log(`Processing sheet: ${name}, data rows: ${data?.length || 0}`);
 
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  saveAs(blob, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      if (!data || data.length === 0) {
+        console.warn(`Sheet "${name}" has no data, skipping`);
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+
+      // Auto-size columns
+      const colWidths = data.length > 0
+        ? Object.keys(data[0]).map(key => ({
+            wch: Math.max(
+              key.length,
+              ...data.map(row => String(row[key] || '').length)
+            ) + 2
+          }))
+        : [];
+      worksheet['!cols'] = colWidths;
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, name.substring(0, 31)); // Excel sheet names max 31 chars
+    });
+
+    console.log('Writing workbook...');
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const finalFilename = `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    console.log('Saving file as:', finalFilename);
+    saveAs(blob, finalFilename);
+    console.log('Export complete!');
+  } catch (error) {
+    console.error('Export error:', error);
+    alert(`Export failed: ${error.message}`);
+  }
 };
 
 // Format currency for export

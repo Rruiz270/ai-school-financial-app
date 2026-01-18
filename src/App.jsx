@@ -212,6 +212,7 @@ function App() {
 
   // Handle export based on selected options
   const handleExport = (selectedOptions) => {
+    console.log('handleExport called with:', selectedOptions);
     const sheets = [];
     const currentDate = new Date().toISOString().split('T')[0];
 
@@ -755,8 +756,12 @@ function App() {
       });
     }
 
+    console.log('Sheets prepared:', sheets.length, sheets.map(s => s.name));
     if (sheets.length > 0) {
       exportToExcel(sheets, `AI_School_Brazil_Report`);
+    } else {
+      console.warn('No sheets were prepared for export');
+      alert('No data could be prepared for export. Please try selecting different options.');
     }
   };
 

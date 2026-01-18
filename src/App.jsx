@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge, RotateCcw, Wallet } from 'lucide-react';
-import { FinancialModel, DEFAULT_PARAMETERS, SCENARIO_PRESETS } from './utils/financialModel';
+import { FinancialModel, DEFAULT_PARAMETERS, SCENARIO_PRESETS, INVESTMENT_PHASES } from './utils/financialModel';
 import Dashboard from './components/Dashboard';
 import ParameterControl from './components/ParameterControl';
 import PresentationMode from './components/PresentationMode';
@@ -12,6 +12,7 @@ import UnitEconomics from './components/UnitEconomics';
 import IntegratedDashboard from './components/IntegratedDashboard';
 import SimpleIntegrated from './components/SimpleIntegrated';
 import ErrorBoundary from './components/ErrorBoundary';
+import ExportButton, { exportToExcel, formatCurrencyForExport, formatPercentageForExport } from './components/ExportButton';
 
 // Public Sector Scenario Presets (copied from PublicPartnerships)
 const PUBLIC_SCENARIO_PRESETS = {
@@ -150,13 +151,343 @@ function App() {
     };
     setCurrentScenario('realistic');
     setParameters(realisticParams);
-    
+
     // Reset public sector to optimistic scenario (default for public)
     setCurrentPublicScenario('optimistic');
     setPublicModelData(generatePublicFinancialData('optimistic'));
-    
+
     // The public sector will reset itself when it receives the new initialScenario prop
     // This will trigger a re-render and the PublicPartnerships component will initialize with optimistic
+  };
+
+  // Export options based on current active tab
+  const getExportOptions = () => {
+    const baseOptions = [
+      { id: 'summary', label: 'Executive Summary', description: 'Key metrics and KPIs' },
+    ];
+
+    switch (activeTab) {
+      case 'dashboard':
+        return [
+          ...baseOptions,
+          { id: 'private-10year', label: 'Private 10-Year Projections', description: 'Year-by-year financial data' },
+          { id: 'private-metrics', label: 'Key Metrics', description: 'IRR, NPV, Payback, etc.' },
+          { id: 'private-students', label: 'Student Growth', description: 'Enrollment projections' },
+        ];
+      case 'public':
+        return [
+          ...baseOptions,
+          { id: 'public-10year', label: 'Public 10-Year Projections', description: 'Year-by-year public sector data' },
+          { id: 'public-municipalities', label: 'Municipality Growth', description: 'Partnership expansion' },
+          { id: 'public-revenue', label: 'Public Revenue Breakdown', description: 'Revenue by category' },
+        ];
+      case 'consolidated':
+        return [
+          ...baseOptions,
+          { id: 'consolidated-projections', label: 'Consolidated Projections', description: 'Combined private + public' },
+          { id: 'consolidated-revenue', label: 'Total Revenue', description: 'Combined revenue streams' },
+          { id: 'consolidated-ebitda', label: 'EBITDA Analysis', description: 'Profitability metrics' },
+        ];
+      case 'cashflow':
+        return [
+          ...baseOptions,
+          { id: 'cashflow-10year', label: 'Cash Flow Projections', description: '10-year cash flow data' },
+          { id: 'investment-phases', label: 'Investment Phases', description: 'CAPEX and funding breakdown' },
+          { id: 'funding-sources', label: 'Funding Sources', description: 'Bridge, Desenvolve SP, Prefeitura' },
+        ];
+      case 'uniteconomics':
+        return [
+          ...baseOptions,
+          { id: 'unit-economics', label: 'Unit Economics', description: 'Per-student metrics' },
+          { id: 'cac-ltv', label: 'CAC & LTV Analysis', description: 'Customer acquisition metrics' },
+        ];
+      case 'yearly':
+        return [
+          ...baseOptions,
+          { id: 'yearly-breakdown', label: 'Year-by-Year Details', description: 'Detailed annual projections' },
+        ];
+      default:
+        return baseOptions;
+    }
+  };
+
+  // Handle export based on selected options
+  const handleExport = (selectedOptions) => {
+    const sheets = [];
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    // Executive Summary
+    if (selectedOptions.includes('summary')) {
+      sheets.push({
+        name: 'Executive Summary',
+        data: [
+          { Metric: 'Year 10 Revenue', Value: formatCurrencyForExport(financialData.summary.year10Revenue), Unit: 'BRL' },
+          { Metric: 'Year 10 EBITDA', Value: formatCurrencyForExport(financialData.summary.year10Ebitda), Unit: 'BRL' },
+          { Metric: 'IRR', Value: formatPercentageForExport(financialData.summary.irr), Unit: '%' },
+          { Metric: 'NPV', Value: formatCurrencyForExport(financialData.summary.npv), Unit: 'BRL' },
+          { Metric: 'Payback Period', Value: financialData.summary.paybackPeriod, Unit: 'Years' },
+          { Metric: 'Year 10 Students', Value: financialData.summary.year10Students, Unit: 'Students' },
+          { Metric: 'Private Scenario', Value: currentScenario, Unit: '' },
+          { Metric: 'Public Scenario', Value: currentPublicScenario, Unit: '' },
+          { Metric: 'Report Date', Value: currentDate, Unit: '' },
+        ]
+      });
+    }
+
+    // Private 10-Year Projections
+    if (selectedOptions.includes('private-10year')) {
+      sheets.push({
+        name: 'Private Projections',
+        data: financialData.yearlyData.map(year => ({
+          Year: year.year,
+          'Calendar Year': 2026 + year.year,
+          Students: year.students,
+          'Revenue (BRL)': formatCurrencyForExport(year.revenue),
+          'COGS (BRL)': formatCurrencyForExport(year.cogs),
+          'Gross Profit (BRL)': formatCurrencyForExport(year.grossProfit),
+          'Gross Margin (%)': formatPercentageForExport(year.grossMargin),
+          'OpEx (BRL)': formatCurrencyForExport(year.opex),
+          'EBITDA (BRL)': formatCurrencyForExport(year.ebitda),
+          'EBITDA Margin (%)': formatPercentageForExport(year.ebitdaMargin),
+        }))
+      });
+    }
+
+    // Private Key Metrics
+    if (selectedOptions.includes('private-metrics')) {
+      sheets.push({
+        name: 'Private Metrics',
+        data: [
+          { Metric: 'Total 10-Year Revenue', Value: formatCurrencyForExport(financialData.yearlyData.reduce((sum, y) => sum + y.revenue, 0)) },
+          { Metric: 'Total 10-Year EBITDA', Value: formatCurrencyForExport(financialData.yearlyData.reduce((sum, y) => sum + y.ebitda, 0)) },
+          { Metric: 'Average Gross Margin', Value: formatPercentageForExport(financialData.yearlyData.reduce((sum, y) => sum + y.grossMargin, 0) / 10) },
+          { Metric: 'Average EBITDA Margin', Value: formatPercentageForExport(financialData.yearlyData.reduce((sum, y) => sum + y.ebitdaMargin, 0) / 10) },
+          { Metric: 'IRR', Value: formatPercentageForExport(financialData.summary.irr) },
+          { Metric: 'NPV', Value: formatCurrencyForExport(financialData.summary.npv) },
+        ]
+      });
+    }
+
+    // Student Growth
+    if (selectedOptions.includes('private-students')) {
+      sheets.push({
+        name: 'Student Growth',
+        data: financialData.yearlyData.map(year => ({
+          Year: year.year,
+          'Calendar Year': 2026 + year.year,
+          'Total Students': year.students,
+          'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
+        }))
+      });
+    }
+
+    // Public 10-Year Projections
+    if (selectedOptions.includes('public-10year') && publicModelData) {
+      sheets.push({
+        name: 'Public Projections',
+        data: publicModelData.map((year, index) => ({
+          Year: index + 1,
+          'Calendar Year': 2027 + index,
+          Students: year.students,
+          Municipalities: year.municipalities,
+          'Total Revenue (BRL)': formatCurrencyForExport(year.revenue?.total || year.totalRevenue || 0),
+          'Costs (BRL)': formatCurrencyForExport(year.costs || 0),
+          'EBITDA (BRL)': formatCurrencyForExport(year.ebitda || 0),
+          'Margin (%)': formatPercentageForExport(year.margin || 0),
+        }))
+      });
+    }
+
+    // Public Municipalities
+    if (selectedOptions.includes('public-municipalities') && publicModelData) {
+      sheets.push({
+        name: 'Municipality Growth',
+        data: publicModelData.map((year, index) => ({
+          Year: index + 1,
+          'Calendar Year': 2027 + index,
+          Municipalities: year.municipalities,
+          'Students': year.students,
+          'Students per Municipality': Math.round(year.students / (year.municipalities || 1)),
+        }))
+      });
+    }
+
+    // Public Revenue Breakdown
+    if (selectedOptions.includes('public-revenue') && publicModelData) {
+      sheets.push({
+        name: 'Public Revenue Breakdown',
+        data: publicModelData.map((year, index) => ({
+          Year: index + 1,
+          'Calendar Year': 2027 + index,
+          'Monthly Revenue': formatCurrencyForExport(year.revenue?.monthly || 0),
+          'Setup Revenue': formatCurrencyForExport(year.revenue?.setup || 0),
+          'Technology Revenue': formatCurrencyForExport(year.revenue?.technology || 0),
+          'Training Revenue': formatCurrencyForExport(year.revenue?.training || 0),
+          'Total Revenue': formatCurrencyForExport(year.revenue?.total || year.totalRevenue || 0),
+        }))
+      });
+    }
+
+    // Consolidated Projections
+    if (selectedOptions.includes('consolidated-projections')) {
+      sheets.push({
+        name: 'Consolidated Projections',
+        data: financialData.yearlyData.map((privateYear, index) => {
+          const publicYear = publicModelData?.[index] || {};
+          return {
+            Year: privateYear.year,
+            'Calendar Year': 2026 + privateYear.year,
+            'Private Revenue': formatCurrencyForExport(privateYear.revenue),
+            'Public Revenue': formatCurrencyForExport(publicYear.revenue?.total || 0),
+            'Total Revenue': formatCurrencyForExport(privateYear.revenue + (publicYear.revenue?.total || 0)),
+            'Private EBITDA': formatCurrencyForExport(privateYear.ebitda),
+            'Public EBITDA': formatCurrencyForExport(publicYear.ebitda || 0),
+            'Total EBITDA': formatCurrencyForExport(privateYear.ebitda + (publicYear.ebitda || 0)),
+          };
+        })
+      });
+    }
+
+    // Consolidated Revenue
+    if (selectedOptions.includes('consolidated-revenue')) {
+      sheets.push({
+        name: 'Total Revenue',
+        data: financialData.yearlyData.map((privateYear, index) => {
+          const publicYear = publicModelData?.[index] || {};
+          return {
+            Year: privateYear.year,
+            'Calendar Year': 2026 + privateYear.year,
+            'Private Revenue': formatCurrencyForExport(privateYear.revenue),
+            'Public Revenue': formatCurrencyForExport(publicYear.revenue?.total || 0),
+            'Combined Total': formatCurrencyForExport(privateYear.revenue + (publicYear.revenue?.total || 0)),
+          };
+        })
+      });
+    }
+
+    // EBITDA Analysis
+    if (selectedOptions.includes('consolidated-ebitda')) {
+      sheets.push({
+        name: 'EBITDA Analysis',
+        data: financialData.yearlyData.map((privateYear, index) => {
+          const publicYear = publicModelData?.[index] || {};
+          const totalRevenue = privateYear.revenue + (publicYear.revenue?.total || 0);
+          const totalEbitda = privateYear.ebitda + (publicYear.ebitda || 0);
+          return {
+            Year: privateYear.year,
+            'Calendar Year': 2026 + privateYear.year,
+            'Private EBITDA': formatCurrencyForExport(privateYear.ebitda),
+            'Private Margin': formatPercentageForExport(privateYear.ebitdaMargin),
+            'Public EBITDA': formatCurrencyForExport(publicYear.ebitda || 0),
+            'Public Margin': formatPercentageForExport(publicYear.margin || 0),
+            'Total EBITDA': formatCurrencyForExport(totalEbitda),
+            'Blended Margin': formatPercentageForExport(totalRevenue > 0 ? totalEbitda / totalRevenue : 0),
+          };
+        })
+      });
+    }
+
+    // Cash Flow Projections
+    if (selectedOptions.includes('cashflow-10year')) {
+      sheets.push({
+        name: 'Cash Flow',
+        data: financialData.yearlyData.map((year, index) => {
+          const publicYear = publicModelData?.[index] || {};
+          return {
+            Year: year.year,
+            'Calendar Year': 2026 + year.year,
+            'Private Revenue': formatCurrencyForExport(year.revenue),
+            'Public Revenue': formatCurrencyForExport(publicYear.revenue?.total || 0),
+            'Total Inflow': formatCurrencyForExport(year.revenue + (publicYear.revenue?.total || 0)),
+            'Private EBITDA': formatCurrencyForExport(year.ebitda),
+            'Public EBITDA': formatCurrencyForExport(publicYear.ebitda || 0),
+            'Net Cash Flow': formatCurrencyForExport(year.ebitda + (publicYear.ebitda || 0)),
+          };
+        })
+      });
+    }
+
+    // Investment Phases
+    if (selectedOptions.includes('investment-phases')) {
+      const phases = INVESTMENT_PHASES || {};
+      sheets.push({
+        name: 'Investment Phases',
+        data: [
+          { Phase: 'Phase 1 - 2026', Category: 'Semester 1 (Jan-Jul)', Amount: 10000000, Description: 'Architecture, People, Technology (Bridge Funded)' },
+          { Phase: 'Phase 1 - 2026', Category: 'Semester 2 (Aug-Dec)', Amount: 15000000, Description: 'People, Tech, CAPEX (Multi-source)' },
+          { Phase: 'Phase 2 - 2027', Category: 'Full Year', Amount: 15000000, Description: 'Additional CAPEX while operating' },
+          { Phase: 'Total', Category: 'All Phases', Amount: 40000000, Description: 'Total CAPEX Investment' },
+        ]
+      });
+    }
+
+    // Funding Sources
+    if (selectedOptions.includes('funding-sources')) {
+      sheets.push({
+        name: 'Funding Sources',
+        data: [
+          { Source: 'Bridge Investment', Amount: 12500000, 'Repayment': 'August 2027', Notes: 'Initial funding for Phase 1' },
+          { Source: 'Desenvolve SP', Amount: 30000000, 'Repayment': 'N/A', Notes: 'CAPEX financing - disbursed August 2027' },
+          { Source: 'Prefeitura Subsidy', Amount: 10000000, 'Repayment': 'N/A', Notes: '25% of total R$40M CAPEX (historic building)' },
+          { Source: 'Total Funding', Amount: 52500000, 'Repayment': '', Notes: 'Total external funding' },
+        ]
+      });
+    }
+
+    // Unit Economics
+    if (selectedOptions.includes('unit-economics')) {
+      sheets.push({
+        name: 'Unit Economics',
+        data: financialData.yearlyData.map(year => ({
+          Year: year.year,
+          'Calendar Year': 2026 + year.year,
+          Students: year.students,
+          'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
+          'COGS per Student': formatCurrencyForExport(year.cogs / year.students),
+          'Gross Profit per Student': formatCurrencyForExport(year.grossProfit / year.students),
+          'EBITDA per Student': formatCurrencyForExport(year.ebitda / year.students),
+        }))
+      });
+    }
+
+    // CAC & LTV
+    if (selectedOptions.includes('cac-ltv')) {
+      sheets.push({
+        name: 'CAC & LTV Analysis',
+        data: financialData.yearlyData.map(year => ({
+          Year: year.year,
+          'Calendar Year': 2026 + year.year,
+          'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
+          'Estimated CAC': formatCurrencyForExport((year.opex * 0.3) / Math.max(1, year.students - (financialData.yearlyData[year.year - 2]?.students || 0))),
+          'Annual LTV': formatCurrencyForExport(year.revenue / year.students),
+          'Est. 3-Year LTV': formatCurrencyForExport((year.revenue / year.students) * 2.5),
+        }))
+      });
+    }
+
+    // Yearly Breakdown
+    if (selectedOptions.includes('yearly-breakdown')) {
+      sheets.push({
+        name: 'Year-by-Year Details',
+        data: financialData.yearlyData.map(year => ({
+          Year: year.year,
+          'Calendar Year': 2026 + year.year,
+          Students: year.students,
+          'Revenue': formatCurrencyForExport(year.revenue),
+          'COGS': formatCurrencyForExport(year.cogs),
+          'Gross Profit': formatCurrencyForExport(year.grossProfit),
+          'Gross Margin (%)': formatPercentageForExport(year.grossMargin),
+          'OpEx': formatCurrencyForExport(year.opex),
+          'EBITDA': formatCurrencyForExport(year.ebitda),
+          'EBITDA Margin (%)': formatPercentageForExport(year.ebitdaMargin),
+          'Net Income': formatCurrencyForExport(year.netIncome || year.ebitda * 0.66),
+        }))
+      });
+    }
+
+    if (sheets.length > 0) {
+      exportToExcel(sheets, `AI_School_Brazil_${activeTab}_Report`);
+    }
   };
 
   const tabs = [
@@ -305,6 +636,14 @@ function App() {
                 </div>
               </div>
               
+              {/* Export Button */}
+              <ExportButton
+                exportOptions={getExportOptions()}
+                onExport={handleExport}
+                buttonText="Export"
+                className=""
+              />
+
               {/* Reset All Button */}
               <button
                 onClick={resetAllToDefault}

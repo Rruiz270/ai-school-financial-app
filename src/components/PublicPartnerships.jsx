@@ -30,7 +30,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     pilotMunicipalities: 0,
     year5Municipalities: 12,
     year10Municipalities: 80,
-    revenuePerStudentMonth: 15, // R$15/student/month (R$180/year) for public sector
+    revenuePerStudentMonth: 10, // R$10/student/month (R$120/year) for public sector
     marginsPublic: 0.35
   },
   pessimistic: {
@@ -55,7 +55,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     pilotMunicipalities: 0,
     year5Municipalities: 10,
     year10Municipalities: 64,
-    revenuePerStudentMonth: 12, // R$12/student/month (20% lower)
+    revenuePerStudentMonth: 7.5, // R$7.50/student/month (R$90/year)
     marginsPublic: 0.30
   },
   optimistic: {
@@ -80,7 +80,7 @@ const PUBLIC_SCENARIO_PRESETS = {
     pilotMunicipalities: 0,
     year5Municipalities: 14,
     year10Municipalities: 96,
-    revenuePerStudentMonth: 18, // R$18/student/month (20% higher)
+    revenuePerStudentMonth: 12.5, // R$12.50/student/month (R$150/year)
     marginsPublic: 0.40
   }
 };

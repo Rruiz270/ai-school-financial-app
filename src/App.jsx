@@ -216,17 +216,28 @@ function App() {
     const sheets = [];
     const currentDate = new Date().toISOString().split('T')[0];
 
+    // Safety checks for data availability
+    const yearlyData = financialData?.yearlyData || [];
+    const summary = financialData?.summary || {};
+    const publicData = publicModelData || [];
+
+    console.log('Data check - yearlyData length:', yearlyData.length, 'publicData length:', publicData.length);
+
+    if (yearlyData.length === 0) {
+      console.warn('No yearly data available for export');
+    }
+
     // Executive Summary
     if (selectedOptions.includes('summary')) {
       sheets.push({
         name: 'Executive Summary',
         data: [
-          { Metric: 'Year 10 Revenue', Value: formatCurrencyForExport(financialData.summary.year10Revenue), Unit: 'BRL' },
-          { Metric: 'Year 10 EBITDA', Value: formatCurrencyForExport(financialData.summary.year10Ebitda), Unit: 'BRL' },
-          { Metric: 'IRR', Value: formatPercentageForExport(financialData.summary.irr), Unit: '%' },
-          { Metric: 'NPV', Value: formatCurrencyForExport(financialData.summary.npv), Unit: 'BRL' },
-          { Metric: 'Payback Period', Value: financialData.summary.paybackPeriod, Unit: 'Years' },
-          { Metric: 'Year 10 Students', Value: financialData.summary.year10Students, Unit: 'Students' },
+          { Metric: 'Year 10 Revenue', Value: formatCurrencyForExport(summary.year10Revenue || 0), Unit: 'BRL' },
+          { Metric: 'Year 10 EBITDA', Value: formatCurrencyForExport(summary.year10Ebitda || 0), Unit: 'BRL' },
+          { Metric: 'IRR', Value: formatPercentageForExport(summary.irr || 0), Unit: '%' },
+          { Metric: 'NPV', Value: formatCurrencyForExport(summary.npv || 0), Unit: 'BRL' },
+          { Metric: 'Payback Period', Value: summary.paybackPeriod || 'N/A', Unit: 'Years' },
+          { Metric: 'Year 10 Students', Value: summary.year10Students || 0, Unit: 'Students' },
           { Metric: 'Private Scenario', Value: currentScenario, Unit: '' },
           { Metric: 'Public Scenario', Value: currentPublicScenario, Unit: '' },
           { Metric: 'Report Date', Value: currentDate, Unit: '' },
@@ -238,7 +249,7 @@ function App() {
     if (selectedOptions.includes('private-10year')) {
       sheets.push({
         name: 'Private Projections',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           Students: year.students,
@@ -258,12 +269,12 @@ function App() {
       sheets.push({
         name: 'Private Metrics',
         data: [
-          { Metric: 'Total 10-Year Revenue', Value: formatCurrencyForExport(financialData.yearlyData.reduce((sum, y) => sum + y.revenue, 0)) },
-          { Metric: 'Total 10-Year EBITDA', Value: formatCurrencyForExport(financialData.yearlyData.reduce((sum, y) => sum + y.ebitda, 0)) },
-          { Metric: 'Average Gross Margin', Value: formatPercentageForExport(financialData.yearlyData.reduce((sum, y) => sum + y.grossMargin, 0) / 10) },
-          { Metric: 'Average EBITDA Margin', Value: formatPercentageForExport(financialData.yearlyData.reduce((sum, y) => sum + y.ebitdaMargin, 0) / 10) },
-          { Metric: 'IRR', Value: formatPercentageForExport(financialData.summary.irr) },
-          { Metric: 'NPV', Value: formatCurrencyForExport(financialData.summary.npv) },
+          { Metric: 'Total 10-Year Revenue', Value: formatCurrencyForExport(yearlyData.reduce((sum, y) => sum + y.revenue, 0)) },
+          { Metric: 'Total 10-Year EBITDA', Value: formatCurrencyForExport(yearlyData.reduce((sum, y) => sum + y.ebitda, 0)) },
+          { Metric: 'Average Gross Margin', Value: formatPercentageForExport(yearlyData.reduce((sum, y) => sum + y.grossMargin, 0) / 10) },
+          { Metric: 'Average EBITDA Margin', Value: formatPercentageForExport(yearlyData.reduce((sum, y) => sum + y.ebitdaMargin, 0) / 10) },
+          { Metric: 'IRR', Value: formatPercentageForExport(summary.irr || 0) },
+          { Metric: 'NPV', Value: formatCurrencyForExport(summary.npv || 0) },
         ]
       });
     }
@@ -272,7 +283,7 @@ function App() {
     if (selectedOptions.includes('private-students')) {
       sheets.push({
         name: 'Student Growth',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           'Total Students': year.students,
@@ -282,10 +293,10 @@ function App() {
     }
 
     // Public 10-Year Projections
-    if (selectedOptions.includes('public-10year') && publicModelData) {
+    if (selectedOptions.includes('public-10year') && publicData.length > 0) {
       sheets.push({
         name: 'Public Projections',
-        data: publicModelData.map((year, index) => ({
+        data: publicData.map((year, index) => ({
           Year: index + 1,
           'Calendar Year': 2027 + index,
           Students: year.students,
@@ -299,10 +310,10 @@ function App() {
     }
 
     // Public Municipalities
-    if (selectedOptions.includes('public-municipalities') && publicModelData) {
+    if (selectedOptions.includes('public-municipalities') && publicData.length > 0) {
       sheets.push({
         name: 'Municipality Growth',
-        data: publicModelData.map((year, index) => ({
+        data: publicData.map((year, index) => ({
           Year: index + 1,
           'Calendar Year': 2027 + index,
           Municipalities: year.municipalities,
@@ -313,10 +324,10 @@ function App() {
     }
 
     // Public Revenue Breakdown
-    if (selectedOptions.includes('public-revenue') && publicModelData) {
+    if (selectedOptions.includes('public-revenue') && publicData.length > 0) {
       sheets.push({
         name: 'Public Revenue Breakdown',
-        data: publicModelData.map((year, index) => ({
+        data: publicData.map((year, index) => ({
           Year: index + 1,
           'Calendar Year': 2027 + index,
           'Monthly Revenue': formatCurrencyForExport(year.revenue?.monthly || 0),
@@ -332,8 +343,8 @@ function App() {
     if (selectedOptions.includes('consolidated-projections')) {
       sheets.push({
         name: 'Consolidated Projections',
-        data: financialData.yearlyData.map((privateYear, index) => {
-          const publicYear = publicModelData?.[index] || {};
+        data: yearlyData.map((privateYear, index) => {
+          const publicYear = publicData[index] || {};
           return {
             Year: privateYear.year,
             'Calendar Year': 2026 + privateYear.year,
@@ -352,8 +363,8 @@ function App() {
     if (selectedOptions.includes('consolidated-revenue')) {
       sheets.push({
         name: 'Total Revenue',
-        data: financialData.yearlyData.map((privateYear, index) => {
-          const publicYear = publicModelData?.[index] || {};
+        data: yearlyData.map((privateYear, index) => {
+          const publicYear = publicData[index] || {};
           return {
             Year: privateYear.year,
             'Calendar Year': 2026 + privateYear.year,
@@ -369,8 +380,8 @@ function App() {
     if (selectedOptions.includes('consolidated-ebitda')) {
       sheets.push({
         name: 'EBITDA Analysis',
-        data: financialData.yearlyData.map((privateYear, index) => {
-          const publicYear = publicModelData?.[index] || {};
+        data: yearlyData.map((privateYear, index) => {
+          const publicYear = publicData[index] || {};
           const totalRevenue = privateYear.revenue + (publicYear.revenue?.total || 0);
           const totalEbitda = privateYear.ebitda + (publicYear.ebitda || 0);
           return {
@@ -391,8 +402,8 @@ function App() {
     if (selectedOptions.includes('cashflow-10year')) {
       sheets.push({
         name: 'Cash Flow',
-        data: financialData.yearlyData.map((year, index) => {
-          const publicYear = publicModelData?.[index] || {};
+        data: yearlyData.map((year, index) => {
+          const publicYear = publicData[index] || {};
           return {
             Year: year.year,
             'Calendar Year': 2026 + year.year,
@@ -438,7 +449,7 @@ function App() {
     if (selectedOptions.includes('unit-economics')) {
       sheets.push({
         name: 'Unit Economics',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           Students: year.students,
@@ -454,11 +465,11 @@ function App() {
     if (selectedOptions.includes('cac-ltv')) {
       sheets.push({
         name: 'CAC & LTV Analysis',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
-          'Estimated CAC': formatCurrencyForExport((year.opex * 0.3) / Math.max(1, year.students - (financialData.yearlyData[year.year - 2]?.students || 0))),
+          'Estimated CAC': formatCurrencyForExport((year.opex * 0.3) / Math.max(1, year.students - (yearlyData[year.year - 2]?.students || 0))),
           'Annual LTV': formatCurrencyForExport(year.revenue / year.students),
           'Est. 3-Year LTV': formatCurrencyForExport((year.revenue / year.students) * 2.5),
         }))
@@ -469,7 +480,7 @@ function App() {
     if (selectedOptions.includes('yearly-breakdown')) {
       sheets.push({
         name: 'Year-by-Year Details',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           Students: year.students,
@@ -491,18 +502,18 @@ function App() {
       sheets.push({
         name: 'Summary',
         data: [
-          { Metric: 'Year 10 Revenue', Value: formatCurrencyForExport(financialData.summary.year10Revenue), Unit: 'BRL' },
-          { Metric: 'Year 10 EBITDA', Value: formatCurrencyForExport(financialData.summary.year10Ebitda), Unit: 'BRL' },
-          { Metric: 'IRR', Value: formatPercentageForExport(financialData.summary.irr), Unit: '%' },
-          { Metric: 'NPV', Value: formatCurrencyForExport(financialData.summary.npv), Unit: 'BRL' },
-          { Metric: 'Payback Period', Value: financialData.summary.paybackPeriod, Unit: 'Years' },
-          { Metric: 'Year 10 Students', Value: financialData.summary.year10Students, Unit: 'Students' },
+          { Metric: 'Year 10 Revenue', Value: formatCurrencyForExport(summary.year10Revenue || 0), Unit: 'BRL' },
+          { Metric: 'Year 10 EBITDA', Value: formatCurrencyForExport(summary.year10Ebitda || 0), Unit: 'BRL' },
+          { Metric: 'IRR', Value: formatPercentageForExport(summary.irr || 0), Unit: '%' },
+          { Metric: 'NPV', Value: formatCurrencyForExport(summary.npv || 0), Unit: 'BRL' },
+          { Metric: 'Payback Period', Value: summary.paybackPeriod || 'N/A', Unit: 'Years' },
+          { Metric: 'Year 10 Students', Value: summary.year10Students || 0, Unit: 'Students' },
           { Metric: 'Report Date', Value: currentDate, Unit: '' },
         ]
       });
       sheets.push({
         name: 'All Private Data',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           Students: year.students,
@@ -515,10 +526,10 @@ function App() {
           'EBITDA Margin %': formatPercentageForExport(year.ebitdaMargin),
         }))
       });
-      if (publicModelData) {
+      if (publicData.length > 0) {
         sheets.push({
           name: 'All Public Data',
-          data: publicModelData.map((year, index) => ({
+          data: publicData.map((year, index) => ({
             Year: index + 1,
             'Calendar Year': 2027 + index,
             Students: year.students,
@@ -536,7 +547,7 @@ function App() {
     if (selectedOptions.includes('private-revenue-detail')) {
       sheets.push({
         name: 'Private Revenue Details',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           Students: year.students,
@@ -553,7 +564,7 @@ function App() {
     if (selectedOptions.includes('private-costs')) {
       sheets.push({
         name: 'Private Cost Structure',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           'Total Revenue': formatCurrencyForExport(year.revenue),
@@ -570,10 +581,10 @@ function App() {
     }
 
     // Public Students
-    if (selectedOptions.includes('public-students') && publicModelData) {
+    if (selectedOptions.includes('public-students') && publicData.length > 0) {
       sheets.push({
         name: 'Public Student Adoption',
-        data: publicModelData.map((year, index) => ({
+        data: publicData.map((year, index) => ({
           Year: index + 1,
           'Calendar Year': 2027 + index,
           'Public Students': year.students,
@@ -588,8 +599,8 @@ function App() {
     if (selectedOptions.includes('consolidated-students')) {
       sheets.push({
         name: 'Total Student Base',
-        data: financialData.yearlyData.map((privateYear, index) => {
-          const publicYear = publicModelData?.[index] || {};
+        data: yearlyData.map((privateYear, index) => {
+          const publicYear = publicData[index] || {};
           return {
             Year: privateYear.year,
             'Calendar Year': 2026 + privateYear.year,
@@ -613,17 +624,17 @@ function App() {
           return {
             Month: month,
             'Calendar': `${month} 2027`,
-            'Private Revenue': formatCurrencyForExport((financialData.yearlyData[0]?.revenue || 0) / 12),
+            'Private Revenue': formatCurrencyForExport((yearlyData[0]?.revenue || 0) / 12),
             'Public Revenue': 0, // No public in 2027
-            'Operating Costs': formatCurrencyForExport(((financialData.yearlyData[0]?.cogs || 0) + (financialData.yearlyData[0]?.opex || 0)) / 12),
+            'Operating Costs': formatCurrencyForExport(((yearlyData[0]?.cogs || 0) + (yearlyData[0]?.opex || 0)) / 12),
             'CAPEX': index === 0 ? 0 : (index < 7 ? formatCurrencyForExport(10000000 / 7) : formatCurrencyForExport(15000000 / 5)),
             'Bridge Funding': index === 0 ? 12500000 : 0,
             'Desenvolve SP': index === 7 ? 30000000 : 0,
             'Prefeitura': index === 7 ? 10000000 : 0,
             'Bridge Repayment': index === 7 ? -12500000 : 0,
             'Net Cash Flow': formatCurrencyForExport(
-              ((financialData.yearlyData[0]?.revenue || 0) / 12) -
-              (((financialData.yearlyData[0]?.cogs || 0) + (financialData.yearlyData[0]?.opex || 0)) / 12) +
+              ((yearlyData[0]?.revenue || 0) / 12) -
+              (((yearlyData[0]?.cogs || 0) + (yearlyData[0]?.opex || 0)) / 12) +
               (index === 0 ? 12500000 : 0) +
               (index === 7 ? 30000000 + 10000000 - 12500000 : 0) -
               (index < 7 ? 10000000 / 7 : 15000000 / 5)
@@ -666,7 +677,7 @@ function App() {
     if (selectedOptions.includes('margin-analysis')) {
       sheets.push({
         name: 'Margin Analysis',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           Revenue: formatCurrencyForExport(year.revenue),
@@ -683,8 +694,8 @@ function App() {
     if (selectedOptions.includes('yearly-comparison')) {
       sheets.push({
         name: 'YoY Growth Rates',
-        data: financialData.yearlyData.map((year, index) => {
-          const prevYear = index > 0 ? financialData.yearlyData[index - 1] : null;
+        data: yearlyData.map((year, index) => {
+          const prevYear = index > 0 ? yearlyData[index - 1] : null;
           return {
             Year: year.year,
             'Calendar Year': 2026 + year.year,
@@ -702,19 +713,19 @@ function App() {
     // Investor Summary
     if (selectedOptions.includes('investor-summary')) {
       const totalInvestment = 40000000;
-      const year10Ebitda = financialData.summary.year10Ebitda;
-      const year10Revenue = financialData.summary.year10Revenue;
+      const year10Ebitda = summary.year10Ebitda || 0;
+      const year10Revenue = summary.year10Revenue || 0;
       sheets.push({
         name: 'Investor Summary',
         data: [
           { Metric: 'Total Investment Required', Value: formatCurrencyForExport(totalInvestment), Notes: 'R$40M CAPEX' },
-          { Metric: 'IRR', Value: formatPercentageForExport(financialData.summary.irr), Notes: 'Internal Rate of Return' },
-          { Metric: 'NPV', Value: formatCurrencyForExport(financialData.summary.npv), Notes: 'Net Present Value' },
-          { Metric: 'Payback Period', Value: financialData.summary.paybackPeriod, Notes: 'Years to recover investment' },
+          { Metric: 'IRR', Value: formatPercentageForExport(summary.irr || 0), Notes: 'Internal Rate of Return' },
+          { Metric: 'NPV', Value: formatCurrencyForExport(summary.npv || 0), Notes: 'Net Present Value' },
+          { Metric: 'Payback Period', Value: summary.paybackPeriod || 'N/A', Notes: 'Years to recover investment' },
           { Metric: 'Year 10 Revenue', Value: formatCurrencyForExport(year10Revenue), Notes: 'Private sector only' },
           { Metric: 'Year 10 EBITDA', Value: formatCurrencyForExport(year10Ebitda), Notes: 'Private sector only' },
-          { Metric: 'Year 10 Students', Value: financialData.summary.year10Students, Notes: 'Private sector only' },
-          { Metric: 'Multiple on Invested Capital', Value: (year10Ebitda / totalInvestment).toFixed(2) + 'x', Notes: 'Year 10 EBITDA / Investment' },
+          { Metric: 'Year 10 Students', Value: summary.year10Students || 0, Notes: 'Private sector only' },
+          { Metric: 'Multiple on Invested Capital', Value: year10Ebitda > 0 ? (year10Ebitda / totalInvestment).toFixed(2) + 'x' : 'N/A', Notes: 'Year 10 EBITDA / Investment' },
         ]
       });
     }
@@ -724,8 +735,8 @@ function App() {
       const totalInvestment = 40000000;
       sheets.push({
         name: 'ROI Analysis',
-        data: financialData.yearlyData.map((year, index) => {
-          const cumulativeEbitda = financialData.yearlyData.slice(0, index + 1).reduce((sum, y) => sum + y.ebitda, 0);
+        data: yearlyData.map((year, index) => {
+          const cumulativeEbitda = yearlyData.slice(0, index + 1).reduce((sum, y) => sum + y.ebitda, 0);
           return {
             Year: year.year,
             'Calendar Year': 2026 + year.year,
@@ -742,7 +753,7 @@ function App() {
     if (selectedOptions.includes('valuation-multiples')) {
       sheets.push({
         name: 'Valuation Multiples',
-        data: financialData.yearlyData.map(year => ({
+        data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
           'Revenue': formatCurrencyForExport(year.revenue),

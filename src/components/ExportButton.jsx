@@ -95,7 +95,6 @@ const ExportButton = ({
   };
 
   const handleExport = () => {
-    console.log('ExportButton handleExport clicked, selectedOptions:', selectedOptions);
     if (selectedOptions.length === 0) {
       alert('Please select at least one item to export');
       return;
@@ -110,16 +109,11 @@ const ExportButton = ({
 
     // Then trigger export with stored options
     if (onExport) {
-      console.log('Calling onExport with:', optionsToExport);
       try {
         onExport(optionsToExport);
       } catch (error) {
-        console.error('Error in onExport:', error);
         alert('Export error: ' + error.message);
       }
-    } else {
-      console.error('onExport callback is not defined!');
-      alert('Export callback not defined');
     }
   };
 
@@ -242,16 +236,6 @@ const ExportButton = ({
                 >
                   Clear All
                 </button>
-                <span className="text-gray-300">|</span>
-                <button
-                  onClick={() => {
-                    console.log('Test export button clicked');
-                    testExport();
-                  }}
-                  className="text-xs text-green-600 hover:text-green-800"
-                >
-                  Test Export
-                </button>
               </div>
               <span className="text-xs text-gray-500 font-medium">
                 {selectedOptions.length} of {exportOptions.length} selected
@@ -276,48 +260,10 @@ const ExportButton = ({
   );
 };
 
-// Simple test export function
-export const testExport = () => {
-  try {
-    console.log('Testing simple export...');
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet([
-      { Test: 'Hello', Value: 123 },
-      { Test: 'World', Value: 456 }
-    ]);
-    XLSX.utils.book_append_sheet(wb, ws, 'Test');
-    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'test_export.xlsx';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    console.log('Test export complete!');
-    return true;
-  } catch (e) {
-    console.error('Test export failed:', e);
-    alert('Test export failed: ' + e.message);
-    return false;
-  }
-};
-
-// Make testExport available in browser console for debugging
-if (typeof window !== 'undefined') {
-  window.testExport = testExport;
-}
-
 // Excel Export Utility Functions
 export const exportToExcel = (sheets, filename = 'export') => {
   try {
-    console.log('exportToExcel called with sheets:', sheets);
-
     if (!sheets || sheets.length === 0) {
-      console.error('No sheets to export');
       alert('No data to export. Please select at least one option.');
       return;
     }
@@ -325,10 +271,7 @@ export const exportToExcel = (sheets, filename = 'export') => {
     const workbook = XLSX.utils.book_new();
 
     sheets.forEach(({ name, data }) => {
-      console.log(`Processing sheet: ${name}, data rows: ${data?.length || 0}`);
-
       if (!data || data.length === 0) {
-        console.warn(`Sheet "${name}" has no data, skipping`);
         return;
       }
 
@@ -348,11 +291,9 @@ export const exportToExcel = (sheets, filename = 'export') => {
       XLSX.utils.book_append_sheet(workbook, worksheet, name.substring(0, 31)); // Excel sheet names max 31 chars
     });
 
-    console.log('Writing workbook...');
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const finalFilename = `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    console.log('Saving file as:', finalFilename);
 
     // Try native download first, fallback to file-saver
     try {
@@ -364,14 +305,10 @@ export const exportToExcel = (sheets, filename = 'export') => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      console.log('Export complete using native download!');
     } catch (downloadError) {
-      console.log('Native download failed, trying file-saver:', downloadError);
       saveAs(blob, finalFilename);
-      console.log('Export complete using file-saver!');
     }
   } catch (error) {
-    console.error('Export error:', error);
     alert(`Export failed: ${error.message}`);
   }
 };

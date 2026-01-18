@@ -212,19 +212,22 @@ function App() {
 
   // Handle export based on selected options
   const handleExport = (selectedOptions) => {
-    console.log('handleExport called with:', selectedOptions);
     const sheets = [];
     const currentDate = new Date().toISOString().split('T')[0];
 
     // Safety checks for data availability
-    const yearlyData = financialData?.yearlyData || [];
+    // financialData has: projection (array of years), summary (object with metrics)
+    const projection = financialData?.projection || [];
     const summary = financialData?.summary || {};
     const publicData = publicModelData || [];
 
-    console.log('Data check - yearlyData length:', yearlyData.length, 'publicData length:', publicData.length);
+    // projection[0] is year 0, projection[1] is year 1, etc.
+    // We typically want years 1-10 (indices 1-10)
+    const yearlyData = projection.slice(1, 11); // Years 1-10
 
     if (yearlyData.length === 0) {
-      console.warn('No yearly data available for export');
+      alert('No financial data available to export. Please wait for the model to load.');
+      return;
     }
 
     // Executive Summary
@@ -252,14 +255,14 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          Students: year.students,
-          'Revenue (BRL)': formatCurrencyForExport(year.revenue),
-          'COGS (BRL)': formatCurrencyForExport(year.cogs),
-          'Gross Profit (BRL)': formatCurrencyForExport(year.grossProfit),
-          'Gross Margin (%)': formatPercentageForExport(year.grossMargin),
-          'OpEx (BRL)': formatCurrencyForExport(year.opex),
-          'EBITDA (BRL)': formatCurrencyForExport(year.ebitda),
-          'EBITDA Margin (%)': formatPercentageForExport(year.ebitdaMargin),
+          Students: year.students?.total || 0,
+          'Revenue (BRL)': formatCurrencyForExport(year.revenue?.total || 0),
+          'COGS (BRL)': formatCurrencyForExport(year.cogs || 0),
+          'Gross Profit (BRL)': formatCurrencyForExport(year.grossProfit || 0),
+          'Gross Margin (%)': formatPercentageForExport(year.grossMargin || 0),
+          'OpEx (BRL)': formatCurrencyForExport(year.opex || 0),
+          'EBITDA (BRL)': formatCurrencyForExport(year.ebitda || 0),
+          'EBITDA Margin (%)': formatPercentageForExport(year.ebitdaMargin || 0),
         }))
       });
     }
@@ -269,10 +272,10 @@ function App() {
       sheets.push({
         name: 'Private Metrics',
         data: [
-          { Metric: 'Total 10-Year Revenue', Value: formatCurrencyForExport(yearlyData.reduce((sum, y) => sum + y.revenue, 0)) },
-          { Metric: 'Total 10-Year EBITDA', Value: formatCurrencyForExport(yearlyData.reduce((sum, y) => sum + y.ebitda, 0)) },
-          { Metric: 'Average Gross Margin', Value: formatPercentageForExport(yearlyData.reduce((sum, y) => sum + y.grossMargin, 0) / 10) },
-          { Metric: 'Average EBITDA Margin', Value: formatPercentageForExport(yearlyData.reduce((sum, y) => sum + y.ebitdaMargin, 0) / 10) },
+          { Metric: 'Total 10-Year Revenue', Value: formatCurrencyForExport(yearlyData.reduce((sum, y) => sum + (y.revenue?.total || 0), 0)) },
+          { Metric: 'Total 10-Year EBITDA', Value: formatCurrencyForExport(yearlyData.reduce((sum, y) => sum + (y.ebitda || 0), 0)) },
+          { Metric: 'Average Gross Margin', Value: formatPercentageForExport(yearlyData.reduce((sum, y) => sum + (y.grossMargin || 0), 0) / 10) },
+          { Metric: 'Average EBITDA Margin', Value: formatPercentageForExport(yearlyData.reduce((sum, y) => sum + (y.ebitdaMargin || 0), 0) / 10) },
           { Metric: 'IRR', Value: formatPercentageForExport(summary.irr || 0) },
           { Metric: 'NPV', Value: formatCurrencyForExport(summary.npv || 0) },
         ]
@@ -286,8 +289,8 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          'Total Students': year.students,
-          'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
+          'Total Students': year.students?.total || 0,
+          'Revenue per Student': formatCurrencyForExport((year.revenue?.total || 0) / (year.students?.total || 1)),
         }))
       });
     }
@@ -299,7 +302,7 @@ function App() {
         data: publicData.map((year, index) => ({
           Year: index + 1,
           'Calendar Year': 2027 + index,
-          Students: year.students,
+          Students: year.students?.total || 0,
           Municipalities: year.municipalities,
           'Total Revenue (BRL)': formatCurrencyForExport(year.revenue?.total || year.totalRevenue || 0),
           'Costs (BRL)': formatCurrencyForExport(year.costs || 0),
@@ -317,7 +320,7 @@ function App() {
           Year: index + 1,
           'Calendar Year': 2027 + index,
           Municipalities: year.municipalities,
-          'Students': year.students,
+          'Students': year.students?.total || 0,
           'Students per Municipality': Math.round(year.students / (year.municipalities || 1)),
         }))
       });
@@ -345,15 +348,16 @@ function App() {
         name: 'Consolidated Projections',
         data: yearlyData.map((privateYear, index) => {
           const publicYear = publicData[index] || {};
+          const privateRev = privateYear.revenue?.total || 0;
           return {
             Year: privateYear.year,
             'Calendar Year': 2026 + privateYear.year,
-            'Private Revenue': formatCurrencyForExport(privateYear.revenue),
+            'Private Revenue': formatCurrencyForExport(privateRev),
             'Public Revenue': formatCurrencyForExport(publicYear.revenue?.total || 0),
-            'Total Revenue': formatCurrencyForExport(privateYear.revenue + (publicYear.revenue?.total || 0)),
-            'Private EBITDA': formatCurrencyForExport(privateYear.ebitda),
+            'Total Revenue': formatCurrencyForExport(privateRev + (publicYear.revenue?.total || 0)),
+            'Private EBITDA': formatCurrencyForExport(privateYear.ebitda || 0),
             'Public EBITDA': formatCurrencyForExport(publicYear.ebitda || 0),
-            'Total EBITDA': formatCurrencyForExport(privateYear.ebitda + (publicYear.ebitda || 0)),
+            'Total EBITDA': formatCurrencyForExport((privateYear.ebitda || 0) + (publicYear.ebitda || 0)),
           };
         })
       });
@@ -365,12 +369,13 @@ function App() {
         name: 'Total Revenue',
         data: yearlyData.map((privateYear, index) => {
           const publicYear = publicData[index] || {};
+          const privateRev = privateYear.revenue?.total || 0;
           return {
             Year: privateYear.year,
             'Calendar Year': 2026 + privateYear.year,
-            'Private Revenue': formatCurrencyForExport(privateYear.revenue),
+            'Private Revenue': formatCurrencyForExport(privateRev),
             'Public Revenue': formatCurrencyForExport(publicYear.revenue?.total || 0),
-            'Combined Total': formatCurrencyForExport(privateYear.revenue + (publicYear.revenue?.total || 0)),
+            'Combined Total': formatCurrencyForExport(privateRev + (publicYear.revenue?.total || 0)),
           };
         })
       });
@@ -382,13 +387,14 @@ function App() {
         name: 'EBITDA Analysis',
         data: yearlyData.map((privateYear, index) => {
           const publicYear = publicData[index] || {};
-          const totalRevenue = privateYear.revenue + (publicYear.revenue?.total || 0);
-          const totalEbitda = privateYear.ebitda + (publicYear.ebitda || 0);
+          const privateRev = privateYear.revenue?.total || 0;
+          const totalRevenue = privateRev + (publicYear.revenue?.total || 0);
+          const totalEbitda = (privateYear.ebitda || 0) + (publicYear.ebitda || 0);
           return {
             Year: privateYear.year,
             'Calendar Year': 2026 + privateYear.year,
-            'Private EBITDA': formatCurrencyForExport(privateYear.ebitda),
-            'Private Margin': formatPercentageForExport(privateYear.ebitdaMargin),
+            'Private EBITDA': formatCurrencyForExport(privateYear.ebitda || 0),
+            'Private Margin': formatPercentageForExport(privateYear.ebitdaMargin || 0),
             'Public EBITDA': formatCurrencyForExport(publicYear.ebitda || 0),
             'Public Margin': formatPercentageForExport(publicYear.margin || 0),
             'Total EBITDA': formatCurrencyForExport(totalEbitda),
@@ -404,15 +410,16 @@ function App() {
         name: 'Cash Flow',
         data: yearlyData.map((year, index) => {
           const publicYear = publicData[index] || {};
+          const privateRev = year.revenue?.total || 0;
           return {
             Year: year.year,
             'Calendar Year': 2026 + year.year,
-            'Private Revenue': formatCurrencyForExport(year.revenue),
+            'Private Revenue': formatCurrencyForExport(privateRev),
             'Public Revenue': formatCurrencyForExport(publicYear.revenue?.total || 0),
-            'Total Inflow': formatCurrencyForExport(year.revenue + (publicYear.revenue?.total || 0)),
-            'Private EBITDA': formatCurrencyForExport(year.ebitda),
+            'Total Inflow': formatCurrencyForExport(privateRev + (publicYear.revenue?.total || 0)),
+            'Private EBITDA': formatCurrencyForExport(year.ebitda || 0),
             'Public EBITDA': formatCurrencyForExport(publicYear.ebitda || 0),
-            'Net Cash Flow': formatCurrencyForExport(year.ebitda + (publicYear.ebitda || 0)),
+            'Net Cash Flow': formatCurrencyForExport((year.ebitda || 0) + (publicYear.ebitda || 0)),
           };
         })
       });
@@ -452,8 +459,8 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          Students: year.students,
-          'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
+          Students: year.students?.total || 0,
+          'Revenue per Student': formatCurrencyForExport((year.revenue?.total || 0) / (year.students?.total || 1)),
           'COGS per Student': formatCurrencyForExport(year.cogs / year.students),
           'Gross Profit per Student': formatCurrencyForExport(year.grossProfit / year.students),
           'EBITDA per Student': formatCurrencyForExport(year.ebitda / year.students),
@@ -468,10 +475,10 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
+          'Revenue per Student': formatCurrencyForExport((year.revenue?.total || 0) / (year.students?.total || 1)),
           'Estimated CAC': formatCurrencyForExport((year.opex * 0.3) / Math.max(1, year.students - (yearlyData[year.year - 2]?.students || 0))),
-          'Annual LTV': formatCurrencyForExport(year.revenue / year.students),
-          'Est. 3-Year LTV': formatCurrencyForExport((year.revenue / year.students) * 2.5),
+          'Annual LTV': formatCurrencyForExport((year.revenue?.total || 0) / (year.students?.total || 1)),
+          'Est. 3-Year LTV': formatCurrencyForExport(((year.revenue?.total || 0) / (year.students?.total || 1)) * 2.5),
         }))
       });
     }
@@ -483,8 +490,8 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          Students: year.students,
-          'Revenue': formatCurrencyForExport(year.revenue),
+          Students: year.students?.total || 0,
+          'Revenue': formatCurrencyForExport(year.revenue?.total || 0),
           'COGS': formatCurrencyForExport(year.cogs),
           'Gross Profit': formatCurrencyForExport(year.grossProfit),
           'Gross Margin (%)': formatPercentageForExport(year.grossMargin),
@@ -516,8 +523,8 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          Students: year.students,
-          Revenue: formatCurrencyForExport(year.revenue),
+          Students: year.students?.total || 0,
+          Revenue: formatCurrencyForExport(year.revenue?.total || 0),
           COGS: formatCurrencyForExport(year.cogs),
           'Gross Profit': formatCurrencyForExport(year.grossProfit),
           'Gross Margin %': formatPercentageForExport(year.grossMargin),
@@ -532,7 +539,7 @@ function App() {
           data: publicData.map((year, index) => ({
             Year: index + 1,
             'Calendar Year': 2027 + index,
-            Students: year.students,
+            Students: year.students?.total || 0,
             Municipalities: year.municipalities,
             Revenue: formatCurrencyForExport(year.revenue?.total || 0),
             Costs: formatCurrencyForExport(year.costs || 0),
@@ -550,12 +557,12 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          Students: year.students,
-          'Tuition Revenue': formatCurrencyForExport(year.revenue * 0.85),
-          'Materials Revenue': formatCurrencyForExport(year.revenue * 0.10),
-          'Other Revenue': formatCurrencyForExport(year.revenue * 0.05),
-          'Total Revenue': formatCurrencyForExport(year.revenue),
-          'Revenue per Student': formatCurrencyForExport(year.revenue / year.students),
+          Students: year.students?.total || 0,
+          'Tuition Revenue': formatCurrencyForExport((year.revenue?.total || 0) *0.85),
+          'Materials Revenue': formatCurrencyForExport((year.revenue?.total || 0) *0.10),
+          'Other Revenue': formatCurrencyForExport((year.revenue?.total || 0) *0.05),
+          'Total Revenue': formatCurrencyForExport(year.revenue?.total || 0),
+          'Revenue per Student': formatCurrencyForExport((year.revenue?.total || 0) / (year.students?.total || 1)),
         }))
       });
     }
@@ -567,12 +574,12 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          'Total Revenue': formatCurrencyForExport(year.revenue),
+          'Total Revenue': formatCurrencyForExport(year.revenue?.total || 0),
           'COGS': formatCurrencyForExport(year.cogs),
-          'COGS %': formatPercentageForExport(year.cogs / year.revenue),
+          'COGS %': formatPercentageForExport((year.cogs || 0) / (year.revenue?.total || 1)),
           'Gross Profit': formatCurrencyForExport(year.grossProfit),
           'OpEx': formatCurrencyForExport(year.opex),
-          'OpEx %': formatPercentageForExport(year.opex / year.revenue),
+          'OpEx %': formatPercentageForExport((year.opex || 0) / (year.revenue?.total || 1)),
           'EBITDA': formatCurrencyForExport(year.ebitda),
           'Total Costs': formatCurrencyForExport(year.cogs + year.opex),
           'Cost per Student': formatCurrencyForExport((year.cogs + year.opex) / year.students),
@@ -680,7 +687,7 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          Revenue: formatCurrencyForExport(year.revenue),
+          Revenue: formatCurrencyForExport(year.revenue?.total || 0),
           'Gross Margin %': formatPercentageForExport(year.grossMargin),
           'EBITDA Margin %': formatPercentageForExport(year.ebitdaMargin),
           'Net Margin % (est)': formatPercentageForExport(year.ebitdaMargin * 0.66),
@@ -699,10 +706,10 @@ function App() {
           return {
             Year: year.year,
             'Calendar Year': 2026 + year.year,
-            'Revenue': formatCurrencyForExport(year.revenue),
-            'Revenue Growth %': prevYear ? formatPercentageForExport((year.revenue - prevYear.revenue) / prevYear.revenue) : 'N/A',
-            'Students': year.students,
-            'Student Growth %': prevYear ? formatPercentageForExport((year.students - prevYear.students) / prevYear.students) : 'N/A',
+            'Revenue': formatCurrencyForExport(year.revenue?.total || 0),
+            'Revenue Growth %': prevYear ? formatPercentageForExport(((year.revenue?.total || 0) - (prevYear.revenue?.total || 0)?.total) / (prevYear.revenue?.total || 1)) : 'N/A',
+            'Students': year.students?.total || 0,
+            'Student Growth %': prevYear ? formatPercentageForExport(((year.students?.total || 0) - (prevYear.students?.total || 0)) / (prevYear.students?.total || 1)) : 'N/A',
             'EBITDA': formatCurrencyForExport(year.ebitda),
             'EBITDA Growth %': prevYear ? formatPercentageForExport((year.ebitda - prevYear.ebitda) / prevYear.ebitda) : 'N/A',
           };
@@ -756,13 +763,13 @@ function App() {
         data: yearlyData.map(year => ({
           Year: year.year,
           'Calendar Year': 2026 + year.year,
-          'Revenue': formatCurrencyForExport(year.revenue),
+          'Revenue': formatCurrencyForExport(year.revenue?.total || 0),
           'EBITDA': formatCurrencyForExport(year.ebitda),
           'EV @ 8x EBITDA': formatCurrencyForExport(year.ebitda * 8),
           'EV @ 10x EBITDA': formatCurrencyForExport(year.ebitda * 10),
           'EV @ 12x EBITDA': formatCurrencyForExport(year.ebitda * 12),
-          'EV @ 3x Revenue': formatCurrencyForExport(year.revenue * 3),
-          'EV @ 5x Revenue': formatCurrencyForExport(year.revenue * 5),
+          'EV @ 3x Revenue': formatCurrencyForExport((year.revenue?.total || 0) *3),
+          'EV @ 5x Revenue': formatCurrencyForExport((year.revenue?.total || 0) *5),
         }))
       });
     }

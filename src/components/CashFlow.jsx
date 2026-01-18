@@ -446,10 +446,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           franchiseMarketing: (revenue.franchiseMarketing || 0) / 12,
           // Private adoption fees (monthly)
           adoptionFeesPrivate: (revenue.adoption || 0) / 12, // No ramp - fixed monthly
-          // Public adoption fees (monthly) - starts year 2
+          // Public adoption fees (monthly) - Year 1=0, starts Year 2 (2028)
           // Use total public revenue divided by 12
-          adoptionFeesPublic: year >= 2 && publicModelData && publicModelData[year-2] ? 
-            publicModelData[year-2].revenue.total / 12 : 0,
+          adoptionFeesPublic: publicModelData && publicModelData[year-1] ?
+            publicModelData[year-1].revenue.total / 12 : 0,
           // Kit sales - ONLY flagship and franchise, ALL in January
           kitSales: month === 1 ? 
             ((students.flagship || 0) + (students.franchise || 0)) * 
@@ -520,9 +520,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           total: students.total || 0
         },
         
-        // Public students (for display)
-        publicStudents: year >= 2 && publicModelData && publicModelData[year-2] ? 
-          publicModelData[year-2].students : 0
+        // Public students (for display) - Year 1=0, starts Year 2 (2028)
+        publicStudents: publicModelData && publicModelData[year-1] ?
+          publicModelData[year-1].students : 0
       };
       
       // Calculate totals

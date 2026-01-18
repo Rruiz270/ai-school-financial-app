@@ -14,97 +14,72 @@ import SimpleIntegrated from './components/SimpleIntegrated';
 import ErrorBoundary from './components/ErrorBoundary';
 import ExportButton, { exportToExcel, formatCurrencyForExport, formatPercentageForExport } from './components/ExportButton';
 
-// Public Sector Scenario Presets (copied from PublicPartnerships)
+// Public Sector Adoption Students by Year - aligned with CashFlow.jsx
+// Year 1 (2027): 0 students - public sector starts in 2028 (Year 2)
+// Year 2 (2028): First public adoption year
+const PUBLIC_ADOPTION_STUDENTS = {
+  realistic: { 1: 0, 2: 10000, 3: 50000, 4: 100000, 5: 180000, 6: 300000, 7: 450000, 8: 650000, 9: 900000, 10: 1200000 },
+  pessimistic: { 1: 0, 2: 8000, 3: 40000, 4: 80000, 5: 144000, 6: 240000, 7: 360000, 8: 520000, 9: 720000, 10: 960000 },
+  optimistic: { 1: 0, 2: 12000, 3: 60000, 4: 120000, 5: 216000, 6: 360000, 7: 540000, 8: 780000, 9: 1080000, 10: 1440000 },
+};
+
+// Public Sector Scenario Presets
 const PUBLIC_SCENARIO_PRESETS = {
   optimistic: {
     name: 'Optimistic',
-    description: 'Strong government partnerships, rapid adoption',
-    year1Students: 50000,
-    year5Students: 610000,
-    year10Students: 2200000,
-    pilotMunicipalities: 5,
-    year5Municipalities: 25,
-    year10Municipalities: 120,
-    revenuePerStudentMonth: 250,
+    description: 'Strong government partnerships, rapid adoption (starts 2028)',
+    revenuePerStudentMonth: 15, // R$180/year = R$15/month
     marginsPublic: 0.40
   },
   realistic: {
     name: 'Realistic',
-    description: 'Moderate government support, steady growth',
-    year1Students: 42500,
-    year5Students: 518500,
-    year10Students: 1870000,
-    pilotMunicipalities: 4,
-    year5Municipalities: 21,
-    year10Municipalities: 102,
-    revenuePerStudentMonth: 212,
+    description: 'Moderate government support, steady growth (starts 2028)',
+    revenuePerStudentMonth: 15, // R$180/year = R$15/month
     marginsPublic: 0.35
   },
   pessimistic: {
     name: 'Pessimistic',
-    description: 'Slow adoption, regulatory challenges',
-    year1Students: 35000,
-    year5Students: 427000,
-    year10Students: 1540000,
-    pilotMunicipalities: 3,
-    year5Municipalities: 17,
-    year10Municipalities: 84,
-    revenuePerStudentMonth: 175,
+    description: 'Slow adoption, regulatory challenges (starts 2028)',
+    revenuePerStudentMonth: 15, // R$180/year = R$15/month
     marginsPublic: 0.30
   }
 };
 
 // Function to generate initial public financial data
+// PUBLIC SECTOR STARTS IN 2028 (Year 2) - Year 1 (2027) has 0 public students
 const generatePublicFinancialData = (scenario = 'optimistic') => {
-  const publicParams = {
-    setupFeePerSchool: 50000,
-    technologyLicenseFee: 25000,
-    teacherTrainingFee: 2000,
-    teachersPerSchool: 25,
-    ...PUBLIC_SCENARIO_PRESETS[scenario]
-  };
-  
+  const publicParams = PUBLIC_SCENARIO_PRESETS[scenario];
+  const studentsByYear = PUBLIC_ADOPTION_STUDENTS[scenario];
+
   const years = [];
-  
+
   for (let year = 1; year <= 10; year++) {
-    const studentGrowth = Math.min(
-      publicParams.year1Students * Math.pow(year / 1, 1.8),
-      publicParams.year10Students
-    );
-    
-    const students = Math.floor(studentGrowth);
-    
-    const municipalities = Math.min(
-      publicParams.pilotMunicipalities * Math.pow(year / 1, 1.5),
-      publicParams.year10Municipalities
-    );
-    
+    const students = studentsByYear[year] || 0;
+
+    // Revenue: R$180/student/year = R$15/student/month
     const monthlyRevenue = students * publicParams.revenuePerStudentMonth * 12;
-    const setupRevenue = Math.floor(municipalities * 50) * publicParams.setupFeePerSchool;
-    const technologyRevenue = Math.floor(municipalities) * publicParams.technologyLicenseFee;
-    const trainingRevenue = Math.floor(municipalities * 50 * publicParams.teachersPerSchool) * publicParams.teacherTrainingFee;
-    
-    const totalRevenue = monthlyRevenue + setupRevenue + technologyRevenue + trainingRevenue;
+
+    const totalRevenue = monthlyRevenue;
     const costs = totalRevenue * (1 - publicParams.marginsPublic);
     const ebitda = totalRevenue - costs;
-    
+
     years.push({
       year,
       students,
-      municipalities: Math.floor(municipalities),
+      municipalities: Math.floor(students / 2000), // Estimate: ~2000 students per municipality
       revenue: {
         monthly: monthlyRevenue,
-        setup: setupRevenue,
-        technology: technologyRevenue,
-        training: trainingRevenue,
+        setup: 0,
+        technology: 0,
+        training: 0,
         total: totalRevenue
       },
       costs,
       ebitda,
-      margin: ebitda / totalRevenue
+      margin: students > 0 ? ebitda / totalRevenue : 0
     });
   }
-  
+
   return years;
 };
 

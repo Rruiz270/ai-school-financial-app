@@ -110,6 +110,7 @@ export const SCENARIO_PRESETS = {
 
 // Phased CAPEX and Investment Structure (2026-2027)
 // Based on private historic building with Desenvolve SP financing and Prefeitura subsidy
+// Prefeitura subsidy = 25% of TOTAL R$40M CAPEX = R$10M
 export const INVESTMENT_PHASES = {
   phase1: {
     name: 'Phase 1 - 2026 (Pre-Launch)',
@@ -130,8 +131,8 @@ export const INVESTMENT_PHASES = {
       total: 15000000, // R$15M
       sources: {
         desenvolveSP: 10000000, // R$10M CAPEX from Desenvolve SP
-        prefeituraSubsidy: 2500000, // 25% of R$10M CAPEX from historic building benefit
-        bridgeInvestment: 2500000, // Remaining R$2.5M from bridge
+        prefeituraSubsidy: 2500000, // Part of 25% subsidy (R$10M of R$40M CAPEX in S2)
+        bridgeInvestment: 2500000, // Additional R$2.5M from bridge
       },
       allocation: {
         capexConstruction: 10000000, // R$10M CAPEX
@@ -146,12 +147,16 @@ export const INVESTMENT_PHASES = {
     total: 15000000, // R$15M additional CAPEX
     sources: {
       desenvolveSP: 20000000, // R$20M from Desenvolve SP (total 30M commitment)
-      prefeituraSubsidy: 5000000, // 25% of R$20M CAPEX = R$5M
-      // Net cost: R$15M
+      prefeituraSubsidy: 7500000, // Remaining 25% subsidy (R$30M of R$40M CAPEX = R$7.5M)
     },
     allocation: {
       capexEquipment: 10000000, // R$10M equipment and finishing
       capexInfrastructure: 5000000, // R$5M additional infrastructure
+    },
+    bridgeRepayment: {
+      amount: 12500000, // R$12.5M bridge repayment
+      month: 8, // August 2027 - when Desenvolve SP disburses
+      description: 'Repay bridge investment when Desenvolve SP funds arrive'
     }
   },
   architectProject: {
@@ -162,10 +167,75 @@ export const INVESTMENT_PHASES = {
   },
   totals: {
     totalCapex: 40000000, // R$40M total CAPEX
-    totalInvestment: 25000000, // R$25M total investment (Phase 1)
+    bridgeInvestment: 12500000, // R$12.5M bridge (repaid in Aug 2027)
     desenvolveSPLoan: 30000000, // R$30M total from Desenvolve SP
-    prefeituraSubsidy: 7500000, // R$7.5M total from Prefeitura (25% of CAPEX where eligible)
+    prefeituraSubsidy: 10000000, // R$10M total from Prefeitura (25% of R$40M CAPEX)
   }
+};
+
+// Public Sector Adoption Projections (2027-2037)
+// Realistic: 10K (2027) -> 50K (2028) -> grow to target by 2037
+// Pessimistic: 20% lower per year
+// Optimistic: 20% higher per year
+export const PUBLIC_ADOPTION_PROJECTIONS = {
+  realistic: {
+    name: 'Realistic',
+    description: '10K students in 2027, 50K in 2028, growing to market target by 2037',
+    yearlyStudents: {
+      2027: 10000,    // Year 1 - 10K students
+      2028: 50000,    // Year 2 - 50K students
+      2029: 100000,   // Year 3 - 100K students
+      2030: 180000,   // Year 4 - 180K students
+      2031: 300000,   // Year 5 - 300K students
+      2032: 450000,   // Year 6 - 450K students
+      2033: 650000,   // Year 7 - 650K students
+      2034: 900000,   // Year 8 - 900K students
+      2035: 1200000,  // Year 9 - 1.2M students
+      2036: 1500000,  // Year 10 - 1.5M students
+      2037: 2000000,  // Year 11 - 2M students (market share target)
+    }
+  },
+  pessimistic: {
+    name: 'Pessimistic',
+    description: '20% lower than realistic per year',
+    yearlyStudents: {
+      2027: 8000,     // 10K * 0.8
+      2028: 40000,    // 50K * 0.8
+      2029: 80000,    // 100K * 0.8
+      2030: 144000,   // 180K * 0.8
+      2031: 240000,   // 300K * 0.8
+      2032: 360000,   // 450K * 0.8
+      2033: 520000,   // 650K * 0.8
+      2034: 720000,   // 900K * 0.8
+      2035: 960000,   // 1.2M * 0.8
+      2036: 1200000,  // 1.5M * 0.8
+      2037: 1600000,  // 2M * 0.8
+    }
+  },
+  optimistic: {
+    name: 'Optimistic',
+    description: '20% higher than realistic per year',
+    yearlyStudents: {
+      2027: 12000,    // 10K * 1.2
+      2028: 60000,    // 50K * 1.2
+      2029: 120000,   // 100K * 1.2
+      2030: 216000,   // 180K * 1.2
+      2031: 360000,   // 300K * 1.2
+      2032: 540000,   // 450K * 1.2
+      2033: 780000,   // 650K * 1.2
+      2034: 1080000,  // 900K * 1.2
+      2035: 1440000,  // 1.2M * 1.2
+      2036: 1800000,  // 1.5M * 1.2
+      2037: 2400000,  // 2M * 1.2
+    }
+  }
+};
+
+// Helper function to get public adoption students for a given year and scenario
+export const getPublicAdoptionStudents = (year, scenario = 'realistic') => {
+  const calendarYear = 2026 + year; // Year 0 = 2026, Year 1 = 2027, etc.
+  const projections = PUBLIC_ADOPTION_PROJECTIONS[scenario] || PUBLIC_ADOPTION_PROJECTIONS.realistic;
+  return projections.yearlyStudents[calendarYear] || 0;
 };
 
 export const CAPEX_SCENARIOS = {
@@ -176,9 +246,14 @@ export const CAPEX_SCENARIOS = {
     annualFacilityCost: 1500000, // R$1.5M annual (maintenance, utilities, taxes - reduced due to historic benefit)
     description: 'R$40M total CAPEX (2 phases), private historic building with Desenvolve SP + Prefeitura subsidy',
     fundingSources: {
-      bridgeInvestment: 12500000, // R$12.5M bridge
+      bridgeInvestment: 12500000, // R$12.5M bridge (repaid Aug 2027)
       desenvolveSP: 30000000, // R$30M CAPEX loan
-      prefeituraSubsidy: 7500000, // R$7.5M (25% of eligible CAPEX)
+      prefeituraSubsidy: 10000000, // R$10M (25% of total R$40M CAPEX)
+    },
+    bridgeRepayment: {
+      amount: 12500000,
+      month: 8, // August
+      year: 1, // 2027
     }
   },
   government: {
@@ -628,13 +703,18 @@ export class FinancialModel {
 
     // Investment summary for new structure
     const investmentSummary = this.params.capexScenario === 'private-historic' ? {
-      totalCapex: INVESTMENT_PHASES.totals.totalCapex,
-      bridgeInvestment: INVESTMENT_PHASES.totals.totalInvestment,
-      desenvolveSPLoan: INVESTMENT_PHASES.totals.desenvolveSPLoan,
-      prefeituraSubsidy: INVESTMENT_PHASES.totals.prefeituraSubsidy,
-      architectProject: INVESTMENT_PHASES.architectProject.total,
-      phase1Total: INVESTMENT_PHASES.phase1.semester1.total + INVESTMENT_PHASES.phase1.semester2.total,
-      phase2Total: INVESTMENT_PHASES.phase2.total,
+      totalCapex: INVESTMENT_PHASES.totals.totalCapex, // R$40M
+      bridgeInvestment: INVESTMENT_PHASES.totals.bridgeInvestment, // R$12.5M (repaid Aug 2027)
+      desenvolveSPLoan: INVESTMENT_PHASES.totals.desenvolveSPLoan, // R$30M
+      prefeituraSubsidy: INVESTMENT_PHASES.totals.prefeituraSubsidy, // R$10M (25% of R$40M)
+      architectProject: INVESTMENT_PHASES.architectProject.total, // R$1.2M
+      phase1Total: INVESTMENT_PHASES.phase1.semester1.total + INVESTMENT_PHASES.phase1.semester2.total, // R$25M
+      phase2Total: INVESTMENT_PHASES.phase2.total, // R$15M
+      bridgeRepayment: {
+        amount: INVESTMENT_PHASES.phase2.bridgeRepayment.amount,
+        month: INVESTMENT_PHASES.phase2.bridgeRepayment.month,
+        year: 2027
+      }
     } : null;
 
     return {

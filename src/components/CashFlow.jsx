@@ -32,7 +32,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       semester2: {
         total: 15000000, // R$15M
         desenvolveSP: 10000000, // CAPEX financing
-        prefeituraSubsidy: 2500000, // 25% historic benefit
+        prefeituraSubsidy: 2500000, // Part of 25% subsidy (R$10M of R$40M CAPEX)
         bridgeInvestment: 2500000,
         allocation: {
           capexConstruction: 10000000,
@@ -44,7 +44,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     phase2: {
       total: 15000000,
       desenvolveSP: 20000000, // Total 30M commitment
-      prefeituraSubsidy: 5000000, // 25% of 20M
+      prefeituraSubsidy: 7500000, // Remaining 25% subsidy (R$30M of R$40M CAPEX = R$7.5M)
+      bridgeRepayment: {
+        amount: 12500000, // R$12.5M bridge repayment
+        month: 8, // August 2027
+      }
     },
     architectProject: {
       total: 1200000,
@@ -54,10 +58,18 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     }
   };
 
+  // Public Adoption Projections by year (2027-2037)
+  // Realistic: 10K (2027), 50K (2028), grow to 2M by 2037
+  const PUBLIC_ADOPTION_STUDENTS = {
+    realistic: { 1: 10000, 2: 50000, 3: 100000, 4: 180000, 5: 300000, 6: 450000, 7: 650000, 8: 900000, 9: 1200000, 10: 1500000 },
+    pessimistic: { 1: 8000, 2: 40000, 3: 80000, 4: 144000, 5: 240000, 6: 360000, 7: 520000, 8: 720000, 9: 960000, 10: 1200000 },
+    optimistic: { 1: 12000, 2: 60000, 3: 120000, 4: 216000, 5: 360000, 6: 540000, 7: 780000, 8: 1080000, 9: 1440000, 10: 1800000 },
+  };
+
   // Total funding sources
-  const TOTAL_BRIDGE_INVESTMENT = 12500000; // R$12.5M bridge
+  const TOTAL_BRIDGE_INVESTMENT = 12500000; // R$12.5M bridge (repaid Aug 2027)
   const TOTAL_DESENVOLVE_SP = 30000000; // R$30M from Desenvolve SP
-  const TOTAL_PREFEITURA_SUBSIDY = 7500000; // R$7.5M (25% of CAPEX)
+  const TOTAL_PREFEITURA_SUBSIDY = 10000000; // R$10M (25% of total R$40M CAPEX)
   const TOTAL_CAPEX = 40000000; // R$40M total CAPEX budget
 
   const INITIAL_INVESTMENT = TOTAL_BRIDGE_INVESTMENT; // Only bridge is actual equity investment
@@ -232,14 +244,19 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       const yearProjection = projection[year];
       // Add government revenue if applicable
       const privateRevenue = yearProjection.revenue.total;
-      // Add public sector revenue if applicable (year 2 onwards)
-      // Use total public revenue from the model
-      const publicRevenue = year >= 2 && publicModelData && publicModelData[year-2] ?
-        publicModelData[year-2].revenue.total : 0;
+
+      // Public sector revenue - use our projected public adoption students
+      // Year 1 = 10K students, Year 2 = 50K students, etc.
+      const publicAdoptionScenario = currentScenario || 'realistic';
+      const publicStudents = PUBLIC_ADOPTION_STUDENTS[publicAdoptionScenario]?.[year] || 0;
+      const publicAdoptionFee = 180; // R$180/student/year adoption fee for public sector
+      const publicRevenue = publicStudents * publicAdoptionFee;
+
       const revenue = privateRevenue + publicRevenue;
-      // Add public sector costs if applicable
-      const publicCosts = year >= 2 && publicModelData && publicModelData[year-2] ?
-        publicModelData[year-2].costs : 0;
+
+      // Add public sector costs (support costs for public students)
+      const publicCosts = publicStudents * 50; // R$50/student support cost
+
       // Add franchising team costs
       const franchisingTeamCosts = (yearProjection.franchiseCount || 0) * 15000 * 12; // R$15k per franchise per month
       const operatingExpenses = yearProjection.costs.total + publicCosts + franchisingTeamCosts;
@@ -248,16 +265,21 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       let capex = yearProjection.capex || 0;
       let yearInvestments = 0;
       let investmentDetails = null;
+      let bridgeRepayment = 0;
 
       if (year === 1) {
         // Phase 2: R$15M CAPEX while school operates
-        // Funded by Desenvolve SP (R$20M) + Prefeitura subsidy (R$5M = 25% of R$20M)
-        // Net CAPEX cost to us: R$15M (after subsidy)
+        // Funded by Desenvolve SP (R$20M) + Prefeitura subsidy (R$7.5M)
         yearInvestments = INVESTMENT_PHASES.phase2.desenvolveSP; // R$20M from Desenvolve SP
-        const phase2Subsidy = INVESTMENT_PHASES.phase2.prefeituraSubsidy; // R$5M
+        const phase2Subsidy = INVESTMENT_PHASES.phase2.prefeituraSubsidy; // R$7.5M
+
+        // Bridge repayment in August when Desenvolve SP disburses
+        bridgeRepayment = INVESTMENT_PHASES.phase2.bridgeRepayment.amount; // R$12.5M
+
         investmentDetails = {
           desenvolveSP: INVESTMENT_PHASES.phase2.desenvolveSP,
           prefeituraSubsidy: phase2Subsidy,
+          bridgeRepayment: bridgeRepayment,
         };
         // Architect payments continue (12 months * 45.8k)
         const architectPayments = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
@@ -272,9 +294,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       const taxes = yearProjection.taxes || 0;
 
       const operatingCashFlow = revenue - operatingExpenses;
-      // For Year 1, we receive Desenvolve SP funding to offset CAPEX
+      // For Year 1, we receive Desenvolve SP funding but also repay bridge
       const fundingReceived = year === 1 ? yearInvestments : 0;
-      const netCashFlow = operatingCashFlow - capex - taxes + fundingReceived;
+      const netCashFlow = operatingCashFlow - capex - taxes + fundingReceived - bridgeRepayment;
       const closingCash = cumulativeCash + netCashFlow;
 
       const monthlyBurn = netCashFlow < 0 ? Math.abs(netCashFlow) / 12 : 0;
@@ -287,8 +309,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         yearLabel: year === 1 ? 'Phase 2 (2027)' : `Year ${year}`,
         openingCash: cumulativeCash,
         revenue,
+        publicRevenue,
+        publicStudents,
         investments: fundingReceived > 0 ? fundingReceived : undefined,
         investmentDetails,
+        bridgeRepayment: bridgeRepayment > 0 ? -bridgeRepayment : undefined,
         operatingExpenses: -operatingExpenses,
         capex: -capex,
         taxes: -taxes,
@@ -748,7 +773,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         </div>
 
         {/* Investment Timeline */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
           <div className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
             <div className="text-sm font-semibold text-indigo-700">Phase 1 - Semester 1</div>
             <div className="text-lg font-bold text-indigo-900">{formatCurrency(INVESTMENT_PHASES.phase1.semester1.total)}</div>
@@ -762,10 +787,29 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
             <div className="text-xs text-indigo-500">CAPEX, Hiring, Technology</div>
           </div>
           <div className="bg-teal-50 p-4 rounded-lg border-l-4 border-teal-500">
-            <div className="text-sm font-semibold text-teal-700">Phase 2 - School Operating</div>
+            <div className="text-sm font-semibold text-teal-700">Phase 2 - 2027</div>
             <div className="text-lg font-bold text-teal-900">{formatCurrency(INVESTMENT_PHASES.phase2.total)}</div>
-            <div className="text-xs text-teal-600 mt-1">2027 • Desenvolve SP + Prefeitura</div>
+            <div className="text-xs text-teal-600 mt-1">School Operating • Desenvolve SP</div>
             <div className="text-xs text-teal-500">Equipment, Infrastructure + Architect</div>
+          </div>
+          <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+            <div className="text-sm font-semibold text-red-700">Bridge Repayment</div>
+            <div className="text-lg font-bold text-red-900">{formatCurrency(INVESTMENT_PHASES.phase2.bridgeRepayment.amount)}</div>
+            <div className="text-xs text-red-600 mt-1">August 2027</div>
+            <div className="text-xs text-red-500">When Desenvolve SP disburses</div>
+          </div>
+        </div>
+
+        {/* Public Adoption Projections */}
+        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-blue-800 mb-3">Public Sector Adoption Projections ({currentScenario})</h4>
+          <div className="grid grid-cols-5 md:grid-cols-10 gap-2 text-center">
+            {Object.entries(PUBLIC_ADOPTION_STUDENTS[currentScenario] || PUBLIC_ADOPTION_STUDENTS.realistic).map(([year, students]) => (
+              <div key={year} className="bg-white p-2 rounded">
+                <div className="text-xs text-blue-600">Year {year}</div>
+                <div className="text-sm font-bold text-blue-900">{(students / 1000).toFixed(0)}K</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -984,39 +1028,45 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                 Year
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Opening Cash
+                Opening
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Investment
+                Funding
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Revenue
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Operating Exp
+                Public Rev
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                OpEx
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 CAPEX
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Taxes
+                Bridge Repay
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Net Cash Flow
+                Net CF
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Closing Cash
+                Closing
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                Details
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {cashFlowData.map((yearData) => (
-              <tr key={yearData.year} className="hover:bg-gray-50">
+              <tr key={yearData.year} className={`hover:bg-gray-50 ${yearData.phase ? 'bg-blue-50' : ''}`}>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {yearData.yearLabel}
+                  <div>{yearData.yearLabel}</div>
+                  {yearData.publicStudents > 0 && (
+                    <div className="text-xs text-blue-600">{(yearData.publicStudents/1000).toFixed(0)}K public</div>
+                  )}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
                   {formatCurrency(yearData.openingCash)}
@@ -1027,14 +1077,17 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-green-600">
                   {yearData.revenue > 0 ? formatCurrency(yearData.revenue) : '-'}
                 </td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-teal-600">
+                  {yearData.publicRevenue > 0 ? formatCurrency(yearData.publicRevenue) : '-'}
+                </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-red-600">
                   {yearData.operatingExpenses ? formatCurrency(yearData.operatingExpenses) : '-'}
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-blue-600">
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-indigo-600">
                   {yearData.capex ? formatCurrency(yearData.capex) : '-'}
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-orange-600">
-                  {yearData.taxes ? formatCurrency(yearData.taxes) : '-'}
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-red-700 font-medium">
+                  {yearData.bridgeRepayment ? formatCurrency(yearData.bridgeRepayment) : '-'}
                 </td>
                 <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-semibold ${
                   yearData.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'

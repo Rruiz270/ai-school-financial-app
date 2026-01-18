@@ -296,8 +296,23 @@ export const exportToExcel = (sheets, filename = 'export') => {
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const finalFilename = `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`;
     console.log('Saving file as:', finalFilename);
-    saveAs(blob, finalFilename);
-    console.log('Export complete!');
+
+    // Try native download first, fallback to file-saver
+    try {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = finalFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      console.log('Export complete using native download!');
+    } catch (downloadError) {
+      console.log('Native download failed, trying file-saver:', downloadError);
+      saveAs(blob, finalFilename);
+      console.log('Export complete using file-saver!');
+    }
   } catch (error) {
     console.error('Export error:', error);
     alert(`Export failed: ${error.message}`);

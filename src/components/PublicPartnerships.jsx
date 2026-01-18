@@ -2,32 +2,34 @@ import React, { useState, useMemo } from 'react';
 import { Building2, Users, TrendingUp, DollarSign, MapPin, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
 
 // Public Sector Scenario Presets - Updated with corrected projections
-// Year 1 = 2027, Year 10 = 2036, Year 11 = 2037 (target 2M)
-// Realistic: 10K -> 50K -> 100K -> 180K -> 300K -> 450K -> 650K -> 900K -> 1.2M -> 1.5M
+// NO PUBLIC in Year 1 (2027) - starts Year 2 (2028)
+// Year 1 = 2027 (0), Year 2 = 2028 (10K), Year 10 = 2036 (1.2M)
+// Realistic: 0 -> 10K -> 50K -> 100K -> 180K -> 300K -> 450K -> 650K -> 900K -> 1.2M
 // Pessimistic: 20% lower per year
 // Optimistic: 20% higher per year
 const PUBLIC_SCENARIO_PRESETS = {
   realistic: {
     name: 'Realistic',
-    description: '10K students Year 1, growing to 1.5M by Year 10',
+    description: 'No public in 2027, 10K in 2028, growing to 1.2M by 2036',
     yearlyStudents: {
-      1: 10000,    // 2027
-      2: 50000,    // 2028
-      3: 100000,   // 2029
-      4: 180000,   // 2030
-      5: 300000,   // 2031
-      6: 450000,   // 2032
-      7: 650000,   // 2033
-      8: 900000,   // 2034
-      9: 1200000,  // 2035
-      10: 1500000, // 2036
+      1: 0,        // 2027 - NO PUBLIC
+      2: 10000,    // 2028 - First year
+      3: 50000,    // 2029
+      4: 100000,   // 2030
+      5: 180000,   // 2031
+      6: 300000,   // 2032
+      7: 450000,   // 2033
+      8: 650000,   // 2034
+      9: 900000,   // 2035
+      10: 1200000, // 2036
     },
-    year1Students: 10000,
-    year5Students: 300000,
-    year10Students: 1500000,
-    pilotMunicipalities: 2,
-    year5Municipalities: 30,
-    year10Municipalities: 100,
+    year1Students: 0,
+    year2Students: 10000,
+    year5Students: 180000,
+    year10Students: 1200000,
+    pilotMunicipalities: 0,
+    year5Municipalities: 12,
+    year10Municipalities: 80,
     revenuePerStudentMonth: 15, // R$15/student/month (R$180/year) for public sector
     marginsPublic: 0.35
   },
@@ -35,23 +37,24 @@ const PUBLIC_SCENARIO_PRESETS = {
     name: 'Pessimistic',
     description: '20% lower than realistic per year',
     yearlyStudents: {
-      1: 8000,     // 10K * 0.8
-      2: 40000,    // 50K * 0.8
-      3: 80000,    // 100K * 0.8
-      4: 144000,   // 180K * 0.8
-      5: 240000,   // 300K * 0.8
-      6: 360000,   // 450K * 0.8
-      7: 520000,   // 650K * 0.8
-      8: 720000,   // 900K * 0.8
-      9: 960000,   // 1.2M * 0.8
-      10: 1200000, // 1.5M * 0.8
+      1: 0,        // NO PUBLIC
+      2: 8000,     // 10K * 0.8
+      3: 40000,    // 50K * 0.8
+      4: 80000,    // 100K * 0.8
+      5: 144000,   // 180K * 0.8
+      6: 240000,   // 300K * 0.8
+      7: 360000,   // 450K * 0.8
+      8: 520000,   // 650K * 0.8
+      9: 720000,   // 900K * 0.8
+      10: 960000,  // 1.2M * 0.8
     },
-    year1Students: 8000,
-    year5Students: 240000,
-    year10Students: 1200000,
-    pilotMunicipalities: 1,
-    year5Municipalities: 24,
-    year10Municipalities: 80,
+    year1Students: 0,
+    year2Students: 8000,
+    year5Students: 144000,
+    year10Students: 960000,
+    pilotMunicipalities: 0,
+    year5Municipalities: 10,
+    year10Municipalities: 64,
     revenuePerStudentMonth: 12, // R$12/student/month (20% lower)
     marginsPublic: 0.30
   },
@@ -59,23 +62,24 @@ const PUBLIC_SCENARIO_PRESETS = {
     name: 'Optimistic',
     description: '20% higher than realistic per year',
     yearlyStudents: {
-      1: 12000,    // 10K * 1.2
-      2: 60000,    // 50K * 1.2
-      3: 120000,   // 100K * 1.2
-      4: 216000,   // 180K * 1.2
-      5: 360000,   // 300K * 1.2
-      6: 540000,   // 450K * 1.2
-      7: 780000,   // 650K * 1.2
-      8: 1080000,  // 900K * 1.2
-      9: 1440000,  // 1.2M * 1.2
-      10: 1800000, // 1.5M * 1.2
+      1: 0,        // NO PUBLIC
+      2: 12000,    // 10K * 1.2
+      3: 60000,    // 50K * 1.2
+      4: 120000,   // 100K * 1.2
+      5: 216000,   // 180K * 1.2
+      6: 360000,   // 300K * 1.2
+      7: 540000,   // 450K * 1.2
+      8: 780000,   // 650K * 1.2
+      9: 1080000,  // 900K * 1.2
+      10: 1440000, // 1.2M * 1.2
     },
-    year1Students: 12000,
-    year5Students: 360000,
-    year10Students: 1800000,
-    pilotMunicipalities: 3,
-    year5Municipalities: 36,
-    year10Municipalities: 120,
+    year1Students: 0,
+    year2Students: 12000,
+    year5Students: 216000,
+    year10Students: 1440000,
+    pilotMunicipalities: 0,
+    year5Municipalities: 14,
+    year10Municipalities: 96,
     revenuePerStudentMonth: 18, // R$18/student/month (20% higher)
     marginsPublic: 0.40
   }
@@ -235,7 +239,7 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'realistic'
               AI Education for Brazil's 46.7M Public K-12 Students through Municipal & State Partnerships
             </p>
             <p className="mt-1 text-sm opacity-75">
-              {currentScenario.charAt(0).toUpperCase() + currentScenario.slice(1)} Scenario: 10K students (2027) → {formatNumber(year10Data.students)} (2036)
+              {currentScenario.charAt(0).toUpperCase() + currentScenario.slice(1)} Scenario: No public in 2027 → {formatNumber(publicFinancialData[1]?.students || 0)} (2028) → {formatNumber(year10Data.students)} (2036)
             </p>
           </div>
           <div className="text-right">

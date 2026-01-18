@@ -173,60 +173,61 @@ export const INVESTMENT_PHASES = {
   }
 };
 
-// Public Sector Adoption Projections (2027-2037)
-// Realistic: 10K (2027) -> 50K (2028) -> grow to target by 2037
+// Public Sector Adoption Projections (2028-2037)
+// NO PUBLIC in 2027 - starts in 2028
+// Realistic: 0 (2027) -> 10K (2028) -> 50K (2029) -> grow to target by 2037
 // Pessimistic: 20% lower per year
 // Optimistic: 20% higher per year
 export const PUBLIC_ADOPTION_PROJECTIONS = {
   realistic: {
     name: 'Realistic',
-    description: '10K students in 2027, 50K in 2028, growing to market target by 2037',
+    description: 'No public in 2027, 10K in 2028, 50K in 2029, growing to 2M by 2037',
     yearlyStudents: {
-      2027: 10000,    // Year 1 - 10K students
-      2028: 50000,    // Year 2 - 50K students
-      2029: 100000,   // Year 3 - 100K students
-      2030: 180000,   // Year 4 - 180K students
-      2031: 300000,   // Year 5 - 300K students
-      2032: 450000,   // Year 6 - 450K students
-      2033: 650000,   // Year 7 - 650K students
-      2034: 900000,   // Year 8 - 900K students
-      2035: 1200000,  // Year 9 - 1.2M students
-      2036: 1500000,  // Year 10 - 1.5M students
-      2037: 2000000,  // Year 11 - 2M students (market share target)
+      2027: 0,        // Year 1 - NO PUBLIC
+      2028: 10000,    // Year 2 - 10K students (first year)
+      2029: 50000,    // Year 3 - 50K students
+      2030: 100000,   // Year 4 - 100K students
+      2031: 180000,   // Year 5 - 180K students
+      2032: 300000,   // Year 6 - 300K students
+      2033: 450000,   // Year 7 - 450K students
+      2034: 650000,   // Year 8 - 650K students
+      2035: 900000,   // Year 9 - 900K students
+      2036: 1200000,  // Year 10 - 1.2M students
+      2037: 1500000,  // Year 11 - 1.5M students (market share target)
     }
   },
   pessimistic: {
     name: 'Pessimistic',
     description: '20% lower than realistic per year',
     yearlyStudents: {
-      2027: 8000,     // 10K * 0.8
-      2028: 40000,    // 50K * 0.8
-      2029: 80000,    // 100K * 0.8
-      2030: 144000,   // 180K * 0.8
-      2031: 240000,   // 300K * 0.8
-      2032: 360000,   // 450K * 0.8
-      2033: 520000,   // 650K * 0.8
-      2034: 720000,   // 900K * 0.8
-      2035: 960000,   // 1.2M * 0.8
-      2036: 1200000,  // 1.5M * 0.8
-      2037: 1600000,  // 2M * 0.8
+      2027: 0,        // NO PUBLIC
+      2028: 8000,     // 10K * 0.8
+      2029: 40000,    // 50K * 0.8
+      2030: 80000,    // 100K * 0.8
+      2031: 144000,   // 180K * 0.8
+      2032: 240000,   // 300K * 0.8
+      2033: 360000,   // 450K * 0.8
+      2034: 520000,   // 650K * 0.8
+      2035: 720000,   // 900K * 0.8
+      2036: 960000,   // 1.2M * 0.8
+      2037: 1200000,  // 1.5M * 0.8
     }
   },
   optimistic: {
     name: 'Optimistic',
     description: '20% higher than realistic per year',
     yearlyStudents: {
-      2027: 12000,    // 10K * 1.2
-      2028: 60000,    // 50K * 1.2
-      2029: 120000,   // 100K * 1.2
-      2030: 216000,   // 180K * 1.2
-      2031: 360000,   // 300K * 1.2
-      2032: 540000,   // 450K * 1.2
-      2033: 780000,   // 650K * 1.2
-      2034: 1080000,  // 900K * 1.2
-      2035: 1440000,  // 1.2M * 1.2
-      2036: 1800000,  // 1.5M * 1.2
-      2037: 2400000,  // 2M * 1.2
+      2027: 0,        // NO PUBLIC
+      2028: 12000,    // 10K * 1.2
+      2029: 60000,    // 50K * 1.2
+      2030: 120000,   // 100K * 1.2
+      2031: 216000,   // 180K * 1.2
+      2032: 360000,   // 300K * 1.2
+      2033: 540000,   // 450K * 1.2
+      2034: 780000,   // 650K * 1.2
+      2035: 1080000,  // 900K * 1.2
+      2036: 1440000,  // 1.2M * 1.2
+      2037: 1800000,  // 1.5M * 1.2
     }
   }
 };

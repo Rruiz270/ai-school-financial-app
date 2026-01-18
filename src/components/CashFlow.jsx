@@ -58,12 +58,13 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     }
   };
 
-  // Public Adoption Projections by year (2027-2037)
-  // Realistic: 10K (2027), 50K (2028), grow to 2M by 2037
+  // Public Adoption Projections by year (2028-2037)
+  // NO PUBLIC in 2027 (Year 1) - starts in 2028 (Year 2)
+  // Realistic: 0 (Y1), 10K (Y2), 50K (Y3), grow to 1.5M by 2037
   const PUBLIC_ADOPTION_STUDENTS = {
-    realistic: { 1: 10000, 2: 50000, 3: 100000, 4: 180000, 5: 300000, 6: 450000, 7: 650000, 8: 900000, 9: 1200000, 10: 1500000 },
-    pessimistic: { 1: 8000, 2: 40000, 3: 80000, 4: 144000, 5: 240000, 6: 360000, 7: 520000, 8: 720000, 9: 960000, 10: 1200000 },
-    optimistic: { 1: 12000, 2: 60000, 3: 120000, 4: 216000, 5: 360000, 6: 540000, 7: 780000, 8: 1080000, 9: 1440000, 10: 1800000 },
+    realistic: { 1: 0, 2: 10000, 3: 50000, 4: 100000, 5: 180000, 6: 300000, 7: 450000, 8: 650000, 9: 900000, 10: 1200000 },
+    pessimistic: { 1: 0, 2: 8000, 3: 40000, 4: 80000, 5: 144000, 6: 240000, 7: 360000, 8: 520000, 9: 720000, 10: 960000 },
+    optimistic: { 1: 0, 2: 12000, 3: 60000, 4: 120000, 5: 216000, 6: 360000, 7: 540000, 8: 780000, 9: 1080000, 10: 1440000 },
   };
 
   // Total funding sources

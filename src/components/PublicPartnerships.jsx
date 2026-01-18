@@ -1,47 +1,87 @@
 import React, { useState, useMemo } from 'react';
 import { Building2, Users, TrendingUp, DollarSign, MapPin, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
 
-// Public Sector Scenario Presets
+// Public Sector Scenario Presets - Updated with corrected projections
+// Year 1 = 2027, Year 10 = 2036, Year 11 = 2037 (target 2M)
+// Realistic: 10K -> 50K -> 100K -> 180K -> 300K -> 450K -> 650K -> 900K -> 1.2M -> 1.5M
+// Pessimistic: 20% lower per year
+// Optimistic: 20% higher per year
 const PUBLIC_SCENARIO_PRESETS = {
-  optimistic: {
-    name: 'Optimistic',
-    description: 'Strong government partnerships, rapid adoption',
-    year1Students: 50000,
-    year5Students: 610000,
-    year10Students: 2200000,
-    pilotMunicipalities: 5,
-    year5Municipalities: 25,
-    year10Municipalities: 120,
-    revenuePerStudentMonth: 250,
-    marginsPublic: 0.40
-  },
   realistic: {
     name: 'Realistic',
-    description: 'Moderate government support, steady growth',
-    year1Students: 42500, // -15%
-    year5Students: 518500, // -15%
-    year10Students: 1870000, // -15%
-    pilotMunicipalities: 4,
-    year5Municipalities: 21, // -15%
-    year10Municipalities: 102, // -15%
-    revenuePerStudentMonth: 212, // -15%
-    marginsPublic: 0.35 // Higher than private due to lower operational costs
+    description: '10K students Year 1, growing to 1.5M by Year 10',
+    yearlyStudents: {
+      1: 10000,    // 2027
+      2: 50000,    // 2028
+      3: 100000,   // 2029
+      4: 180000,   // 2030
+      5: 300000,   // 2031
+      6: 450000,   // 2032
+      7: 650000,   // 2033
+      8: 900000,   // 2034
+      9: 1200000,  // 2035
+      10: 1500000, // 2036
+    },
+    year1Students: 10000,
+    year5Students: 300000,
+    year10Students: 1500000,
+    pilotMunicipalities: 2,
+    year5Municipalities: 30,
+    year10Municipalities: 100,
+    revenuePerStudentMonth: 15, // R$15/student/month (R$180/year) for public sector
+    marginsPublic: 0.35
   },
   pessimistic: {
     name: 'Pessimistic',
-    description: 'Slow adoption, regulatory challenges',
-    year1Students: 35000, // -30%
-    year5Students: 427000, // -30%
-    year10Students: 1540000, // -30%
+    description: '20% lower than realistic per year',
+    yearlyStudents: {
+      1: 8000,     // 10K * 0.8
+      2: 40000,    // 50K * 0.8
+      3: 80000,    // 100K * 0.8
+      4: 144000,   // 180K * 0.8
+      5: 240000,   // 300K * 0.8
+      6: 360000,   // 450K * 0.8
+      7: 520000,   // 650K * 0.8
+      8: 720000,   // 900K * 0.8
+      9: 960000,   // 1.2M * 0.8
+      10: 1200000, // 1.5M * 0.8
+    },
+    year1Students: 8000,
+    year5Students: 240000,
+    year10Students: 1200000,
+    pilotMunicipalities: 1,
+    year5Municipalities: 24,
+    year10Municipalities: 80,
+    revenuePerStudentMonth: 12, // R$12/student/month (20% lower)
+    marginsPublic: 0.30
+  },
+  optimistic: {
+    name: 'Optimistic',
+    description: '20% higher than realistic per year',
+    yearlyStudents: {
+      1: 12000,    // 10K * 1.2
+      2: 60000,    // 50K * 1.2
+      3: 120000,   // 100K * 1.2
+      4: 216000,   // 180K * 1.2
+      5: 360000,   // 300K * 1.2
+      6: 540000,   // 450K * 1.2
+      7: 780000,   // 650K * 1.2
+      8: 1080000,  // 900K * 1.2
+      9: 1440000,  // 1.2M * 1.2
+      10: 1800000, // 1.5M * 1.2
+    },
+    year1Students: 12000,
+    year5Students: 360000,
+    year10Students: 1800000,
     pilotMunicipalities: 3,
-    year5Municipalities: 17, // -30%
-    year10Municipalities: 84, // -30%
-    revenuePerStudentMonth: 175, // -30%
-    marginsPublic: 0.30 // Still higher than private despite challenges
+    year5Municipalities: 36,
+    year10Municipalities: 120,
+    revenuePerStudentMonth: 18, // R$18/student/month (20% higher)
+    marginsPublic: 0.40
   }
 };
 
-const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic' }) => {
+const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'realistic' }) => {
   const [currentScenario, setCurrentScenario] = useState(initialScenario);
   
   // Initialize parameters based on the initial scenario
@@ -73,36 +113,43 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
 
   const publicFinancialData = useMemo(() => {
     const years = [];
-    
+    const scenarioData = PUBLIC_SCENARIO_PRESETS[currentScenario];
+
     for (let year = 1; year <= 10; year++) {
-      // Student growth curve
-      const studentGrowth = Math.min(
-        publicParameters.year1Students * Math.pow(year / 1, 1.8),
-        publicParameters.year10Students
-      );
-      
-      const students = Math.floor(studentGrowth);
-      
-      // Municipality expansion
+      // Use the predefined yearly student projections
+      const students = scenarioData.yearlyStudents?.[year] ||
+        Math.floor(publicParameters.year1Students * Math.pow(year / 1, 1.8));
+
+      // Municipality expansion based on student count
+      // Roughly 15K students per municipality average
       const municipalities = Math.min(
-        publicParameters.pilotMunicipalities * Math.pow(year / 1, 1.5),
+        Math.max(publicParameters.pilotMunicipalities, Math.floor(students / 15000)),
         publicParameters.year10Municipalities
       );
-      
+
       // Core revenue streams
+      // Monthly license fee per student (R$15-18/month depending on scenario)
       const monthlyRevenue = students * publicParameters.revenuePerStudentMonth * 12;
-      const setupRevenue = Math.floor(municipalities * 50) * publicParameters.setupFeePerSchool; // 50 schools per municipality avg
-      const technologyRevenue = Math.floor(municipalities) * publicParameters.technologyLicenseFee;
-      const trainingRevenue = Math.floor(municipalities * 50 * publicParameters.teachersPerSchool) * publicParameters.teacherTrainingFee;
-      
+
+      // Setup fees for new municipalities (only count new ones each year)
+      const prevMunicipalities = year > 1 ?
+        Math.min(Math.max(publicParameters.pilotMunicipalities, Math.floor((scenarioData.yearlyStudents?.[year-1] || 0) / 15000)), publicParameters.year10Municipalities) : 0;
+      const newMunicipalities = municipalities - prevMunicipalities;
+      const setupRevenue = Math.max(0, newMunicipalities) * 50 * publicParameters.setupFeePerSchool; // 50 schools per municipality avg
+
+      const technologyRevenue = municipalities * publicParameters.technologyLicenseFee;
+      const trainingRevenue = Math.max(0, newMunicipalities) * 50 * publicParameters.teachersPerSchool * publicParameters.teacherTrainingFee;
+
       const totalRevenue = monthlyRevenue + setupRevenue + technologyRevenue + trainingRevenue;
       const costs = totalRevenue * (1 - publicParameters.marginsPublic);
       const ebitda = totalRevenue - costs;
-      
+
       years.push({
         year,
+        calendarYear: 2026 + year, // Year 1 = 2027
         students,
         municipalities: Math.floor(municipalities),
+        newMunicipalities: Math.max(0, newMunicipalities),
         revenue: {
           monthly: monthlyRevenue,
           setup: setupRevenue,
@@ -112,12 +159,12 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
         },
         costs,
         ebitda,
-        margin: ebitda / totalRevenue
+        margin: totalRevenue > 0 ? ebitda / totalRevenue : 0
       });
     }
-    
+
     return years;
-  }, [publicParameters]);
+  }, [publicParameters, currentScenario]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -187,10 +234,13 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
             <p className="mt-2 opacity-90">
               AI Education for Brazil's 46.7M Public K-12 Students through Municipal & State Partnerships
             </p>
+            <p className="mt-1 text-sm opacity-75">
+              {currentScenario.charAt(0).toUpperCase() + currentScenario.slice(1)} Scenario: 10K students (2027) → {formatNumber(year10Data.students)} (2036)
+            </p>
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold">{formatNumber(year10Data.students)}</div>
-            <div className="text-sm opacity-90">Students by Year 10</div>
+            <div className="text-sm opacity-90">Students by 2036 (Year 10)</div>
           </div>
         </div>
       </div>
@@ -413,38 +463,42 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'optimistic
 
       {/* Growth Timeline */}
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">10-Year Growth Projection</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">10-Year Growth Projection (2027-2036)</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Municipalities</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EBITDA</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calendar</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Municipalities</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">EBITDA</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {publicFinancialData.slice(0, 10).map((yearData) => (
                 <tr key={yearData.year} className={yearData.year % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     Year {yearData.year}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
+                    {yearData.calendarYear}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-700">
                     {formatNumber(yearData.students)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-500">
                     {yearData.municipalities}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 font-semibold">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-emerald-600 font-semibold">
                     {formatCurrency(yearData.revenue.total)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-green-600 font-semibold">
                     {formatCurrency(yearData.ebitda)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-500">
                     {(yearData.margin * 100).toFixed(1)}%
                   </td>
                 </tr>

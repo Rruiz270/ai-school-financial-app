@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Download, FileSpreadsheet, ChevronDown, X } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Download, FileSpreadsheet, ChevronDown, X, ChevronRight } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
@@ -11,7 +11,30 @@ const ExportButton = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [expandedCategories, setExpandedCategories] = useState({});
   const dropdownRef = useRef(null);
+
+  // Group options by category
+  const groupedOptions = useMemo(() => {
+    const groups = {};
+    exportOptions.forEach(option => {
+      const category = option.category || 'Other';
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(option);
+    });
+    return groups;
+  }, [exportOptions]);
+
+  // Initialize all categories as expanded
+  useEffect(() => {
+    const initialExpanded = {};
+    Object.keys(groupedOptions).forEach(cat => {
+      initialExpanded[cat] = true;
+    });
+    setExpandedCategories(initialExpanded);
+  }, [groupedOptions]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -30,6 +53,37 @@ const ExportButton = ({
         ? prev.filter(id => id !== optionId)
         : [...prev, optionId]
     );
+  };
+
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  const selectAllInCategory = (category) => {
+    const categoryOptionIds = groupedOptions[category].map(opt => opt.id);
+    setSelectedOptions(prev => {
+      const withoutCategory = prev.filter(id => !categoryOptionIds.includes(id));
+      return [...withoutCategory, ...categoryOptionIds];
+    });
+  };
+
+  const clearCategory = (category) => {
+    const categoryOptionIds = groupedOptions[category].map(opt => opt.id);
+    setSelectedOptions(prev => prev.filter(id => !categoryOptionIds.includes(id)));
+  };
+
+  const isCategoryFullySelected = (category) => {
+    const categoryOptionIds = groupedOptions[category].map(opt => opt.id);
+    return categoryOptionIds.every(id => selectedOptions.includes(id));
+  };
+
+  const isCategoryPartiallySelected = (category) => {
+    const categoryOptionIds = groupedOptions[category].map(opt => opt.id);
+    const selectedCount = categoryOptionIds.filter(id => selectedOptions.includes(id)).length;
+    return selectedCount > 0 && selectedCount < categoryOptionIds.length;
   };
 
   const selectAll = () => {
@@ -53,6 +107,17 @@ const ExportButton = ({
     setSelectedOptions([]);
   };
 
+  const categoryColors = {
+    'General': 'bg-purple-100 text-purple-700',
+    'Private Sector': 'bg-blue-100 text-blue-700',
+    'Public Sector': 'bg-green-100 text-green-700',
+    'Consolidated': 'bg-orange-100 text-orange-700',
+    'Cash Flow': 'bg-teal-100 text-teal-700',
+    'Unit Economics': 'bg-pink-100 text-pink-700',
+    'Year-by-Year': 'bg-indigo-100 text-indigo-700',
+    'Investment': 'bg-yellow-100 text-yellow-700',
+  };
+
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Main Export Button */}
@@ -67,7 +132,7 @@ const ExportButton = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
             <h3 className="font-semibold text-gray-800">Export to Excel</h3>
@@ -79,26 +144,68 @@ const ExportButton = ({
             </button>
           </div>
 
-          {/* Options List */}
-          <div className="max-h-64 overflow-y-auto p-2">
-            {exportOptions.map((option) => (
-              <label
-                key={option.id}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedOptions.includes(option.id)}
-                  onChange={() => toggleOption(option.id)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-800">{option.label}</div>
-                  {option.description && (
-                    <div className="text-xs text-gray-500">{option.description}</div>
-                  )}
+          {/* Options List - Grouped by Category */}
+          <div className="max-h-96 overflow-y-auto">
+            {Object.entries(groupedOptions).map(([category, options]) => (
+              <div key={category} className="border-b border-gray-100 last:border-b-0">
+                {/* Category Header */}
+                <div
+                  className="flex items-center justify-between px-4 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                  onClick={() => toggleCategory(category)}
+                >
+                  <div className="flex items-center gap-2">
+                    <ChevronRight
+                      className={`w-4 h-4 text-gray-500 transition-transform ${expandedCategories[category] ? 'rotate-90' : ''}`}
+                    />
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${categoryColors[category] || 'bg-gray-100 text-gray-700'}`}>
+                      {category}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      ({options.filter(opt => selectedOptions.includes(opt.id)).length}/{options.length})
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => selectAllInCategory(category)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      All
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <button
+                      onClick={() => clearCategory(category)}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      None
+                    </button>
+                  </div>
                 </div>
-              </label>
+
+                {/* Category Options */}
+                {expandedCategories[category] && (
+                  <div className="px-2 py-1">
+                    {options.map((option) => (
+                      <label
+                        key={option.id}
+                        className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 cursor-pointer ml-4"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedOptions.includes(option.id)}
+                          onChange={() => toggleOption(option.id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-800">{option.label}</div>
+                          {option.description && (
+                            <div className="text-xs text-gray-500">{option.description}</div>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 
@@ -108,7 +215,7 @@ const ExportButton = ({
               <div className="flex gap-2">
                 <button
                   onClick={selectAll}
-                  className="text-xs text-blue-600 hover:text-blue-800"
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Select All
                 </button>
@@ -120,8 +227,8 @@ const ExportButton = ({
                   Clear All
                 </button>
               </div>
-              <span className="text-xs text-gray-500">
-                {selectedOptions.length} selected
+              <span className="text-xs text-gray-500 font-medium">
+                {selectedOptions.length} of {exportOptions.length} selected
               </span>
             </div>
             <button
@@ -134,7 +241,7 @@ const ExportButton = ({
               }`}
             >
               <Download className="w-4 h-4" />
-              Export Selected
+              Export Selected ({selectedOptions.length})
             </button>
           </div>
         </div>

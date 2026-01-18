@@ -101,14 +101,26 @@ const ExportButton = ({
       return;
     }
 
-    if (onExport) {
-      console.log('Calling onExport with:', selectedOptions);
-      onExport(selectedOptions);
-    } else {
-      console.error('onExport callback is not defined!');
-    }
+    // Store options before clearing state
+    const optionsToExport = [...selectedOptions];
+
+    // Close dropdown and clear selections first
     setIsOpen(false);
     setSelectedOptions([]);
+
+    // Then trigger export with stored options
+    if (onExport) {
+      console.log('Calling onExport with:', optionsToExport);
+      try {
+        onExport(optionsToExport);
+      } catch (error) {
+        console.error('Error in onExport:', error);
+        alert('Export error: ' + error.message);
+      }
+    } else {
+      console.error('onExport callback is not defined!');
+      alert('Export callback not defined');
+    }
   };
 
   const categoryColors = {
@@ -230,6 +242,16 @@ const ExportButton = ({
                 >
                   Clear All
                 </button>
+                <span className="text-gray-300">|</span>
+                <button
+                  onClick={() => {
+                    console.log('Test export button clicked');
+                    testExport();
+                  }}
+                  className="text-xs text-green-600 hover:text-green-800"
+                >
+                  Test Export
+                </button>
               </div>
               <span className="text-xs text-gray-500 font-medium">
                 {selectedOptions.length} of {exportOptions.length} selected
@@ -253,6 +275,41 @@ const ExportButton = ({
     </div>
   );
 };
+
+// Simple test export function
+export const testExport = () => {
+  try {
+    console.log('Testing simple export...');
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet([
+      { Test: 'Hello', Value: 123 },
+      { Test: 'World', Value: 456 }
+    ]);
+    XLSX.utils.book_append_sheet(wb, ws, 'Test');
+    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'test_export.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    console.log('Test export complete!');
+    return true;
+  } catch (e) {
+    console.error('Test export failed:', e);
+    alert('Test export failed: ' + e.message);
+    return false;
+  }
+};
+
+// Make testExport available in browser console for debugging
+if (typeof window !== 'undefined') {
+  window.testExport = testExport;
+}
 
 // Excel Export Utility Functions
 export const exportToExcel = (sheets, filename = 'export') => {

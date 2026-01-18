@@ -8,9 +8,60 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
   const [showEmployeeBreakdown, setShowEmployeeBreakdown] = useState(false);
   const [showExpenseTooltip, setShowExpenseTooltip] = useState(null);
   const [employeeDetailModal, setEmployeeDetailModal] = useState(null);
-  
-  const INITIAL_INVESTMENT = 30000000; // R$30M initial cash
-  const PRE_LAUNCH_TECH_INVESTMENT = 3000000; // R$3M tech investment before Year 1
+
+  // Investment Structure for Private Historic Building (2026-2027)
+  // Phase 1 (2026): R$25M total
+  //   - Semester 1 (Jan-Jul): R$10M from Bridge Investment
+  //   - Semester 2 (Aug-Dec): R$15M (R$10M CAPEX + R$5M people/tech)
+  //     Sources: Desenvolve SP R$10M + Prefeitura 25% subsidy + Bridge R$2.5M
+  // Phase 2 (2027): R$15M CAPEX while school operates
+  //   Sources: Desenvolve SP R$20M + Prefeitura 25% subsidy
+
+  const INVESTMENT_PHASES = {
+    phase1: {
+      semester1: {
+        total: 10000000, // R$10M
+        bridgeInvestment: 10000000, // 100% from bridge
+        allocation: {
+          architectUpfront: 100000,
+          technologyPlatform: 5000000,
+          peoplePreLaunch: 3400000,
+          curriculumDevelopment: 1500000,
+        }
+      },
+      semester2: {
+        total: 15000000, // R$15M
+        desenvolveSP: 10000000, // CAPEX financing
+        prefeituraSubsidy: 2500000, // 25% historic benefit
+        bridgeInvestment: 2500000,
+        allocation: {
+          capexConstruction: 10000000,
+          peopleHiring: 3000000,
+          technology: 2000000,
+        }
+      }
+    },
+    phase2: {
+      total: 15000000,
+      desenvolveSP: 20000000, // Total 30M commitment
+      prefeituraSubsidy: 5000000, // 25% of 20M
+    },
+    architectProject: {
+      total: 1200000,
+      upfront: 100000,
+      monthlyPayment: 45833,
+      paymentMonths: 24,
+    }
+  };
+
+  // Total funding sources
+  const TOTAL_BRIDGE_INVESTMENT = 12500000; // R$12.5M bridge
+  const TOTAL_DESENVOLVE_SP = 30000000; // R$30M from Desenvolve SP
+  const TOTAL_PREFEITURA_SUBSIDY = 7500000; // R$7.5M (25% of CAPEX)
+  const TOTAL_CAPEX = 40000000; // R$40M total CAPEX budget
+
+  const INITIAL_INVESTMENT = TOTAL_BRIDGE_INVESTMENT; // Only bridge is actual equity investment
+  const PRE_LAUNCH_TECH_INVESTMENT = 5000000; // R$5M tech investment (part of phase 1 semester 1)
   
   // Expense category definitions matching presentation
   const expenseCategories = {
@@ -117,35 +168,63 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
   const cashFlowData = useMemo(() => {
     const { projection } = financialData;
     const yearlyData = [];
-    
-    // Calculate pre-launch year expenses
-    const preLaunchExpenses = PRE_LAUNCH_TECH_INVESTMENT + // Tech: R$3M
-                              (100000 * 12) + // Founder salaries: R$1.2M
-                              (200000 * 10) + // Curriculum: R$2M (months 3-12)
-                              50000 + // Legal setup
-                              150000 + // Market research (2 months)
-                              200000 + // Branding (2 months)
-                              150000; // Office setup
-    
-    // Year 0 - Pre-launch
-    const year0NetCashFlow = -preLaunchExpenses - projection[0].capex;
-    const year0ClosingCash = INITIAL_INVESTMENT + year0NetCashFlow;
-    
+
+    // Phase 1 - Year 0 (2026) Pre-Launch
+    // Semester 1: R$10M (Bridge) -> Architecture, Tech, People, Curriculum
+    // Semester 2: R$15M (Desenvolve SP + Prefeitura + Bridge) -> CAPEX, Hiring, Tech
+    const phase1Semester1Expenses = INVESTMENT_PHASES.phase1.semester1.total; // R$10M
+    const phase1Semester2Expenses = INVESTMENT_PHASES.phase1.semester2.total; // R$15M
+    const phase1TotalExpenses = phase1Semester1Expenses + phase1Semester2Expenses; // R$25M
+
+    // Funding for Year 0
+    const year0BridgeInvestment = INVESTMENT_PHASES.phase1.semester1.bridgeInvestment +
+                                   INVESTMENT_PHASES.phase1.semester2.bridgeInvestment; // R$12.5M
+    const year0DesenvolveSP = INVESTMENT_PHASES.phase1.semester2.desenvolveSP; // R$10M
+    const year0PrefeituraSubsidy = INVESTMENT_PHASES.phase1.semester2.prefeituraSubsidy; // R$2.5M
+    const year0TotalFunding = year0BridgeInvestment + year0DesenvolveSP + year0PrefeituraSubsidy; // R$25M
+
+    // Year 0 cash flow (expenses match funding exactly)
+    const year0NetCashFlow = year0TotalFunding - phase1TotalExpenses;
+    const year0ClosingCash = year0NetCashFlow; // Starts at 0, ends at 0 (all deployed)
+
     yearlyData.push({
       year: 0,
-      yearLabel: 'Pre-Launch',
-      openingCash: 0, // Start with zero, investment is shown separately
-      investments: INITIAL_INVESTMENT,
+      yearLabel: 'Phase 1 (2026)',
+      openingCash: 0,
+      investments: year0TotalFunding,
+      investmentDetails: {
+        bridgeInvestment: year0BridgeInvestment,
+        desenvolveSP: year0DesenvolveSP,
+        prefeituraSubsidy: year0PrefeituraSubsidy,
+      },
+      expenses: {
+        semester1: {
+          total: phase1Semester1Expenses,
+          architectUpfront: INVESTMENT_PHASES.architectProject.upfront,
+          technology: INVESTMENT_PHASES.phase1.semester1.allocation.technologyPlatform,
+          people: INVESTMENT_PHASES.phase1.semester1.allocation.peoplePreLaunch,
+          curriculum: INVESTMENT_PHASES.phase1.semester1.allocation.curriculumDevelopment,
+          architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 5, // 5 months
+        },
+        semester2: {
+          total: phase1Semester2Expenses,
+          capex: INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction,
+          people: INVESTMENT_PHASES.phase1.semester2.allocation.peopleHiring,
+          technology: INVESTMENT_PHASES.phase1.semester2.allocation.technology,
+          architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 5, // 5 months
+        }
+      },
       revenue: 0,
-      operatingExpenses: -preLaunchExpenses,
-      capex: -projection[0].capex,
+      operatingExpenses: -(phase1TotalExpenses - INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction),
+      capex: -INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction,
       taxes: 0,
-      netCashFlow: INITIAL_INVESTMENT + year0NetCashFlow, // Include investment in net cash flow
+      netCashFlow: year0NetCashFlow,
       closingCash: year0ClosingCash,
-      burnRate: Math.abs(preLaunchExpenses + projection[0].capex) / 12,
-      runwayMonths: year0ClosingCash > 0 ? Math.floor(year0ClosingCash / (Math.abs(preLaunchExpenses + projection[0].capex) / 12)) : 0
+      burnRate: phase1TotalExpenses / 12,
+      runwayMonths: 12, // Funded for full year
+      phase: 'Phase 1 - Pre-Launch'
     });
-    
+
     let cumulativeCash = year0ClosingCash;
     
     // Years 1-10
@@ -155,32 +234,61 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       const privateRevenue = yearProjection.revenue.total;
       // Add public sector revenue if applicable (year 2 onwards)
       // Use total public revenue from the model
-      const publicRevenue = year >= 2 && publicModelData && publicModelData[year-2] ? 
+      const publicRevenue = year >= 2 && publicModelData && publicModelData[year-2] ?
         publicModelData[year-2].revenue.total : 0;
       const revenue = privateRevenue + publicRevenue;
       // Add public sector costs if applicable
-      const publicCosts = year >= 2 && publicModelData && publicModelData[year-2] ? 
+      const publicCosts = year >= 2 && publicModelData && publicModelData[year-2] ?
         publicModelData[year-2].costs : 0;
       // Add franchising team costs
       const franchisingTeamCosts = (yearProjection.franchiseCount || 0) * 15000 * 12; // R$15k per franchise per month
       const operatingExpenses = yearProjection.costs.total + publicCosts + franchisingTeamCosts;
-      const capex = yearProjection.capex || 0;
+
+      // CAPEX and funding for Year 1 (Phase 2 - School Operating)
+      let capex = yearProjection.capex || 0;
+      let yearInvestments = 0;
+      let investmentDetails = null;
+
+      if (year === 1) {
+        // Phase 2: R$15M CAPEX while school operates
+        // Funded by Desenvolve SP (R$20M) + Prefeitura subsidy (R$5M = 25% of R$20M)
+        // Net CAPEX cost to us: R$15M (after subsidy)
+        yearInvestments = INVESTMENT_PHASES.phase2.desenvolveSP; // R$20M from Desenvolve SP
+        const phase2Subsidy = INVESTMENT_PHASES.phase2.prefeituraSubsidy; // R$5M
+        investmentDetails = {
+          desenvolveSP: INVESTMENT_PHASES.phase2.desenvolveSP,
+          prefeituraSubsidy: phase2Subsidy,
+        };
+        // Architect payments continue (12 months * 45.8k)
+        const architectPayments = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
+        // Total Phase 2 CAPEX + architect
+        capex = INVESTMENT_PHASES.phase2.total + architectPayments;
+      } else if (year === 2) {
+        // Final year of architect payments
+        const architectPayments = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
+        capex = architectPayments + (yearProjection.capex || 0);
+      }
+
       const taxes = yearProjection.taxes || 0;
-      
+
       const operatingCashFlow = revenue - operatingExpenses;
-      const netCashFlow = operatingCashFlow - capex - taxes;
+      // For Year 1, we receive Desenvolve SP funding to offset CAPEX
+      const fundingReceived = year === 1 ? yearInvestments : 0;
+      const netCashFlow = operatingCashFlow - capex - taxes + fundingReceived;
       const closingCash = cumulativeCash + netCashFlow;
-      
+
       const monthlyBurn = netCashFlow < 0 ? Math.abs(netCashFlow) / 12 : 0;
-      const runwayMonths = closingCash > 0 && monthlyBurn > 0 
+      const runwayMonths = closingCash > 0 && monthlyBurn > 0
         ? Math.floor(closingCash / monthlyBurn)
         : closingCash > 0 ? 999 : 0;
-      
+
       yearlyData.push({
         year,
-        yearLabel: `Year ${year}`,
+        yearLabel: year === 1 ? 'Phase 2 (2027)' : `Year ${year}`,
         openingCash: cumulativeCash,
         revenue,
+        investments: fundingReceived > 0 ? fundingReceived : undefined,
+        investmentDetails,
         operatingExpenses: -operatingExpenses,
         capex: -capex,
         taxes: -taxes,
@@ -188,9 +296,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         netCashFlow,
         closingCash,
         burnRate: monthlyBurn,
-        runwayMonths
+        runwayMonths,
+        phase: year === 1 ? 'Phase 2 - School Operating' : null,
+        architectPayment: year <= 2 ? INVESTMENT_PHASES.architectProject.monthlyPayment * 12 : 0,
       });
-      
+
       cumulativeCash = closingCash;
     }
     
@@ -200,40 +310,84 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
   // Calculate detailed monthly cash flow
   const getMonthlyDetailedData = (year) => {
     if (!showMonthly || selectedYear === null) return [];
-    
+
     const yearData = cashFlowData[year];
     const monthlyData = [];
     const yearProjection = financialData.projection[year];
     // For Year 0, start with 0 and add investment in month 1
     let runningCash = year === 0 ? 0 : yearData.openingCash;
-    
-    // For Year 0, it's pre-launch investments
+
+    // For Year 0 (Phase 1 - 2026), it's pre-launch investments
     if (year === 0) {
       for (let month = 1; month <= 12; month++) {
+        const isSemester1 = month <= 7; // Jan-Jul
+        const isSemester2 = month > 7; // Aug-Dec
+
+        // Funding inflows based on semester
+        let bridgeFunding = 0;
+        let desenvolveSPFunding = 0;
+        let prefeituaSubsidy = 0;
+
+        if (month === 1) {
+          // Semester 1 bridge funding arrives
+          bridgeFunding = INVESTMENT_PHASES.phase1.semester1.bridgeInvestment; // R$10M
+        }
+        if (month === 8) {
+          // Semester 2 funding arrives
+          desenvolveSPFunding = INVESTMENT_PHASES.phase1.semester2.desenvolveSP; // R$10M
+          prefeituaSubsidy = INVESTMENT_PHASES.phase1.semester2.prefeituraSubsidy; // R$2.5M
+          bridgeFunding = INVESTMENT_PHASES.phase1.semester2.bridgeInvestment; // R$2.5M
+        }
+
+        // Monthly expense allocations
+        const techMonthly = isSemester1 ?
+          INVESTMENT_PHASES.phase1.semester1.allocation.technologyPlatform / 7 : // R$5M / 7 months
+          INVESTMENT_PHASES.phase1.semester2.allocation.technology / 5; // R$2M / 5 months
+
+        const peopleMonthly = isSemester1 ?
+          INVESTMENT_PHASES.phase1.semester1.allocation.peoplePreLaunch / 7 : // R$3.4M / 7 months
+          INVESTMENT_PHASES.phase1.semester2.allocation.peopleHiring / 5; // R$3M / 5 months
+
+        const curriculumMonthly = isSemester1 && month >= 2 ?
+          INVESTMENT_PHASES.phase1.semester1.allocation.curriculumDevelopment / 6 : 0; // R$1.5M / 6 months (Feb-Jul)
+
+        const architectPayment = month === 1 ?
+          INVESTMENT_PHASES.architectProject.upfront : // R$100k upfront
+          INVESTMENT_PHASES.architectProject.monthlyPayment; // R$45.8k/month
+
+        // CAPEX only in semester 2
+        const capexMonthly = isSemester2 ?
+          INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction / 5 : 0; // R$10M / 5 months
+
         const details = {
           month,
-          monthLabel: `Month ${month}`,
+          monthLabel: isSemester1 ? `Month ${month} (S1)` : `Month ${month} (S2)`,
+          semester: isSemester1 ? 'Semester 1' : 'Semester 2',
           inflows: {
-            investorFunding: month === 1 ? INITIAL_INVESTMENT : 0,
-            total: month === 1 ? INITIAL_INVESTMENT : 0
+            bridgeInvestment: bridgeFunding,
+            desenvolveSP: desenvolveSPFunding,
+            prefeituraSubsidy: prefeituaSubsidy,
+            total: bridgeFunding + desenvolveSPFunding + prefeituaSubsidy
           },
           outflows: {
-            techDevelopment: PRE_LAUNCH_TECH_INVESTMENT / 12, // Spread over 12 months
-            founderSalaries: 100000, // R$100k/month throughout
-            curriculumDevelopment: month >= 3 ? 200000 : 0, // R$200k/month starting month 3
+            techDevelopment: techMonthly,
+            peopleOperations: peopleMonthly,
+            curriculumDevelopment: curriculumMonthly,
+            architectProject: architectPayment,
+            capexConstruction: capexMonthly,
             legalSetup: month === 2 ? 50000 : 0,
-            marketResearch: month >= 3 && month <= 4 ? 75000 : 0,
-            brandingDesign: month >= 5 && month <= 6 ? 100000 : 0,
-            officeSetup: month === 9 ? 150000 : 0,
-            capex: month === 12 ? yearProjection.capex : 0,
+            marketResearch: month === 3 || month === 4 ? 75000 : 0,
+            brandingDesign: month === 5 || month === 6 ? 100000 : 0,
             total: 0
           }
         };
-        
-        details.outflows.total = Object.values(details.outflows).reduce((sum, val) => sum + val, 0) - details.outflows.total;
+
+        details.outflows.total = Object.values(details.outflows).reduce((sum, val) => {
+          return typeof val === 'number' ? sum + val : sum;
+        }, 0);
         const netFlow = details.inflows.total - details.outflows.total;
         runningCash += netFlow;
-        
+
         details.netCashFlow = netFlow;
         details.closingCash = runningCash;
         monthlyData.push(details);
@@ -569,12 +723,58 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           </div>
         </div>
         
-        {/* Key Metrics */}
+        {/* Key Metrics - Funding Sources */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">Initial Investment</div>
-            <div className="text-lg font-bold text-gray-900">{formatCurrency(INITIAL_INVESTMENT)}</div>
-            <div className="text-xs text-gray-500 mt-1">Including R$3M pre-launch tech</div>
+            <div className="text-sm text-gray-600">Bridge Investment</div>
+            <div className="text-lg font-bold text-gray-900">{formatCurrency(TOTAL_BRIDGE_INVESTMENT)}</div>
+            <div className="text-xs text-gray-500 mt-1">Private equity (H1 2026)</div>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="text-sm text-blue-600">Desenvolve SP Financing</div>
+            <div className="text-lg font-bold text-blue-900">{formatCurrency(TOTAL_DESENVOLVE_SP)}</div>
+            <div className="text-xs text-blue-500 mt-1">CAPEX loan (H2 2026 + 2027)</div>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="text-sm text-green-600">Prefeitura Subsidy</div>
+            <div className="text-lg font-bold text-green-900">{formatCurrency(TOTAL_PREFEITURA_SUBSIDY)}</div>
+            <div className="text-xs text-green-500 mt-1">25% historic building benefit</div>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="text-sm text-purple-600">Total CAPEX Budget</div>
+            <div className="text-lg font-bold text-purple-900">{formatCurrency(TOTAL_CAPEX)}</div>
+            <div className="text-xs text-purple-500 mt-1">Phase 1 + Phase 2</div>
+          </div>
+        </div>
+
+        {/* Investment Timeline */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
+            <div className="text-sm font-semibold text-indigo-700">Phase 1 - Semester 1</div>
+            <div className="text-lg font-bold text-indigo-900">{formatCurrency(INVESTMENT_PHASES.phase1.semester1.total)}</div>
+            <div className="text-xs text-indigo-600 mt-1">Jan-Jul 2026 • Bridge Investment</div>
+            <div className="text-xs text-indigo-500">Architecture, Tech, People, Curriculum</div>
+          </div>
+          <div className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
+            <div className="text-sm font-semibold text-indigo-700">Phase 1 - Semester 2</div>
+            <div className="text-lg font-bold text-indigo-900">{formatCurrency(INVESTMENT_PHASES.phase1.semester2.total)}</div>
+            <div className="text-xs text-indigo-600 mt-1">Aug-Dec 2026 • Multi-source</div>
+            <div className="text-xs text-indigo-500">CAPEX, Hiring, Technology</div>
+          </div>
+          <div className="bg-teal-50 p-4 rounded-lg border-l-4 border-teal-500">
+            <div className="text-sm font-semibold text-teal-700">Phase 2 - School Operating</div>
+            <div className="text-lg font-bold text-teal-900">{formatCurrency(INVESTMENT_PHASES.phase2.total)}</div>
+            <div className="text-xs text-teal-600 mt-1">2027 • Desenvolve SP + Prefeitura</div>
+            <div className="text-xs text-teal-500">Equipment, Infrastructure + Architect</div>
+          </div>
+        </div>
+
+        {/* Cash Flow Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+          <div className="bg-amber-50 p-4 rounded-lg">
+            <div className="text-sm text-amber-600">Architect Project</div>
+            <div className="text-lg font-bold text-amber-900">{formatCurrency(INVESTMENT_PHASES.architectProject.total)}</div>
+            <div className="text-xs text-amber-500 mt-1">R$100K upfront + 24 months</div>
           </div>
           <div className="bg-blue-50 p-4 rounded-lg">
             <div className="text-sm text-blue-600">Cash Positive From</div>
@@ -591,9 +791,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
             </div>
           </div>
           <div className="bg-orange-50 p-4 rounded-lg">
-            <div className="text-sm text-orange-600">Peak Funding Need</div>
-            <div className="text-lg font-bold text-orange-900">{formatCurrency(peakFunding)}</div>
-            <div className="text-xs text-orange-500 mt-1">Maximum capital deployed</div>
+            <div className="text-sm text-orange-600">Net Equity Required</div>
+            <div className="text-lg font-bold text-orange-900">{formatCurrency(TOTAL_BRIDGE_INVESTMENT)}</div>
+            <div className="text-xs text-orange-500 mt-1">After subsidies & financing</div>
           </div>
         </div>
         

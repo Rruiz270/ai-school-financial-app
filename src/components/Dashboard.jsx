@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, DollarSign, Users, Target, AlertCircle, CheckCircle, BarChart3 } from 'lucide-react';
-import { SCENARIO_PRESETS } from '../utils/financialModel';
+import { SCENARIO_PRESETS, INVESTMENT_PHASES } from '../utils/financialModel';
 
 const Dashboard = ({ financialData, onScenarioChange, currentScenario = 'realistic', className = '' }) => {
   const [selectedYear, setSelectedYear] = useState(10);
@@ -193,6 +193,61 @@ const Dashboard = ({ financialData, onScenarioChange, currentScenario = 'realist
           </div>
         ))}
       </div>
+
+      {/* Investment Summary - New Funding Structure */}
+      {summary.investmentSummary && (
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Investment & Funding Structure</h3>
+            <span className="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">
+              Private Historic Building
+            </span>
+          </div>
+
+          {/* Funding Sources */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-sm text-gray-600">Bridge Investment</div>
+              <div className="text-xl font-bold text-gray-900">{formatCurrency(summary.investmentSummary.bridgeInvestment)}</div>
+              <div className="text-xs text-gray-500 mt-1">Private equity (H1 2026)</div>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="text-sm text-blue-600">Desenvolve SP</div>
+              <div className="text-xl font-bold text-blue-900">{formatCurrency(summary.investmentSummary.desenvolveSPLoan)}</div>
+              <div className="text-xs text-blue-500 mt-1">CAPEX financing</div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="text-sm text-green-600">Prefeitura Subsidy</div>
+              <div className="text-xl font-bold text-green-900">{formatCurrency(summary.investmentSummary.prefeituraSubsidy)}</div>
+              <div className="text-xs text-green-500 mt-1">25% historic building</div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="text-sm text-purple-600">Total CAPEX</div>
+              <div className="text-xl font-bold text-purple-900">{formatCurrency(summary.investmentSummary.totalCapex)}</div>
+              <div className="text-xs text-purple-500 mt-1">Building + Equipment</div>
+            </div>
+          </div>
+
+          {/* Phase Timeline */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+              <div className="text-sm font-semibold text-indigo-700">Phase 1 - 2026</div>
+              <div className="text-lg font-bold text-indigo-900">{formatCurrency(summary.investmentSummary.phase1Total)}</div>
+              <div className="text-xs text-indigo-600">Pre-Launch: Tech, People, CAPEX Start</div>
+            </div>
+            <div className="border-l-4 border-teal-500 bg-teal-50 p-4 rounded-r-lg">
+              <div className="text-sm font-semibold text-teal-700">Phase 2 - 2027</div>
+              <div className="text-lg font-bold text-teal-900">{formatCurrency(summary.investmentSummary.phase2Total)}</div>
+              <div className="text-xs text-teal-600">School Operating: Equipment, Infrastructure</div>
+            </div>
+            <div className="border-l-4 border-amber-500 bg-amber-50 p-4 rounded-r-lg">
+              <div className="text-sm font-semibold text-amber-700">Architect Project</div>
+              <div className="text-lg font-bold text-amber-900">{formatCurrency(summary.investmentSummary.architectProject)}</div>
+              <div className="text-xs text-amber-600">R$100K upfront + 24 monthly payments</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Revenue Growth Chart */}
       <div className="bg-white rounded-lg shadow-lg p-6">

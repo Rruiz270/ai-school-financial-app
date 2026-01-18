@@ -22,7 +22,7 @@ export const DEFAULT_PARAMETERS = {
   marketingRate: 0.05, // 5% of revenue
   
   // CAPEX Scenarios
-  capexScenario: 'government', // government, built-to-suit, direct
+  capexScenario: 'private-historic', // private-historic, government, built-to-suit, direct
   
   // Growth rates (more conservative)
   franchiseGrowthRate: 2.5, // Even more conservative - 2-3 new franchises per year
@@ -63,7 +63,7 @@ export const SCENARIO_PRESETS = {
       adoptionGrowthRate: 0.3, // Slower than 40%
       franchiseStartingStudents: 300,
       
-      capexScenario: 'government',
+      capexScenario: 'private-historic',
       yearlyOverrides: {}
     }
   },
@@ -102,30 +102,120 @@ export const SCENARIO_PRESETS = {
       adoptionGrowthRate: 0.5, // 50% growth
       franchiseStartingStudents: 300,
       
-      capexScenario: 'government',
+      capexScenario: 'private-historic',
       yearlyOverrides: {}
     }
   }
 };
 
+// Phased CAPEX and Investment Structure (2026-2027)
+// Based on private historic building with Desenvolve SP financing and Prefeitura subsidy
+export const INVESTMENT_PHASES = {
+  phase1: {
+    name: 'Phase 1 - 2026 (Pre-Launch)',
+    semester1: {
+      total: 10000000, // R$10M
+      sources: {
+        bridgeInvestment: 10000000, // 100% from bridge private investment
+      },
+      allocation: {
+        architectUpfront: 100000, // R$100K architect upfront
+        technologyPlatform: 5000000, // R$5M tech development
+        peoplePreLaunch: 3400000, // R$3.4M salaries and operations
+        curriculumDevelopment: 1500000, // R$1.5M curriculum
+      },
+      months: [1, 2, 3, 4, 5, 6, 7] // Jan-Jul
+    },
+    semester2: {
+      total: 15000000, // R$15M
+      sources: {
+        desenvolveSP: 10000000, // R$10M CAPEX from Desenvolve SP
+        prefeituraSubsidy: 2500000, // 25% of R$10M CAPEX from historic building benefit
+        bridgeInvestment: 2500000, // Remaining R$2.5M from bridge
+      },
+      allocation: {
+        capexConstruction: 10000000, // R$10M CAPEX
+        peopleHiring: 3000000, // R$3M people hiring
+        technology: 2000000, // R$2M additional tech
+      },
+      months: [8, 9, 10, 11, 12] // Aug-Dec
+    }
+  },
+  phase2: {
+    name: 'Phase 2 - 2027 (School Operating)',
+    total: 15000000, // R$15M additional CAPEX
+    sources: {
+      desenvolveSP: 20000000, // R$20M from Desenvolve SP (total 30M commitment)
+      prefeituraSubsidy: 5000000, // 25% of R$20M CAPEX = R$5M
+      // Net cost: R$15M
+    },
+    allocation: {
+      capexEquipment: 10000000, // R$10M equipment and finishing
+      capexInfrastructure: 5000000, // R$5M additional infrastructure
+    }
+  },
+  architectProject: {
+    total: 1200000, // R$1.2M total
+    upfront: 100000, // R$100K upfront (included in Phase 1 Semester 1)
+    monthlyPayment: 45833, // R$1.1M / 24 months ≈ R$45,833/month
+    paymentMonths: 24, // 24 months starting from month 2
+  },
+  totals: {
+    totalCapex: 40000000, // R$40M total CAPEX
+    totalInvestment: 25000000, // R$25M total investment (Phase 1)
+    desenvolveSPLoan: 30000000, // R$30M total from Desenvolve SP
+    prefeituraSubsidy: 7500000, // R$7.5M total from Prefeitura (25% of CAPEX where eligible)
+  }
+};
+
 export const CAPEX_SCENARIOS = {
+  'private-historic': {
+    name: 'Private Historic Building',
+    initialCapex: 25000000, // R$25M Year 0 (Phase 1 full investment)
+    year1Capex: 15000000, // R$15M Year 1 (Phase 2)
+    annualFacilityCost: 1500000, // R$1.5M annual (maintenance, utilities, taxes - reduced due to historic benefit)
+    description: 'R$40M total CAPEX (2 phases), private historic building with Desenvolve SP + Prefeitura subsidy',
+    fundingSources: {
+      bridgeInvestment: 12500000, // R$12.5M bridge
+      desenvolveSP: 30000000, // R$30M CAPEX loan
+      prefeituraSubsidy: 7500000, // R$7.5M (25% of eligible CAPEX)
+    }
+  },
   government: {
     name: 'Government Partnership',
     initialCapex: 10000000, // R$10M renovation only
+    year1Capex: 0,
     annualFacilityCost: 800000, // licenses, maintenance, utilities
-    description: 'R$10M renovation, 30-year free building use from government'
+    description: 'R$10M renovation, 30-year free building use from government',
+    fundingSources: {
+      bridgeInvestment: 10000000,
+      desenvolveSP: 0,
+      prefeituraSubsidy: 0,
+    }
   },
   'built-to-suit': {
     name: 'Built-to-Suit with 30-Year Lease',
     initialCapex: 3000000, // R$3M tech only
+    year1Capex: 0,
     annualFacilityCost: 3200000, // R$25M building cost amortized over 30 years + operational costs
-    description: 'R$3M tech, developer builds R$25M facility, 30-year lease ~R$3.2M/year'
+    description: 'R$3M tech, developer builds R$25M facility, 30-year lease ~R$3.2M/year',
+    fundingSources: {
+      bridgeInvestment: 3000000,
+      desenvolveSP: 0,
+      prefeituraSubsidy: 0,
+    }
   },
   direct: {
     name: 'Direct Investment & Construction',
     initialCapex: 25000000, // R$25M for our own construction + tech
+    year1Capex: 0,
     annualFacilityCost: 1200000, // maintenance, utilities, taxes only
-    description: 'R$25M building construction + tech, full ownership'
+    description: 'R$25M building construction + tech, full ownership',
+    fundingSources: {
+      bridgeInvestment: 25000000,
+      desenvolveSP: 0,
+      prefeituraSubsidy: 0,
+    }
   }
 };
 
@@ -301,10 +391,27 @@ export class FinancialModel {
     const ebitda = totalRevenue - totalCosts;
     const ebitdaMargin = totalRevenue > 0 ? ebitda / totalRevenue : 0;
     
-    // CAPEX for year 0 with overrides
-    const capex = yearOverrides.capex !== undefined ? yearOverrides.capex :
-                  (year === 0 ? capexScenario.initialCapex : 
-                  year <= 5 ? totalRevenue * 0.005 : totalRevenue * 0.003);
+    // CAPEX calculation with phased structure
+    // For private-historic: Year 0 = 25M, Year 1 = 15M (Phase 2)
+    // Plus architect payments: 100k upfront + 45.8k/month for 24 months
+    let capex;
+    if (yearOverrides.capex !== undefined) {
+      capex = yearOverrides.capex;
+    } else if (year === 0) {
+      // Phase 1: Full initial investment including CAPEX and pre-launch
+      capex = capexScenario.initialCapex;
+    } else if (year === 1 && capexScenario.year1Capex) {
+      // Phase 2 CAPEX (for private-historic scenario)
+      // Plus ongoing architect payments (12 months * 45.8k)
+      const architectPayments = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
+      capex = capexScenario.year1Capex + architectPayments;
+    } else if (year === 2 && this.params.capexScenario === 'private-historic') {
+      // Final year of architect payments (remaining 12 months)
+      capex = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
+    } else {
+      // Ongoing maintenance CAPEX
+      capex = year <= 5 ? totalRevenue * 0.005 : totalRevenue * 0.003;
+    }
     
     // Tax calculation
     const taxRate = 0.25; // 25% corporate tax rate in Brazil
@@ -314,6 +421,40 @@ export class FinancialModel {
     const netIncome = ebitda - taxes;
     const freeCashFlow = netIncome - capex;
     
+    // Investment phase and funding details for Year 0 and Year 1
+    let investmentPhase = null;
+    let fundingSources = null;
+    let architectPayment = 0;
+
+    if (this.params.capexScenario === 'private-historic') {
+      if (year === 0) {
+        investmentPhase = {
+          phase: 'Phase 1 - Pre-Launch (2026)',
+          semester1: INVESTMENT_PHASES.phase1.semester1,
+          semester2: INVESTMENT_PHASES.phase1.semester2,
+        };
+        fundingSources = {
+          bridgeInvestment: 12500000, // 10M S1 + 2.5M S2
+          desenvolveSP: 10000000, // S2 CAPEX
+          prefeituraSubsidy: 2500000, // 25% of S2 CAPEX
+        };
+        architectPayment = INVESTMENT_PHASES.architectProject.upfront +
+                          (INVESTMENT_PHASES.architectProject.monthlyPayment * 5); // upfront + 5 months
+      } else if (year === 1) {
+        investmentPhase = {
+          phase: 'Phase 2 - School Operating (2027)',
+          details: INVESTMENT_PHASES.phase2,
+        };
+        fundingSources = {
+          desenvolveSP: 20000000, // Remaining 20M from Desenvolve SP
+          prefeituraSubsidy: 5000000, // 25% of Phase 2 CAPEX
+        };
+        architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12; // 12 months
+      } else if (year === 2) {
+        architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12; // Final 12 months
+      }
+    }
+
     return {
       year,
       students: {
@@ -356,6 +497,7 @@ export class FinancialModel {
         paymentProcessing,
         platformRD,
         contentDevelopment,
+        architectPayment,
         total: totalCosts
       },
       capex,
@@ -368,7 +510,10 @@ export class FinancialModel {
         tuition: currentTuition,
         adoptionFee: currentAdoptionFee,
         kitCost: currentKitCost
-      }
+      },
+      // Investment and funding details (for Year 0 and 1)
+      investmentPhase,
+      fundingSources
     };
   }
 
@@ -461,17 +606,37 @@ export class FinancialModel {
   getFinancialSummary() {
     const projection = this.calculateProjection(10);
     const cashFlows = projection.map(year => year.freeCashFlow);
-    
-    // Initial investment is negative cash flow
-    cashFlows[0] = -CAPEX_SCENARIOS[this.params.capexScenario].initialCapex;
-    
+
+    // For private-historic, use the total equity investment from bridge (not including financing)
+    const capexScenario = CAPEX_SCENARIOS[this.params.capexScenario];
+    if (this.params.capexScenario === 'private-historic') {
+      // Only count bridge investment as equity outflow (financing is not equity)
+      cashFlows[0] = -capexScenario.fundingSources.bridgeInvestment;
+      // Year 1 gets Desenvolve SP funding which offsets CAPEX
+      // Net cash impact is reduced by the funding received
+    } else {
+      // Initial investment is negative cash flow
+      cashFlows[0] = -capexScenario.initialCapex;
+    }
+
     const irr = this.calculateIRR(cashFlows);
     const npv = this.calculateNPV(cashFlows);
     const year10 = projection[10];
     const cumulativeEbitda = projection.slice(1).reduce((sum, year) => sum + year.ebitda, 0);
     const cumulativeFcf = projection.slice(1).reduce((sum, year) => sum + year.freeCashFlow, 0);
     const flagshipBreakeven = this.calculateFlagshipBreakeven();
-    
+
+    // Investment summary for new structure
+    const investmentSummary = this.params.capexScenario === 'private-historic' ? {
+      totalCapex: INVESTMENT_PHASES.totals.totalCapex,
+      bridgeInvestment: INVESTMENT_PHASES.totals.totalInvestment,
+      desenvolveSPLoan: INVESTMENT_PHASES.totals.desenvolveSPLoan,
+      prefeituraSubsidy: INVESTMENT_PHASES.totals.prefeituraSubsidy,
+      architectProject: INVESTMENT_PHASES.architectProject.total,
+      phase1Total: INVESTMENT_PHASES.phase1.semester1.total + INVESTMENT_PHASES.phase1.semester2.total,
+      phase2Total: INVESTMENT_PHASES.phase2.total,
+    } : null;
+
     return {
       projection,
       flagshipBreakeven,
@@ -485,7 +650,8 @@ export class FinancialModel {
         npv,
         paybackPeriod: this.calculatePaybackPeriod(cashFlows),
         flagshipBreakEvenMonths: flagshipBreakeven.breakEvenMonth,
-        capexScenario: CAPEX_SCENARIOS[this.params.capexScenario]
+        capexScenario: capexScenario,
+        investmentSummary
       }
     };
   }

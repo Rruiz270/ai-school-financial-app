@@ -67,6 +67,13 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     optimistic: { 1: 0, 2: 12000, 3: 60000, 4: 120000, 5: 216000, 6: 360000, 7: 540000, 8: 780000, 9: 1080000, 10: 1440000 },
   };
 
+  // Public adoption fee per student per year by scenario
+  const PUBLIC_ADOPTION_FEE = {
+    optimistic: 150,   // R$150/student/year
+    realistic: 120,    // R$120/student/year
+    pessimistic: 90,   // R$90/student/year
+  };
+
   // Total funding sources
   const TOTAL_BRIDGE_INVESTMENT = 12500000; // R$12.5M bridge (repaid Aug 2027)
   const TOTAL_DESENVOLVE_SP = 30000000; // R$30M from Desenvolve SP
@@ -247,10 +254,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       const privateRevenue = yearProjection.revenue.total;
 
       // Public sector revenue - use our projected public adoption students
-      // Year 1 = 10K students, Year 2 = 50K students, etc.
+      // Year 1 = 0 students, Year 2 = first public year (2028)
       const publicAdoptionScenario = currentScenario || 'realistic';
       const publicStudents = PUBLIC_ADOPTION_STUDENTS[publicAdoptionScenario]?.[year] || 0;
-      const publicAdoptionFee = 180; // R$180/student/year adoption fee for public sector
+      const publicAdoptionFee = PUBLIC_ADOPTION_FEE[publicAdoptionScenario] || 120; // R$150/120/90 per scenario
       const publicRevenue = publicStudents * publicAdoptionFee;
 
       const revenue = privateRevenue + publicRevenue;

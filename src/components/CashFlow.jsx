@@ -1397,6 +1397,33 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                               <span className="text-red-600">{formatCurrency(month.outflows.curriculumDevelopment)}</span>
                             </div>
                           )}
+                          {month.outflows.peopleOperations > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Corporate Team</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.peopleOperations)}</span>
+                            </div>
+                          )}
+                          {month.outflows.teacherHiring > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">
+                                Flagship Teachers (30)
+                                <span className="text-gray-400 ml-1">training</span>
+                              </span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.teacherHiring)}</span>
+                            </div>
+                          )}
+                          {month.outflows.architectProject > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Architect Project</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.architectProject)}</span>
+                            </div>
+                          )}
+                          {month.outflows.capexConstruction > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">CAPEX Construction</span>
+                              <span className="text-red-600">{formatCurrency(month.outflows.capexConstruction)}</span>
+                            </div>
+                          )}
                         </>
                       )}
                       

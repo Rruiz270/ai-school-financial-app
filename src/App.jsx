@@ -28,19 +28,19 @@ const PUBLIC_SCENARIO_PRESETS = {
   optimistic: {
     name: 'Optimistic',
     description: 'Strong government partnerships, rapid adoption (starts 2028)',
-    revenuePerStudentMonth: 12.50, // R$150/year = R$12.50/month
+    revenuePerStudentMonth: 150, // R$150/student/month
     marginsPublic: 0.40
   },
   realistic: {
     name: 'Realistic',
     description: 'Moderate government support, steady growth (starts 2028)',
-    revenuePerStudentMonth: 10, // R$120/year = R$10/month
+    revenuePerStudentMonth: 120, // R$120/student/month
     marginsPublic: 0.35
   },
   pessimistic: {
     name: 'Pessimistic',
     description: 'Slow adoption, regulatory challenges (starts 2028)',
-    revenuePerStudentMonth: 7.50, // R$90/year = R$7.50/month
+    revenuePerStudentMonth: 90, // R$90/student/month
     marginsPublic: 0.30
   }
 };

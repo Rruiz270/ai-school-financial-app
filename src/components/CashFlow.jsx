@@ -67,11 +67,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     optimistic: { 1: 0, 2: 12000, 3: 60000, 4: 120000, 5: 216000, 6: 360000, 7: 540000, 8: 780000, 9: 1080000, 10: 1440000 },
   };
 
-  // Public adoption fee per student per year by scenario
-  const PUBLIC_ADOPTION_FEE = {
-    optimistic: 150,   // R$150/student/year
-    realistic: 120,    // R$120/student/year
-    pessimistic: 90,   // R$90/student/year
+  // Public adoption fee per student per MONTH by scenario
+  const PUBLIC_ADOPTION_FEE_MONTHLY = {
+    optimistic: 150,   // R$150/student/month
+    realistic: 120,    // R$120/student/month
+    pessimistic: 90,   // R$90/student/month
   };
 
   // Total funding sources
@@ -207,6 +207,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     const year0NetCashFlow = year0TotalFunding - phase1TotalExpenses;
     const year0ClosingCash = year0NetCashFlow; // Starts at 0, ends at 0 (all deployed)
 
+    // 30 teachers hired in S2 2026 for flagship training
+    const teacherHiringCostS2 = 30 * 8000 * 5; // 30 teachers x R$8K/month x 5 months = R$1.2M
+
     yearlyData.push({
       year: 0,
       yearLabel: 'Phase 1 (2026)',
@@ -227,26 +230,32 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 5, // 5 months
         },
         semester2: {
-          total: phase1Semester2Expenses,
+          total: phase1Semester2Expenses + teacherHiringCostS2,
           capex: INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction,
           people: INVESTMENT_PHASES.phase1.semester2.allocation.peopleHiring,
+          teacherHiring: teacherHiringCostS2, // 30 teachers for flagship
           technology: INVESTMENT_PHASES.phase1.semester2.allocation.technology,
           architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 5, // 5 months
         }
       },
+      headcount: {
+        teachers: 30, // 30 teachers hired in S2 for flagship
+        corporate: 12, // Corporate team by end of 2026
+        support: 4 // Support staff
+      },
       revenue: 0,
-      operatingExpenses: -(phase1TotalExpenses - INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction),
+      operatingExpenses: -(phase1TotalExpenses + teacherHiringCostS2 - INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction),
       capex: -INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction,
       taxes: 0,
-      netCashFlow: year0NetCashFlow,
-      closingCash: year0ClosingCash,
-      burnRate: phase1TotalExpenses / 12,
+      netCashFlow: year0NetCashFlow - teacherHiringCostS2,
+      closingCash: year0ClosingCash - teacherHiringCostS2,
+      burnRate: (phase1TotalExpenses + teacherHiringCostS2) / 12,
       runwayMonths: 12, // Funded for full year
       phase: 'Phase 1 - Pre-Launch'
     });
 
-    let cumulativeCash = year0ClosingCash;
-    
+    let cumulativeCash = year0ClosingCash - teacherHiringCostS2;
+
     // Years 1-10
     for (let year = 1; year <= 10; year++) {
       const yearProjection = projection[year];
@@ -257,8 +266,8 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       // Year 1 = 0 students, Year 2 = first public year (2028)
       const publicAdoptionScenario = currentScenario || 'realistic';
       const publicStudents = PUBLIC_ADOPTION_STUDENTS[publicAdoptionScenario]?.[year] || 0;
-      const publicAdoptionFee = PUBLIC_ADOPTION_FEE[publicAdoptionScenario] || 120; // R$150/120/90 per scenario
-      const publicRevenue = publicStudents * publicAdoptionFee;
+      const publicAdoptionFeeMonthly = PUBLIC_ADOPTION_FEE_MONTHLY[publicAdoptionScenario] || 120; // R$150/120/90 per month
+      const publicRevenue = publicStudents * publicAdoptionFeeMonthly * 12; // Annual revenue
 
       const revenue = privateRevenue + publicRevenue;
 
@@ -379,7 +388,11 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
 
         const peopleMonthly = isSemester1 ?
           INVESTMENT_PHASES.phase1.semester1.allocation.peoplePreLaunch / 7 : // R$3.4M / 7 months
-          INVESTMENT_PHASES.phase1.semester2.allocation.peopleHiring / 5; // R$3M / 5 months
+          INVESTMENT_PHASES.phase1.semester2.allocation.peopleHiring / 5; // R$3M / 5 months (corporate hiring)
+
+        // 30 teachers hired and trained in semester 2 for flagship launch
+        // Average teacher salary ~R$8K/month, hiring 30 teachers over 5 months
+        const teacherHiringMonthly = isSemester2 ? 30 * 8000 : 0; // R$240K/month for 30 teachers
 
         const curriculumMonthly = isSemester1 && month >= 2 ?
           INVESTMENT_PHASES.phase1.semester1.allocation.curriculumDevelopment / 6 : 0; // R$1.5M / 6 months (Feb-Jul)
@@ -405,6 +418,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           outflows: {
             techDevelopment: techMonthly,
             peopleOperations: peopleMonthly,
+            teacherHiring: teacherHiringMonthly, // 30 teachers for flagship - training in S2
             curriculumDevelopment: curriculumMonthly,
             architectProject: architectPayment,
             capexConstruction: capexMonthly,
@@ -412,6 +426,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
             marketResearch: month === 3 || month === 4 ? 75000 : 0,
             brandingDesign: month === 5 || month === 6 ? 100000 : 0,
             total: 0
+          },
+          headcount: {
+            teachers: isSemester2 ? 30 : 0, // 30 teachers hired in S2 for flagship
+            corporate: isSemester1 ? 8 : 12 // Corporate team grows in S2
           }
         };
 

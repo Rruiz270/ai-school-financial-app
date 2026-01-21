@@ -482,6 +482,7 @@ const MonthDetailModal = ({
   monthValue,
   yearIndex,
   calendarYear,
+  onSave,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedItems, setEditedItems] = useState([]);
@@ -496,6 +497,65 @@ const MonthDetailModal = ({
     const result = breakdown.getItems(monthValue, yearIndex, monthIndex);
     return result;
   }, [breakdown, monthValue, yearIndex, monthIndex]);
+
+  // Initialize editedItems when entering edit mode
+  const handleStartEdit = () => {
+    setEditedItems(items.map(item => ({ ...item })));
+    setIsEditing(true);
+  };
+
+  // Handle cancel
+  const handleCancel = () => {
+    setEditedItems([]);
+    setIsEditing(false);
+  };
+
+  // Handle save
+  const handleSave = () => {
+    const newTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+    if (onSave) {
+      onSave({
+        expenseId,
+        monthIndex,
+        yearIndex,
+        items: editedItems,
+        newTotal,
+      });
+    }
+    setIsEditing(false);
+  };
+
+  // Update staff item
+  const handleStaffChange = (index, field, value) => {
+    setEditedItems(prev => {
+      const newItems = [...prev];
+      const numValue = parseInt(value) || 0;
+      newItems[index] = {
+        ...newItems[index],
+        [field]: numValue,
+        total: field === 'quantity'
+          ? numValue * newItems[index].monthlySalary
+          : newItems[index].quantity * numValue,
+      };
+      return newItems;
+    });
+  };
+
+  // Update generic item
+  const handleItemChange = (index, field, value) => {
+    setEditedItems(prev => {
+      const newItems = [...prev];
+      const numValue = parseFloat(value) || 0;
+      newItems[index] = {
+        ...newItems[index],
+        [field]: numValue,
+      };
+      return newItems;
+    });
+  };
+
+  // Get display items (edited or original)
+  const displayItems = isEditing ? editedItems : items;
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null || isNaN(value)) return 'R$ 0';
@@ -514,9 +574,9 @@ const MonthDetailModal = ({
   const title = breakdown?.title || 'Expense Breakdown';
 
   // Check if this is a staff breakdown (has role field)
-  const isStaffBreakdown = items.length > 0 && items[0].role;
+  const isStaffBreakdown = displayItems.length > 0 && displayItems[0].role;
 
-  const totalFromItems = items.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+  const totalFromItems = displayItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
@@ -569,7 +629,7 @@ const MonthDetailModal = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, index) => (
+                  {displayItems.map((item, index) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-800">{item.role}</div>
@@ -577,12 +637,33 @@ const MonthDetailModal = ({
                       </td>
                       <td className="px-4 py-3 text-gray-600">{item.department}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
-                          {item.quantity}
-                        </span>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleStaffChange(index, 'quantity', e.target.value)}
+                            className="w-16 px-2 py-1 border border-blue-300 rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                          />
+                        ) : (
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                            {item.quantity}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600">
-                        {formatCurrency(item.monthlySalary)}
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={item.monthlySalary}
+                            onChange={(e) => handleStaffChange(index, 'monthlySalary', e.target.value)}
+                            className="w-28 px-2 py-1 border border-blue-300 rounded text-right focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            min="0"
+                            step="100"
+                          />
+                        ) : (
+                          formatCurrency(item.monthlySalary)
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-800">
                         {formatCurrency(item.total)}
@@ -594,7 +675,7 @@ const MonthDetailModal = ({
                   <tr className="bg-gray-800 text-white">
                     <td colSpan="2" className="px-4 py-3 font-semibold">Total</td>
                     <td className="px-4 py-3 text-center font-semibold">
-                      {items.reduce((sum, item) => sum + item.quantity, 0)}
+                      {displayItems.reduce((sum, item) => sum + item.quantity, 0)}
                     </td>
                     <td className="px-4 py-3"></td>
                     <td className="px-4 py-3 text-right font-bold text-lg">
@@ -607,7 +688,7 @@ const MonthDetailModal = ({
           ) : (
             // Generic Item Table View
             <div className="space-y-3">
-              {items.map((item, index) => (
+              {displayItems.map((item, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -624,12 +705,28 @@ const MonthDetailModal = ({
                     </div>
                   </div>
                   <div className="text-right ml-4">
-                    <div className="text-lg font-bold text-gray-800">
-                      {formatCurrency(item.amount)}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {item.percentage}%
-                    </div>
+                    {isEditing ? (
+                      <div className="flex flex-col items-end space-y-1">
+                        <input
+                          type="number"
+                          value={item.amount}
+                          onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
+                          className="w-32 px-2 py-1 border border-blue-300 rounded text-right focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          min="0"
+                          step="100"
+                        />
+                        <span className="text-xs text-gray-500">{item.percentage}%</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-lg font-bold text-gray-800">
+                          {formatCurrency(item.amount)}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {item.percentage}%
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -646,22 +743,46 @@ const MonthDetailModal = ({
         {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 border-t flex justify-between items-center">
           <div className="text-sm text-gray-500">
-            Year {yearIndex} ({calendarYear}) • {months[monthIndex]}
+            {isEditing ? (
+              <span className="text-blue-600 font-medium">✏️ Editing Mode - Changes will update the total</span>
+            ) : (
+              <>Year {yearIndex} ({calendarYear}) • {months[monthIndex]}</>
+            )}
           </div>
           <div className="flex space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Close
-            </button>
-            <button
-              onClick={() => setIsEditing(true)}
-              className={`flex items-center space-x-2 px-4 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-colors`}
-            >
-              <Edit2 className="w-4 h-4" />
-              <span>Edit Details</span>
-            </button>
+            {isEditing ? (
+              <>
+                <button
+                  onClick={handleCancel}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Save Changes</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleStartEdit}
+                  className={`flex items-center space-x-2 px-4 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-colors`}
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Edit Details</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -212,6 +212,17 @@ const ExpenseDetailModal = ({
     }
   };
 
+  const handleMonthDetailSave = (data) => {
+    // Update the monthly value with the new total from detailed items
+    const newValues = [...monthlyValues];
+    newValues[data.monthIndex] = data.newTotal;
+    setMonthlyValues(newValues);
+    setHasChanges(true);
+    // Close the month detail modal
+    setIsMonthModalOpen(false);
+    setSelectedMonthIndex(null);
+  };
+
   if (!isOpen || !expense) return null;
 
   const annualTotal = monthlyValues.reduce((a, b) => a + b, 0);
@@ -425,6 +436,7 @@ const ExpenseDetailModal = ({
         monthValue={selectedMonthIndex !== null ? monthlyValues[selectedMonthIndex] : 0}
         yearIndex={selectedYear}
         calendarYear={calendarYear}
+        onSave={handleMonthDetailSave}
       />
     </div>
   );

@@ -1,36 +1,37 @@
 // Financial modeling engine with live calculations
 
 export const DEFAULT_PARAMETERS = {
-  // Market and Students (more conservative targets)
-  flagshipStudents: 1200, // Reduced from 1500
-  franchiseCount: 30, // Reduced from 50 
-  studentsPerFranchise: 1200, // Reduced from 1500
-  adoptionStudents: 150000, // Reduced from 250000
-  
-  // Pricing (more competitive and realistic)
-  flagshipTuition: 2300, // Balanced pricing for profitability
-  adoptionLicenseFee: 180, // Competitive for scale
+  // Market and Students (realistic targets)
+  flagshipStudents: 1200, // 30 students/class, morning+afternoon shifts, 3,500m2 building
+  franchiseCount: 24, // 3 new franchises/year starting Year 3 (8 years × 3)
+  studentsPerFranchise: 1200, // Same model as flagship
+  adoptionStudents: 150000, // Private adoption students by Year 10
+  churnRate: 0.05, // 5% annual student churn (K-12 standard)
+
+  // Pricing (competitive and realistic)
+  flagshipTuition: 2300, // R$2,300/month
+  adoptionLicenseFeeMonthly: 180, // R$180/month for private adoption (R$2,160/year)
   franchiseRoyaltyRate: 0.06, // 6% royalty
-  marketingFeeRate: 0.005, // 0.5%
-  franchiseFee: 180000, // Accessible franchise fee
-  kitCostPerStudent: 1200, // Educational materials
-  tuitionIncreaseRate: 0.06, // 6% - above inflation
-  
+  franchiseMarketingFeeRate: 0.02, // 2% marketing fund (industry standard)
+  franchiseFee: 180000, // R$180K franchise fee
+  kitCostPerStudent: 1200, // R$100/month × 12 = R$1,200/year (for all students)
+  tuitionIncreaseRate: 0.06, // 6% annual increase
+
   // Costs
   technologyCapex: 3000000,
   technologyOpexRate: 0.04, // 4% of revenue
   marketingRate: 0.05, // 5% of revenue
-  
+
   // CAPEX Scenarios
-  capexScenario: 'private-historic', // private-historic, government, built-to-suit, direct
-  
-  // Growth rates (more conservative)
-  franchiseGrowthRate: 2.5, // Even more conservative - 2-3 new franchises per year
-  adoptionGrowthRate: 0.3, // 30% growth - more sustainable
+  capexScenario: 'private-historic',
+
+  // Growth rates
+  franchiseGrowthRate: 3, // 3 new franchises per year starting Year 3
+  adoptionGrowthRate: 0.3, // 30% growth
   franchiseStartingStudents: 300, // Franchises start with 300 students
-  
+
   // Year-by-year overrides (optional)
-  yearlyOverrides: {}, // Format: { year: { parameter: value } }
+  yearlyOverrides: {},
 };
 
 // Scenario presets for quick switching
@@ -41,67 +42,69 @@ export const SCENARIO_PRESETS = {
     parameters: {
       // Market and Students (10% lower than realistic)
       flagshipStudents: 1080, // 10% lower than 1200
-      franchiseCount: 27, // 10% lower than 30
+      franchiseCount: 21, // ~10% lower than 24
       studentsPerFranchise: 1080, // 10% lower than 1200
       adoptionStudents: 135000, // 10% lower than 150000
-      
+      churnRate: 0.07, // 7% churn (higher than realistic)
+
       // Pricing (10% lower)
       flagshipTuition: 2070, // 10% lower than 2300
-      adoptionLicenseFee: 162, // 10% lower than 180
+      adoptionLicenseFeeMonthly: 162, // R$162/month (10% lower)
       franchiseRoyaltyRate: 0.054, // 10% lower than 6%
-      marketingFeeRate: 0.005,
+      franchiseMarketingFeeRate: 0.02,
       franchiseFee: 162000, // 10% lower than 180000
       kitCostPerStudent: 1080, // 10% lower than 1200
       tuitionIncreaseRate: 0.054, // 10% lower than 6%
-      
+
       // Costs (higher)
-      technologyOpexRate: 0.05, // Higher costs (4% + 1%)
+      technologyOpexRate: 0.05, // Higher costs
       marketingRate: 0.06, // Higher marketing needed
-      
+
       // Growth rates (slower)
-      franchiseGrowthRate: 2, // Slower than 3
-      adoptionGrowthRate: 0.3, // Slower than 40%
+      franchiseGrowthRate: 2.5, // Slower
+      adoptionGrowthRate: 0.25,
       franchiseStartingStudents: 300,
-      
+
       capexScenario: 'private-historic',
       yearlyOverrides: {}
     }
   },
-  
+
   realistic: {
     name: 'Realistic',
     description: 'Expected scenario with moderate growth',
-    parameters: { ...DEFAULT_PARAMETERS } // Current parameters
+    parameters: { ...DEFAULT_PARAMETERS }
   },
-  
+
   optimistic: {
     name: 'Optimistic',
-    description: 'Strong growth with original ambitious targets',
+    description: 'Strong growth with ambitious targets',
     parameters: {
-      // Market and Students (original higher numbers)
+      // Market and Students (higher numbers)
       flagshipStudents: 1500,
-      franchiseCount: 50,
+      franchiseCount: 30, // ~4 per year
       studentsPerFranchise: 1500,
       adoptionStudents: 250000,
-      
-      // Pricing (original higher)
+      churnRate: 0.03, // 3% churn (lower)
+
+      // Pricing (higher)
       flagshipTuition: 2500,
-      adoptionLicenseFee: 200,
+      adoptionLicenseFeeMonthly: 200, // R$200/month
       franchiseRoyaltyRate: 0.07, // 7%
-      marketingFeeRate: 0.005,
+      franchiseMarketingFeeRate: 0.02,
       franchiseFee: 200000,
       kitCostPerStudent: 1500,
       tuitionIncreaseRate: 0.08, // 8%
-      
+
       // Costs (lower, more efficient)
-      technologyOpexRate: 0.03, // More efficient (4% - 1%)
-      marketingRate: 0.04, // Less marketing needed
-      
+      technologyOpexRate: 0.03,
+      marketingRate: 0.04,
+
       // Growth rates (faster)
-      franchiseGrowthRate: 5, // Original faster growth
-      adoptionGrowthRate: 0.5, // 50% growth
+      franchiseGrowthRate: 4,
+      adoptionGrowthRate: 0.5,
       franchiseStartingStudents: 300,
-      
+
       capexScenario: 'private-historic',
       yearlyOverrides: {}
     }
@@ -109,55 +112,55 @@ export const SCENARIO_PRESETS = {
 };
 
 // Phased CAPEX and Investment Structure (2026-2027)
-// Based on private historic building with Desenvolve SP financing and Prefeitura subsidy
-// Prefeitura subsidy = 25% of TOTAL R$40M CAPEX = R$10M
+// Based on private historic building with Desenvolve SP + Innovation financing and Prefeitura subsidy
+// CAPEX = R$25M total, Prefeitura subsidy = 25% of R$25M = R$6.25M
 export const INVESTMENT_PHASES = {
   phase1: {
     name: 'Phase 1 - 2026 (Pre-Launch)',
     semester1: {
       total: 10000000, // R$10M
       sources: {
-        bridgeInvestment: 10000000, // 100% from bridge private investment
+        bridgeInvestment: 10000000, // R$10M from bridge private investment
       },
       allocation: {
         architectUpfront: 100000, // R$100K architect upfront
         technologyPlatform: 5000000, // R$5M tech development
         peoplePreLaunch: 3400000, // R$3.4M salaries and operations
-        curriculumDevelopment: 1500000, // R$1.5M curriculum
+        contentDevelopment: 500000, // R$500K content (R$100K/mo for 5 months S2)
       },
       months: [1, 2, 3, 4, 5, 6, 7] // Jan-Jul
     },
     semester2: {
       total: 15000000, // R$15M
       sources: {
-        desenvolveSP: 10000000, // R$10M CAPEX from Desenvolve SP
-        prefeituraSubsidy: 2500000, // Part of 25% subsidy (R$10M of R$40M CAPEX in S2)
-        bridgeInvestment: 2500000, // Additional R$2.5M from bridge
+        desenvolveSP: 20000000, // R$20M from Desenvolve SP
+        innovationLoan: 15000000, // R$15M Innovation loan
+        prefeituraSubsidy: 5000000, // Part of 25% subsidy (R$5M in 2026)
       },
       allocation: {
         capexConstruction: 10000000, // R$10M CAPEX
         peopleHiring: 3000000, // R$3M people hiring
         technology: 2000000, // R$2M additional tech
       },
-      months: [8, 9, 10, 11, 12] // Aug-Dec
+      months: [8, 9, 10, 11, 12], // Aug-Dec
+      bridgeRepayment: {
+        amount: 10000000, // R$10M bridge repayment in Oct 2026
+        month: 10, // October 2026
+        interestPaid: 1800000, // ~2% × 9 months (Jan-Oct) ≈ R$1.8M interest
+      }
     }
   },
   phase2: {
     name: 'Phase 2 - 2027 (School Operating)',
-    total: 15000000, // R$15M additional CAPEX
+    total: 5000000, // R$5M additional CAPEX
     sources: {
-      desenvolveSP: 20000000, // R$20M from Desenvolve SP (total 30M commitment)
-      prefeituraSubsidy: 7500000, // Remaining 25% subsidy (R$30M of R$40M CAPEX = R$7.5M)
+      desenvolveSP: 10000000, // R$10M more from Desenvolve SP (total 30M)
+      prefeituraSubsidy: 1250000, // Remaining 25% subsidy (R$1.25M)
     },
     allocation: {
-      capexEquipment: 10000000, // R$10M equipment and finishing
-      capexInfrastructure: 5000000, // R$5M additional infrastructure
+      capexEquipment: 3000000, // R$3M equipment and finishing
+      capexInfrastructure: 2000000, // R$2M additional infrastructure
     },
-    bridgeRepayment: {
-      amount: 12500000, // R$12.5M bridge repayment
-      month: 8, // August 2027 - when Desenvolve SP disburses
-      description: 'Repay bridge investment when Desenvolve SP funds arrive'
-    }
   },
   architectProject: {
     total: 1200000, // R$1.2M total
@@ -165,11 +168,37 @@ export const INVESTMENT_PHASES = {
     monthlyPayment: 45833, // R$1.1M / 24 months ≈ R$45,833/month
     paymentMonths: 24, // 24 months starting from month 2
   },
+  // Loan details for debt service calculations
+  loans: {
+    bridge: {
+      amount: 10000000, // R$10M
+      interestRate: 0.02, // 2% per month
+      disbursementMonth: 1, // January 2026
+      repaymentMonth: 10, // October 2026
+    },
+    desenvolveSP: {
+      total: 30000000, // R$30M total
+      year2026: 20000000, // R$20M in Aug 2026
+      year2027: 10000000, // R$10M in Jan 2027
+      interestRate: 0.12, // 12% per year
+      gracePeriodMonths: 36, // 3 years grace
+      repaymentYears: 5, // 5 year amortization after grace
+    },
+    innovation: {
+      amount: 15000000, // R$15M
+      disbursementMonth: 8, // August 2026 with Desenvolve SP
+      interestRate: 0.12, // Same terms as Desenvolve SP
+      gracePeriodMonths: 36,
+      repaymentYears: 5,
+    },
+  },
   totals: {
-    totalCapex: 40000000, // R$40M total CAPEX
-    bridgeInvestment: 12500000, // R$12.5M bridge (repaid in Aug 2027)
+    totalCapex: 25000000, // R$25M total CAPEX
+    bridgeInvestment: 10000000, // R$10M bridge (repaid Aug 2026)
     desenvolveSPLoan: 30000000, // R$30M total from Desenvolve SP
-    prefeituraSubsidy: 10000000, // R$10M total from Prefeitura (25% of R$40M CAPEX)
+    innovationLoan: 15000000, // R$15M Innovation loan
+    prefeituraSubsidy: 6250000, // R$6.25M total from Prefeitura (25% of R$25M CAPEX)
+    totalDebt: 45000000, // R$30M DSP + R$15M Innovation
   }
 };
 
@@ -242,30 +271,35 @@ export const getPublicAdoptionStudents = (year, scenario = 'realistic') => {
 export const CAPEX_SCENARIOS = {
   'private-historic': {
     name: 'Private Historic Building',
-    initialCapex: 25000000, // R$25M Year 0 (Phase 1 full investment)
-    year1Capex: 15000000, // R$15M Year 1 (Phase 2)
-    annualFacilityCost: 1500000, // R$1.5M annual (maintenance, utilities, taxes - reduced due to historic benefit)
-    description: 'R$40M total CAPEX (2 phases), private historic building with Desenvolve SP + Prefeitura subsidy',
+    initialCapex: 20000000, // R$20M Year 0 (Phase 1 CAPEX portion)
+    year1Capex: 5000000, // R$5M Year 1 (Phase 2)
+    baseFacilityCost: 1500000, // R$1.5M Year 1 (maintenance, utilities, taxes)
+    facilityInflationRate: 0.05, // 5% annual inflation
+    description: 'R$25M total CAPEX, historic building with Desenvolve SP + Innovation + Prefeitura subsidy',
     fundingSources: {
-      bridgeInvestment: 12500000, // R$12.5M bridge (repaid Aug 2027)
+      bridgeInvestment: 10000000, // R$10M bridge (repaid Aug 2026)
       desenvolveSP: 30000000, // R$30M CAPEX loan
-      prefeituraSubsidy: 10000000, // R$10M (25% of total R$40M CAPEX)
+      innovationLoan: 15000000, // R$15M Innovation loan
+      prefeituraSubsidy: 6250000, // R$6.25M (25% of R$25M CAPEX)
     },
     bridgeRepayment: {
-      amount: 12500000,
-      month: 8, // August
-      year: 1, // 2027
+      amount: 10000000,
+      interestPaid: 1800000, // ~2% × 9 months (Jan-Oct)
+      month: 10, // October
+      year: 0, // 2026
     }
   },
   government: {
     name: 'Government Partnership',
     initialCapex: 10000000, // R$10M renovation only
     year1Capex: 0,
-    annualFacilityCost: 800000, // licenses, maintenance, utilities
+    baseFacilityCost: 800000,
+    facilityInflationRate: 0.05,
     description: 'R$10M renovation, 30-year free building use from government',
     fundingSources: {
       bridgeInvestment: 10000000,
       desenvolveSP: 0,
+      innovationLoan: 0,
       prefeituraSubsidy: 0,
     }
   },
@@ -273,11 +307,13 @@ export const CAPEX_SCENARIOS = {
     name: 'Built-to-Suit with 30-Year Lease',
     initialCapex: 3000000, // R$3M tech only
     year1Capex: 0,
-    annualFacilityCost: 3200000, // R$25M building cost amortized over 30 years + operational costs
+    baseFacilityCost: 3200000, // R$25M building cost amortized over 30 years + operational costs
+    facilityInflationRate: 0.05,
     description: 'R$3M tech, developer builds R$25M facility, 30-year lease ~R$3.2M/year',
     fundingSources: {
       bridgeInvestment: 3000000,
       desenvolveSP: 0,
+      innovationLoan: 0,
       prefeituraSubsidy: 0,
     }
   },
@@ -285,11 +321,13 @@ export const CAPEX_SCENARIOS = {
     name: 'Direct Investment & Construction',
     initialCapex: 25000000, // R$25M for our own construction + tech
     year1Capex: 0,
-    annualFacilityCost: 1200000, // maintenance, utilities, taxes only
+    baseFacilityCost: 1200000,
+    facilityInflationRate: 0.05,
     description: 'R$25M building construction + tech, full ownership',
     fundingSources: {
       bridgeInvestment: 25000000,
       desenvolveSP: 0,
+      innovationLoan: 0,
       prefeituraSubsidy: 0,
     }
   }
@@ -306,71 +344,72 @@ export class FinancialModel {
 
   calculateYearData(year) {
     const yearIndex = year - 1;
-    
+
     // Check for yearly overrides
     const yearOverrides = this.params.yearlyOverrides?.[year] || {};
-    
+
     // Student calculations with overrides and realistic ramp-up
-    const flagshipStudents = yearOverrides.flagshipStudents || 
-      (year === 0 ? 0 : 
-       year === 1 ? 300 : 
-       year === 2 ? 750 : 
+    // Apply churn rate (5% default for K-12)
+    const churnRate = this.params.churnRate || 0.05;
+    const retentionFactor = year > 1 ? (1 - churnRate) : 1;
+
+    let flagshipStudents = yearOverrides.flagshipStudents ||
+      (year === 0 ? 0 :
+       year === 1 ? 300 :
+       year === 2 ? 750 :
        this.params.flagshipStudents);
-    
+
+    // Apply churn to returning students (not new ones)
+    if (year > 2) {
+      flagshipStudents = Math.round(flagshipStudents * retentionFactor + this.params.flagshipStudents * churnRate);
+    }
+
     // Franchises only start after Year 2 (need proven model first)
+    // 3 new franchises per year starting Year 3
     const franchiseCount = yearOverrides.franchiseCount !== undefined ? yearOverrides.franchiseCount :
       (year <= 2 ? 0 : Math.min((year - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount));
-    
+
     // Calculate franchise students with ramp-up period
     let franchiseStudents = 0;
     if (franchiseCount > 0 && year > 2) {
-      // Each franchise starts with 300 students and ramps up over 4 years
       const targetPerFranchise = yearOverrides.studentsPerFranchise || this.params.studentsPerFranchise;
       const startingStudents = this.params.franchiseStartingStudents || 300;
-      
-      // Calculate students for each franchise cohort
+
       for (let cohortStartYear = 3; cohortStartYear <= year; cohortStartYear++) {
-        // How many franchises started this year?
-        const previousCount = cohortStartYear === 3 ? 0 : 
+        const previousCount = cohortStartYear === 3 ? 0 :
           Math.min((cohortStartYear - 3) * this.params.franchiseGrowthRate, this.params.franchiseCount);
         const currentCount = Math.min((cohortStartYear - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount);
         const newFranchisesThisYear = currentCount - previousCount;
-        
+
         if (newFranchisesThisYear > 0) {
-          const franchiseAge = year - cohortStartYear; // 0-based age
-          
-          // Ramp-up: Year 1 = 300, Year 2 = 50% between start and target, Year 3 = 75%, Year 4+ = 100%
+          const franchiseAge = year - cohortStartYear;
           let studentsPerFranchise;
           if (franchiseAge === 0) {
-            studentsPerFranchise = startingStudents; // 300 students in first year
+            studentsPerFranchise = startingStudents;
           } else if (franchiseAge === 1) {
-            studentsPerFranchise = startingStudents + (targetPerFranchise - startingStudents) * 0.33; // ~33% progress
+            studentsPerFranchise = startingStudents + (targetPerFranchise - startingStudents) * 0.33;
           } else if (franchiseAge === 2) {
-            studentsPerFranchise = startingStudents + (targetPerFranchise - startingStudents) * 0.67; // ~67% progress
+            studentsPerFranchise = startingStudents + (targetPerFranchise - startingStudents) * 0.67;
           } else {
-            studentsPerFranchise = targetPerFranchise; // Full capacity from year 4+
+            studentsPerFranchise = targetPerFranchise;
           }
-          
-          const studentsInThisCohort = newFranchisesThisYear * studentsPerFranchise;
-          franchiseStudents += studentsInThisCohort;
+          franchiseStudents += newFranchisesThisYear * studentsPerFranchise * retentionFactor;
         }
       }
     }
-    
+
     // Adoption students start small in Year 2, grow gradually
     let adoptionStudents;
     if (yearOverrides.adoptionStudents !== undefined) {
       adoptionStudents = yearOverrides.adoptionStudents;
     } else if (year <= 1) {
-      adoptionStudents = 0; // No adoption in first years
+      adoptionStudents = 0;
     } else if (year === 2) {
-      adoptionStudents = 2500; // Start small in Year 2
+      adoptionStudents = 2500;
     } else {
-      // Grow towards target, reaching it by year 10
       const growthYears = year - 2;
       const targetAdoption = this.params.adoptionStudents;
       if (growthYears <= 8) {
-        // Linear growth to reach target by year 10
         adoptionStudents = Math.min(
           2500 + (targetAdoption - 2500) * (growthYears / 8),
           targetAdoption
@@ -378,107 +417,114 @@ export class FinancialModel {
       } else {
         adoptionStudents = targetAdoption;
       }
+      // Apply churn
+      adoptionStudents = adoptionStudents * retentionFactor;
     }
-    
-    // Pricing with annual increases and overrides
-    const currentTuition = yearOverrides.tuition || (this.params.flagshipTuition * Math.pow(1 + this.params.tuitionIncreaseRate, year - 1));
-    const currentAdoptionFee = yearOverrides.adoptionFee || (this.params.adoptionLicenseFee * Math.pow(1 + this.params.tuitionIncreaseRate, year - 1));
-    const currentKitCost = yearOverrides.kitCost || (this.params.kitCostPerStudent * Math.pow(1 + this.params.tuitionIncreaseRate, year - 1));
-    
+
+    // Pricing with annual increases
+    const currentTuition = yearOverrides.tuition || (this.params.flagshipTuition * Math.pow(1 + this.params.tuitionIncreaseRate, Math.max(0, year - 1)));
+    // Private adoption fee is R$180/MONTH (adoptionLicenseFeeMonthly)
+    const monthlyAdoptionFee = this.params.adoptionLicenseFeeMonthly || 180;
+    const currentAdoptionFeeMonthly = yearOverrides.adoptionFee || (monthlyAdoptionFee * Math.pow(1 + this.params.tuitionIncreaseRate, Math.max(0, year - 1)));
+    const currentKitCost = yearOverrides.kitCost || (this.params.kitCostPerStudent * Math.pow(1 + this.params.tuitionIncreaseRate, Math.max(0, year - 1)));
+
     // Calculate NEW franchises this year for franchise fees
     const previousYear = year - 1;
     const previousYearOverrides = this.params.yearlyOverrides?.[previousYear] || {};
-    const previousFranchiseCount = previousYear <= 2 ? 0 : 
+    const previousFranchiseCount = previousYear <= 2 ? 0 :
       (previousYearOverrides.franchiseCount !== undefined ? previousYearOverrides.franchiseCount :
        Math.min((previousYear - 2) * this.params.franchiseGrowthRate, this.params.franchiseCount));
     const newFranchises = Math.max(0, franchiseCount - previousFranchiseCount);
-    
+
     // Revenue calculations
     const flagshipRevenue = flagshipStudents * currentTuition * 12;
     const franchiseTuitionRevenue = franchiseStudents * currentTuition * 12;
     const franchiseRoyaltyRevenue = franchiseTuitionRevenue * this.params.franchiseRoyaltyRate;
-    const franchiseMarketingRevenue = franchiseTuitionRevenue * this.params.marketingFeeRate;
+    // Use franchiseMarketingFeeRate (2%) instead of old marketingFeeRate (0.5%)
+    const franchiseMarketingFeeRate = this.params.franchiseMarketingFeeRate || 0.02;
+    const franchiseMarketingRevenue = franchiseTuitionRevenue * franchiseMarketingFeeRate;
     const franchiseFeeRevenue = newFranchises * this.params.franchiseFee;
-    const adoptionRevenue = adoptionStudents * currentAdoptionFee * 12;
+    // Adoption revenue: R$180/month × 12 = R$2,160/year per student
+    const adoptionRevenue = adoptionStudents * currentAdoptionFeeMonthly * 12;
     const totalStudents = flagshipStudents + franchiseStudents + adoptionStudents;
+    // Kit revenue for ALL students (flagship + franchise + adoption)
     const kitRevenue = totalStudents * currentKitCost;
-    
-    const totalRevenue = flagshipRevenue + franchiseRoyaltyRevenue + franchiseMarketingRevenue + 
+
+    const totalRevenue = flagshipRevenue + franchiseRoyaltyRevenue + franchiseMarketingRevenue +
                         franchiseFeeRevenue + adoptionRevenue + kitRevenue;
-    
+
     // Cost calculations
     const technologyOpex = totalRevenue * this.params.technologyOpexRate;
     const marketingCosts = totalRevenue * this.params.marketingRate;
-    
-    // Staff costs with annual increases
-    // Base costs before annual increases
+
+    // Staff costs with SENSIBLE annual increases (5% inflation only, not compound)
+    const inflationMultiplier = Math.pow(1.05, Math.max(0, year - 1)); // 5% annual inflation
+
     const baseStaffCorporate = Math.max(3000000, totalStudents * 80);
     const baseStaffFlagship = flagshipStudents > 0 ? Math.max(2500000, flagshipStudents * 2200) : 0;
     const baseStaffFranchiseSupport = franchiseCount * 300000;
-    const baseStaffAdoptionSupport = adoptionStudents * 150;
-    
-    // Apply annual increases: 20% in first year, then 10% year-over-year
-    let staffIncreaseMultiplier = 1;
-    if (year === 1) {
-      staffIncreaseMultiplier = 1.20; // 20% increase in first year
-    } else if (year > 1) {
-      // Compound 10% increases: 1.20 * (1.10)^(year-1)
-      staffIncreaseMultiplier = 1.20 * Math.pow(1.10, year - 1);
-    }
-    
-    const staffCorporate = baseStaffCorporate * staffIncreaseMultiplier;
-    const staffFlagship = baseStaffFlagship * staffIncreaseMultiplier;
-    const staffFranchiseSupport = baseStaffFranchiseSupport * staffIncreaseMultiplier;
-    const staffAdoptionSupport = baseStaffAdoptionSupport * staffIncreaseMultiplier;
-    
+
+    // Adoption support: 1 person (R$10K salary) per 20 schools
+    // Schools = adoptionStudents / 500 (avg school size)
+    const adoptionSchools = Math.ceil(adoptionStudents / 500);
+    const adoptionSupportStaff = Math.ceil(adoptionSchools / 20);
+    const baseStaffAdoptionSupport = adoptionSupportStaff * 10000 * 12; // R$10K/month × 12
+
+    const staffCorporate = baseStaffCorporate * inflationMultiplier;
+    const staffFlagship = baseStaffFlagship * inflationMultiplier;
+    const staffFranchiseSupport = baseStaffFranchiseSupport * inflationMultiplier;
+    const staffAdoptionSupport = baseStaffAdoptionSupport * inflationMultiplier;
+
     // Educational & Operational costs
-    const curriculum = Math.max(500000, totalStudents * 50); // Curriculum materials
-    const teacherTraining = Math.max(200000, (flagshipStudents + franchiseStudents) * 250) * staffIncreaseMultiplier; // Teacher development
-    const studentSupport = totalStudents * 200; // Student services, counseling, tech support
-    const qualityAssurance = Math.max(300000, totalRevenue * 0.01); // Quality control and assessment
-    const regulatoryCompliance = Math.max(400000, totalRevenue * 0.005); // Education regulations, audits
-    const dataManagement = Math.max(200000, totalStudents * 40); // Student data systems, privacy
-    const parentEngagement = Math.max(150000, totalStudents * 60); // Parent communication systems
-    
+    // Teacher training: base cost without crazy multiplier
+    const teacherTraining = Math.max(200000, (flagshipStudents + franchiseStudents) * 250) * inflationMultiplier;
+    const qualityAssurance = Math.max(300000, totalRevenue * 0.01);
+    const regulatoryCompliance = Math.max(400000, totalRevenue * 0.005);
+    const dataManagement = Math.max(200000, totalStudents * 40);
+    const parentEngagement = Math.max(150000, totalStudents * 60);
+
     // Business costs
-    const badDebt = totalRevenue * 0.02; // 2% bad debt (realistic for education)
-    const paymentProcessing = totalRevenue * 0.025; // 2.5% payment fees
-    const platformRD = totalRevenue * 0.06; // 6% for platform improvements (not excessive)
-    const contentDevelopment = totalRevenue * 0.04; // 4% for ongoing curriculum updates
-    
-    // Facility costs
+    const badDebt = totalRevenue * 0.02; // 2%
+    const paymentProcessing = totalRevenue * 0.025; // 2.5%
+    const platformRD = totalRevenue * 0.06; // 6% for platform R&D
+    // Content development: 4% of revenue (removed separate curriculum line)
+    const contentDevelopment = totalRevenue * 0.04;
+
+    // Facility costs with 5% annual inflation
     const capexScenario = CAPEX_SCENARIOS[this.params.capexScenario];
-    const facilityCosts = capexScenario.annualFacilityCost;
-    
+    const baseFacilityCost = capexScenario.baseFacilityCost || 1500000;
+    const facilityInflation = capexScenario.facilityInflationRate || 0.05;
+    const facilityCosts = baseFacilityCost * Math.pow(1 + facilityInflation, Math.max(0, year - 1));
+
     // Other costs
     const legalCompliance = Math.max(500000, totalRevenue * 0.003);
-    const insurance = totalRevenue * 0.002;
+    const insurance = totalRevenue * 0.005; // 0.5% (market rate for education)
     const travel = Math.max(300000, (franchiseCount + Math.floor(adoptionStudents / 5000)) * 50000);
     const workingCapital = totalRevenue * 0.01;
     const contingency = totalRevenue * 0.005;
-    
-    const totalCosts = technologyOpex + marketingCosts + staffCorporate + staffFlagship + 
-                      staffFranchiseSupport + staffAdoptionSupport + facilityCosts + 
+
+    const totalCosts = technologyOpex + marketingCosts + staffCorporate + staffFlagship +
+                      staffFranchiseSupport + staffAdoptionSupport + facilityCosts +
                       legalCompliance + insurance + travel + workingCapital + contingency +
-                      curriculum + teacherTraining + studentSupport + qualityAssurance + 
-                      regulatoryCompliance + dataManagement + parentEngagement + badDebt + 
+                      teacherTraining + qualityAssurance +
+                      regulatoryCompliance + dataManagement + parentEngagement + badDebt +
                       paymentProcessing + platformRD + contentDevelopment;
     
     const ebitda = totalRevenue - totalCosts;
     const ebitdaMargin = totalRevenue > 0 ? ebitda / totalRevenue : 0;
-    
+
     // CAPEX calculation with phased structure
-    // For private-historic: Year 0 = 25M, Year 1 = 15M (Phase 2)
-    // Plus architect payments: 100k upfront + 45.8k/month for 24 months
+    // For private-historic: Year 0 = R$20M, Year 1 = R$5M (Phase 2)
+    // Plus architect payments: R$100k upfront + R$45.8k/month for 24 months
     let capex;
     if (yearOverrides.capex !== undefined) {
       capex = yearOverrides.capex;
     } else if (year === 0) {
-      // Phase 1: Full initial investment including CAPEX and pre-launch
+      // Phase 1: Initial CAPEX (R$20M for private-historic)
       capex = capexScenario.initialCapex;
     } else if (year === 1 && capexScenario.year1Capex) {
-      // Phase 2 CAPEX (for private-historic scenario)
-      // Plus ongoing architect payments (12 months * 45.8k)
+      // Phase 2 CAPEX (R$5M for private-historic)
+      // Plus ongoing architect payments (12 months × R$45.8k)
       const architectPayments = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
       capex = capexScenario.year1Capex + architectPayments;
     } else if (year === 2 && this.params.capexScenario === 'private-historic') {
@@ -488,9 +534,9 @@ export class FinancialModel {
       // Ongoing maintenance CAPEX
       capex = year <= 5 ? totalRevenue * 0.005 : totalRevenue * 0.003;
     }
-    
-    // Tax calculation
-    const taxRate = 0.25; // 25% corporate tax rate in Brazil
+
+    // Tax calculation - Brazil corporate tax (IRPJ + CSLL) = 34%
+    const taxRate = 0.34;
     const taxableIncome = Math.max(0, ebitda);
     const taxes = taxableIncome * taxRate;
     
@@ -501,6 +547,7 @@ export class FinancialModel {
     let investmentPhase = null;
     let fundingSources = null;
     let architectPayment = 0;
+    let debtService = null;
 
     if (this.params.capexScenario === 'private-historic') {
       if (year === 0) {
@@ -510,32 +557,69 @@ export class FinancialModel {
           semester2: INVESTMENT_PHASES.phase1.semester2,
         };
         fundingSources = {
-          bridgeInvestment: 12500000, // 10M S1 + 2.5M S2
-          desenvolveSP: 10000000, // S2 CAPEX
-          prefeituraSubsidy: 2500000, // 25% of S2 CAPEX
+          bridgeInvestment: 10000000, // R$10M in January
+          desenvolveSP: 20000000, // R$20M in August
+          innovationLoan: 15000000, // R$15M in August
+          prefeituraSubsidy: 5000000, // R$5M in August
+        };
+        // Bridge repaid in Aug 2026 when funding arrives
+        debtService = {
+          bridgeRepayment: 10000000, // R$10M principal
+          bridgeInterest: 1400000, // ~2% × 7 months
         };
         architectPayment = INVESTMENT_PHASES.architectProject.upfront +
-                          (INVESTMENT_PHASES.architectProject.monthlyPayment * 5); // upfront + 5 months
+                          (INVESTMENT_PHASES.architectProject.monthlyPayment * 11); // upfront + 11 months
       } else if (year === 1) {
         investmentPhase = {
           phase: 'Phase 2 - School Operating (2027)',
           details: INVESTMENT_PHASES.phase2,
         };
         fundingSources = {
-          desenvolveSP: 20000000, // Remaining 20M from Desenvolve SP
-          prefeituraSubsidy: 5000000, // 25% of Phase 2 CAPEX
+          desenvolveSP: 10000000, // Remaining R$10M from Desenvolve SP
+          prefeituraSubsidy: 1250000, // R$1.25M
         };
-        architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12; // 12 months
+        // Quarterly interest on DSP R$30M + Innovation R$15M = R$45M × 12% / 4 = R$1.35M/quarter
+        debtService = {
+          dspInterest: 30000000 * 0.12, // R$3.6M/year
+          innovationInterest: 15000000 * 0.12, // R$1.8M/year
+        };
+        architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
       } else if (year === 2) {
-        architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12; // Final 12 months
+        architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
+        // Interest only (still in grace period)
+        debtService = {
+          dspInterest: 30000000 * 0.12,
+          innovationInterest: 15000000 * 0.12,
+        };
+      } else if (year >= 3) {
+        // Grace period ends Aug 2029 (36 months from Aug 2026)
+        // Principal repayment starts Year 4 (2030)
+        const graceEndYear = 4; // Year 4 = 2030
+        if (year >= graceEndYear) {
+          // 5-year amortization: R$45M / 5 = R$9M/year principal
+          const yearsSinceGraceEnd = year - graceEndYear;
+          const remainingPrincipal = 45000000 - (yearsSinceGraceEnd * 9000000);
+          if (remainingPrincipal > 0) {
+            debtService = {
+              principal: 9000000, // R$9M/year
+              interest: remainingPrincipal * 0.12, // Interest on remaining
+            };
+          }
+        } else {
+          // Still in grace - interest only
+          debtService = {
+            dspInterest: 30000000 * 0.12,
+            innovationInterest: 15000000 * 0.12,
+          };
+        }
       }
     }
 
     return {
       year,
       students: {
-        flagship: flagshipStudents,
-        franchise: franchiseStudents,
+        flagship: Math.round(flagshipStudents),
+        franchise: Math.round(franchiseStudents),
         adoption: Math.round(adoptionStudents),
         total: Math.round(totalStudents)
       },
@@ -562,9 +646,7 @@ export class FinancialModel {
         travel,
         workingCapital,
         contingency,
-        curriculum,
         teacherTraining,
-        studentSupport,
         qualityAssurance,
         regulatoryCompliance,
         dataManagement,
@@ -584,12 +666,15 @@ export class FinancialModel {
       freeCashFlow,
       pricing: {
         tuition: currentTuition,
-        adoptionFee: currentAdoptionFee,
+        adoptionFeeMonthly: currentAdoptionFeeMonthly,
         kitCost: currentKitCost
       },
-      // Investment and funding details (for Year 0 and 1)
+      // Investment and funding details
       investmentPhase,
-      fundingSources
+      fundingSources,
+      debtService,
+      // Churn info
+      churnRate: churnRate,
     };
   }
 
@@ -704,17 +789,26 @@ export class FinancialModel {
 
     // Investment summary for new structure
     const investmentSummary = this.params.capexScenario === 'private-historic' ? {
-      totalCapex: INVESTMENT_PHASES.totals.totalCapex, // R$40M
-      bridgeInvestment: INVESTMENT_PHASES.totals.bridgeInvestment, // R$12.5M (repaid Aug 2027)
+      totalCapex: INVESTMENT_PHASES.totals.totalCapex, // R$25M
+      bridgeInvestment: INVESTMENT_PHASES.totals.bridgeInvestment, // R$10M (repaid Aug 2026)
       desenvolveSPLoan: INVESTMENT_PHASES.totals.desenvolveSPLoan, // R$30M
-      prefeituraSubsidy: INVESTMENT_PHASES.totals.prefeituraSubsidy, // R$10M (25% of R$40M)
+      innovationLoan: INVESTMENT_PHASES.totals.innovationLoan, // R$15M
+      prefeituraSubsidy: INVESTMENT_PHASES.totals.prefeituraSubsidy, // R$6.25M (25% of R$25M)
+      totalDebt: INVESTMENT_PHASES.totals.totalDebt, // R$45M (DSP + Innovation)
       architectProject: INVESTMENT_PHASES.architectProject.total, // R$1.2M
       phase1Total: INVESTMENT_PHASES.phase1.semester1.total + INVESTMENT_PHASES.phase1.semester2.total, // R$25M
-      phase2Total: INVESTMENT_PHASES.phase2.total, // R$15M
+      phase2Total: INVESTMENT_PHASES.phase2.total, // R$5M
       bridgeRepayment: {
-        amount: INVESTMENT_PHASES.phase2.bridgeRepayment.amount,
-        month: INVESTMENT_PHASES.phase2.bridgeRepayment.month,
-        year: 2027
+        amount: INVESTMENT_PHASES.phase1.semester2.bridgeRepayment.amount,
+        interestPaid: INVESTMENT_PHASES.phase1.semester2.bridgeRepayment.interestPaid,
+        month: INVESTMENT_PHASES.phase1.semester2.bridgeRepayment.month,
+        year: 2026
+      },
+      debtTerms: {
+        gracePeriodMonths: 36, // 3 years grace
+        repaymentYears: 5, // 5 year amortization
+        interestRate: 0.12, // 12% per year
+        principalStartYear: 2030, // Year 4
       }
     } : null;
 

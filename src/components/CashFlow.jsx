@@ -10,30 +10,35 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
   const [employeeDetailModal, setEmployeeDetailModal] = useState(null);
 
   // Investment Structure for Private Historic Building (2026-2027)
+  // CAPEX = R$25M total, Bridge R$10M (repaid Aug 2026), DSP R$30M, Innovation R$15M
+  // Prefeitura subsidy = 25% of R$25M = R$6.25M
   // Phase 1 (2026): R$25M total
   //   - Semester 1 (Jan-Jul): R$10M from Bridge Investment
-  //   - Semester 2 (Aug-Dec): R$15M (R$10M CAPEX + R$5M people/tech)
-  //     Sources: Desenvolve SP R$10M + Prefeitura 25% subsidy + Bridge R$2.5M
-  // Phase 2 (2027): R$15M CAPEX while school operates
-  //   Sources: Desenvolve SP R$20M + Prefeitura 25% subsidy
+  //   - Semester 2 (Aug-Dec): R$15M - Bridge repaid, DSP+Innovation arrive
+  // Phase 2 (2027): R$5M CAPEX while school operates
 
   const INVESTMENT_PHASES = {
     phase1: {
       semester1: {
         total: 10000000, // R$10M
-        bridgeInvestment: 10000000, // 100% from bridge
+        bridgeInvestment: 10000000, // R$10M from bridge
         allocation: {
           architectUpfront: 100000,
           technologyPlatform: 5000000,
           peoplePreLaunch: 3400000,
-          curriculumDevelopment: 1500000,
+          contentDevelopment: 500000,
         }
       },
       semester2: {
-        total: 15000000, // R$15M
-        desenvolveSP: 10000000, // CAPEX financing
-        prefeituraSubsidy: 2500000, // Part of 25% subsidy (R$10M of R$40M CAPEX)
-        bridgeInvestment: 2500000,
+        total: 15000000, // R$15M expenses
+        desenvolveSP: 20000000, // R$20M from DSP
+        innovationLoan: 15000000, // R$15M Innovation loan
+        prefeituraSubsidy: 5000000, // R$5M (part of R$6.25M total)
+        bridgeRepayment: {
+          amount: 10000000, // R$10M bridge repaid
+          interestPaid: 1800000, // ~2% × 9 months (Jan-Oct)
+          month: 10, // October 2026
+        },
         allocation: {
           capexConstruction: 10000000,
           peopleHiring: 3000000,
@@ -42,13 +47,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       }
     },
     phase2: {
-      total: 15000000,
-      desenvolveSP: 20000000, // Total 30M commitment
-      prefeituraSubsidy: 7500000, // Remaining 25% subsidy (R$30M of R$40M CAPEX = R$7.5M)
-      bridgeRepayment: {
-        amount: 12500000, // R$12.5M bridge repayment
-        month: 8, // August 2027
-      }
+      total: 5000000, // R$5M CAPEX
+      desenvolveSP: 10000000, // Remaining R$10M from DSP (total R$30M)
+      prefeituraSubsidy: 1250000, // R$1.25M remaining
     },
     architectProject: {
       total: 1200000,
@@ -75,34 +76,36 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
   };
 
   // Total funding sources
-  const TOTAL_BRIDGE_INVESTMENT = 12500000; // R$12.5M bridge (repaid Aug 2027)
+  const TOTAL_BRIDGE_INVESTMENT = 10000000; // R$10M bridge (repaid Aug 2026)
   const TOTAL_DESENVOLVE_SP = 30000000; // R$30M from Desenvolve SP
-  const TOTAL_PREFEITURA_SUBSIDY = 10000000; // R$10M (25% of total R$40M CAPEX)
-  const TOTAL_CAPEX = 40000000; // R$40M total CAPEX budget
+  const TOTAL_INNOVATION_LOAN = 15000000; // R$15M Innovation loan
+  const TOTAL_PREFEITURA_SUBSIDY = 6250000; // R$6.25M (25% of R$25M CAPEX)
+  const TOTAL_CAPEX = 25000000; // R$25M total CAPEX budget
+  const TOTAL_DEBT = 45000000; // R$30M DSP + R$15M Innovation
 
-  const INITIAL_INVESTMENT = TOTAL_BRIDGE_INVESTMENT; // Only bridge is actual equity investment
+  const INITIAL_INVESTMENT = TOTAL_BRIDGE_INVESTMENT; // Bridge equity investment
   const PRE_LAUNCH_TECH_INVESTMENT = 5000000; // R$5M tech investment (part of phase 1 semester 1)
   
-  // Expense category definitions matching presentation
+  // Expense category definitions matching model
   const expenseCategories = {
     technology: {
       title: "Technology Expenses",
-      percentage: "10% of total revenue",
+      percentage: "4% of total revenue",
       description: "Cloud infrastructure, software licenses, API costs, system maintenance"
     },
     marketing: {
-      title: "Marketing & Growth", 
-      percentage: "8% of total revenue",
+      title: "Marketing & Growth",
+      percentage: "5% of total revenue",
       description: "Customer acquisition, brand building, digital marketing, advertising, events"
     },
     corporateStaff: {
       title: "Corporate Staff",
-      formula: "Max(R$3M OR R$80/student)",
+      formula: "Max(R$3M OR R$80/student) + 5% inflation/year",
       description: "Executives, tech team, sales, operations staff"
     },
     flagshipStaff: {
       title: "Flagship Staff",
-      formula: "Max(R$2.5M OR R$2,200/student)", 
+      formula: "Max(R$2.5M OR R$2,200/student) + 5% inflation/year",
       description: "Teachers, support staff, campus operations"
     },
     franchiseSupport: {
@@ -117,33 +120,33 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     },
     adoptionSupport: {
       title: "Adoption Support",
-      formula: "R$150 per student",
-      description: "Support for adoption licensing program"
+      formula: "1 person (R$10K/mo) per 20 schools",
+      description: "Support for adoption licensing program (1 staff per 20 schools)"
     },
     facilities: {
       title: "Facilities & Infrastructure",
-      options: "R$800K (Gov) / R$3.2M (Lease) / R$1.2M (Direct)",
+      formula: "R$1.5M base + 5% inflation/year",
       description: "Building costs, utilities, maintenance"
     },
-    curriculum: {
-      title: "Curriculum Development",
-      formula: "Max(R$500K OR R$200/student)",
-      description: "Educational content development and updates"
+    contentDevelopment: {
+      title: "Content Development",
+      percentage: "4% of revenue",
+      description: "Curriculum and content development"
     },
     teacherTraining: {
       title: "Teacher Training",
-      formula: "Max(R$800K OR 10% x R$15K)",
+      formula: "Max(R$200K OR R$250/student)",
       description: "Professional development and AI system training"
     },
     qualityAssurance: {
       title: "Quality & Compliance",
-      formula: "Max(R$400K OR 1.5% revenue)",
+      formula: "Max(R$300K OR 1% revenue)",
       description: "Quality assurance, regulatory compliance, data privacy"
     },
     insurance: {
       title: "Insurance",
-      percentage: "0.2% of revenue",
-      description: "Business insurance, liability coverage"
+      percentage: "0.5% of revenue",
+      description: "Business insurance, liability coverage (market rate)"
     },
     travel: {
       title: "Travel & Business",
@@ -152,13 +155,23 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     },
     workingCapital: {
       title: "Working Capital",
-      percentage: "1% of revenue", 
+      percentage: "1% of revenue",
       description: "Cash flow management and operational buffer"
     },
     contingency: {
       title: "Contingency",
       percentage: "0.5% of revenue",
       description: "Unexpected expenses and risk mitigation"
+    },
+    platformRD: {
+      title: "Platform R&D",
+      percentage: "6% of revenue",
+      description: "Platform improvements and new feature development"
+    },
+    corporateTax: {
+      title: "Corporate Tax",
+      percentage: "34% (IRPJ + CSLL)",
+      description: "Brazilian corporate tax on profit"
     }
   };
   
@@ -190,22 +203,26 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     const yearlyData = [];
 
     // Phase 1 - Year 0 (2026) Pre-Launch
-    // Semester 1: R$10M (Bridge) -> Architecture, Tech, People, Curriculum
-    // Semester 2: R$15M (Desenvolve SP + Prefeitura + Bridge) -> CAPEX, Hiring, Tech
+    // Semester 1: R$10M (Bridge) -> Architecture, Tech, People, Content
+    // Semester 2: R$15M expenses, Bridge repaid, DSP+Innovation arrive
     const phase1Semester1Expenses = INVESTMENT_PHASES.phase1.semester1.total; // R$10M
     const phase1Semester2Expenses = INVESTMENT_PHASES.phase1.semester2.total; // R$15M
     const phase1TotalExpenses = phase1Semester1Expenses + phase1Semester2Expenses; // R$25M
 
     // Funding for Year 0
-    const year0BridgeInvestment = INVESTMENT_PHASES.phase1.semester1.bridgeInvestment +
-                                   INVESTMENT_PHASES.phase1.semester2.bridgeInvestment; // R$12.5M
-    const year0DesenvolveSP = INVESTMENT_PHASES.phase1.semester2.desenvolveSP; // R$10M
-    const year0PrefeituraSubsidy = INVESTMENT_PHASES.phase1.semester2.prefeituraSubsidy; // R$2.5M
-    const year0TotalFunding = year0BridgeInvestment + year0DesenvolveSP + year0PrefeituraSubsidy; // R$25M
+    const year0BridgeInvestment = INVESTMENT_PHASES.phase1.semester1.bridgeInvestment; // R$10M
+    const year0DesenvolveSP = INVESTMENT_PHASES.phase1.semester2.desenvolveSP; // R$20M
+    const year0InnovationLoan = INVESTMENT_PHASES.phase1.semester2.innovationLoan; // R$15M
+    const year0PrefeituraSubsidy = INVESTMENT_PHASES.phase1.semester2.prefeituraSubsidy; // R$5M
+    const year0TotalFunding = year0BridgeInvestment + year0DesenvolveSP + year0InnovationLoan + year0PrefeituraSubsidy; // R$50M
 
-    // Year 0 cash flow (expenses match funding exactly)
-    const year0NetCashFlow = year0TotalFunding - phase1TotalExpenses;
-    const year0ClosingCash = year0NetCashFlow; // Starts at 0, ends at 0 (all deployed)
+    // Bridge repayment in Oct 2026
+    const bridgeRepayment = INVESTMENT_PHASES.phase1.semester2.bridgeRepayment.amount; // R$10M
+    const bridgeInterest = INVESTMENT_PHASES.phase1.semester2.bridgeRepayment.interestPaid; // R$1.8M
+
+    // Year 0 cash flow
+    const year0NetCashFlow = year0TotalFunding - phase1TotalExpenses - bridgeRepayment - bridgeInterest;
+    const year0ClosingCash = year0NetCashFlow;
 
     // 30 teachers hired in S2 2026 for flagship training
     const teacherHiringCostS2 = 30 * 8000 * 5; // 30 teachers x R$8K/month x 5 months = R$1.2M
@@ -218,7 +235,10 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       investmentDetails: {
         bridgeInvestment: year0BridgeInvestment,
         desenvolveSP: year0DesenvolveSP,
+        innovationLoan: year0InnovationLoan,
         prefeituraSubsidy: year0PrefeituraSubsidy,
+        bridgeRepayment: -bridgeRepayment,
+        bridgeInterest: -bridgeInterest,
       },
       expenses: {
         semester1: {
@@ -226,31 +246,32 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           architectUpfront: INVESTMENT_PHASES.architectProject.upfront,
           technology: INVESTMENT_PHASES.phase1.semester1.allocation.technologyPlatform,
           people: INVESTMENT_PHASES.phase1.semester1.allocation.peoplePreLaunch,
-          curriculum: INVESTMENT_PHASES.phase1.semester1.allocation.curriculumDevelopment,
-          architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 5, // 5 months
+          content: INVESTMENT_PHASES.phase1.semester1.allocation.contentDevelopment,
+          architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 5,
         },
         semester2: {
           total: phase1Semester2Expenses + teacherHiringCostS2,
           capex: INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction,
           people: INVESTMENT_PHASES.phase1.semester2.allocation.peopleHiring,
-          teacherHiring: teacherHiringCostS2, // 30 teachers for flagship
+          teacherHiring: teacherHiringCostS2,
           technology: INVESTMENT_PHASES.phase1.semester2.allocation.technology,
-          architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 5, // 5 months
+          architectMonthly: INVESTMENT_PHASES.architectProject.monthlyPayment * 7,
         }
       },
       headcount: {
-        teachers: 30, // 30 teachers hired in S2 for flagship
-        corporate: 12, // Corporate team by end of 2026
-        support: 4 // Support staff
+        teachers: 30,
+        corporate: 12,
+        support: 4
       },
       revenue: 0,
       operatingExpenses: -(phase1TotalExpenses + teacherHiringCostS2 - INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction),
       capex: -INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction,
+      debtService: -(bridgeRepayment + bridgeInterest),
       taxes: 0,
       netCashFlow: year0NetCashFlow - teacherHiringCostS2,
       closingCash: year0ClosingCash - teacherHiringCostS2,
       burnRate: (phase1TotalExpenses + teacherHiringCostS2) / 12,
-      runwayMonths: 12, // Funded for full year
+      runwayMonths: 12,
       phase: 'Phase 1 - Pre-Launch'
     });
 
@@ -285,18 +306,17 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
       let bridgeRepayment = 0;
 
       if (year === 1) {
-        // Phase 2: R$15M CAPEX while school operates
-        // Funded by Desenvolve SP (R$20M) + Prefeitura subsidy (R$7.5M)
-        yearInvestments = INVESTMENT_PHASES.phase2.desenvolveSP; // R$20M from Desenvolve SP
-        const phase2Subsidy = INVESTMENT_PHASES.phase2.prefeituraSubsidy; // R$7.5M
+        // Phase 2: R$5M CAPEX while school operates
+        // Funded by remaining Desenvolve SP (R$10M) + Prefeitura subsidy (R$1.25M)
+        yearInvestments = INVESTMENT_PHASES.phase2.desenvolveSP; // R$10M from Desenvolve SP
+        const phase2Subsidy = INVESTMENT_PHASES.phase2.prefeituraSubsidy; // R$1.25M
 
-        // Bridge repayment in August when Desenvolve SP disburses
-        bridgeRepayment = INVESTMENT_PHASES.phase2.bridgeRepayment.amount; // R$12.5M
+        // Bridge already repaid in Aug 2026
+        bridgeRepayment = 0;
 
         investmentDetails = {
           desenvolveSP: INVESTMENT_PHASES.phase2.desenvolveSP,
           prefeituraSubsidy: phase2Subsidy,
-          bridgeRepayment: bridgeRepayment,
         };
         // Architect payments continue (12 months * 45.8k)
         const architectPayments = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;

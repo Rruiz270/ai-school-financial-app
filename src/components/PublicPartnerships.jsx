@@ -314,13 +314,13 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'realistic'
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Year 10 EBITDA</p>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(year10Data.ebitda)}</p>
+              <p className="text-sm font-medium text-gray-600">Fee per Student/Month</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(adoptionFee)}</p>
             </div>
             <DollarSign className="w-8 h-8 text-green-600" />
           </div>
           <div className="mt-4 text-xs text-gray-500">
-            {(year10Data.margin * 100).toFixed(1)}% EBITDA Margin
+            Government pays per enrolled student
           </div>
         </div>
 
@@ -448,19 +448,6 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'realistic'
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                EBITDA Margin (%)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={publicParameters.marginsPublic ? (publicParameters.marginsPublic * 100) : ''}
-                onChange={(e) => handleParameterChange('marginsPublic', e.target.value === '' ? '' : Number(e.target.value) / 100)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="75"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -477,8 +464,6 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'realistic'
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Municipalities</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">EBITDA</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -498,12 +483,6 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'realistic'
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-emerald-600 font-semibold">
                     {formatCurrency(yearData.revenue.total)}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-green-600 font-semibold">
-                    {formatCurrency(yearData.ebitda)}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-500">
-                    {(yearData.margin * 100).toFixed(1)}%
                   </td>
                 </tr>
               ))}

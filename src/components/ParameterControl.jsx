@@ -27,7 +27,7 @@ const ParameterControl = ({ parameters, onParameterChange, className = '' }) => 
       icon: <DollarSign className="w-5 h-5" />,
       parameters: [
         { key: 'flagshipTuition', label: 'Monthly Tuition (R$)', value: parameters.flagshipTuition, min: 1500, max: 4000, step: 100 },
-        { key: 'adoptionLicenseFee', label: 'Adoption Fee/Student/Month (R$)', value: parameters.adoptionLicenseFee, min: 100, max: 400, step: 25 },
+        { key: 'adoptionLicenseFeeMonthly', label: 'Adoption Fee/Student/Month (R$)', value: parameters.adoptionLicenseFeeMonthly, min: 100, max: 400, step: 25 },
         { key: 'kitCostPerStudent', label: 'Annual Kit Cost (R$)', value: parameters.kitCostPerStudent, min: 1000, max: 2500, step: 100 },
         { key: 'franchiseRoyaltyRate', label: 'Franchise Royalty (%)', value: parameters.franchiseRoyaltyRate * 100, min: 5, max: 15, step: 0.5, isPercentage: true },
         { key: 'franchiseFee', label: 'Franchise Fee (R$)', value: parameters.franchiseFee, min: 100000, max: 500000, step: 25000 },

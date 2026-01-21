@@ -157,11 +157,25 @@ const ExpenseDetailModal = ({
   }, [expense, currentYearData]);
 
   // Initialize monthly values when expense or year changes
+  // Check for saved overrides first, otherwise use calculated values
   useEffect(() => {
-    setMonthlyValues(calculateMonthlyValues);
+    if (expense) {
+      const overrideKey = `${expense.id}_${selectedYear}`;
+      const savedOverride = expenseOverrides[overrideKey];
+
+      if (savedOverride?.monthlyValues) {
+        // Use saved overrides
+        setMonthlyValues(savedOverride.monthlyValues);
+      } else {
+        // Calculate from formula
+        setMonthlyValues(calculateMonthlyValues);
+      }
+    } else {
+      setMonthlyValues(calculateMonthlyValues);
+    }
     setHasChanges(false);
     setIsEditing(false);
-  }, [calculateMonthlyValues]);
+  }, [calculateMonthlyValues, expense, selectedYear, expenseOverrides]);
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null || isNaN(value)) return 'R$ 0';

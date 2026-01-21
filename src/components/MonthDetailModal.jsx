@@ -633,10 +633,10 @@ const MonthDetailModal = ({
         <div className="bg-gray-100 px-6 py-3 flex justify-between items-center border-b">
           <div>
             <span className="text-gray-600">Month Total:</span>
-            <span className="ml-2 text-xl font-bold text-gray-800">{formatCurrency(monthValue)}</span>
+            <span className="ml-2 text-xl font-bold text-gray-800">{formatCurrency(totalFromItems)}</span>
           </div>
           <div className="text-sm text-gray-500">
-            {items.length} line items
+            {displayItems.length} line items
           </div>
         </div>
 

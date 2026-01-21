@@ -42,6 +42,13 @@ const Dashboard = ({ financialData, onScenarioChange, currentScenario = 'realist
   ];
 
   const formatCurrency = (value) => {
+    // For large numbers, use compact format (M for millions, B for billions)
+    const absValue = Math.abs(value);
+    if (absValue >= 1000000000) {
+      return `R$ ${(value / 1000000000).toFixed(1)}B`;
+    } else if (absValue >= 1000000) {
+      return `R$ ${(value / 1000000).toFixed(1)}M`;
+    }
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',

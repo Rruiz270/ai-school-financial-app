@@ -315,7 +315,7 @@ const PublicPartnerships = ({ onPublicModelChange, initialScenario = 'realistic'
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Fee per Student/Month</p>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(adoptionFee)}</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(publicParameters.revenuePerStudentMonth)}</p>
             </div>
             <DollarSign className="w-8 h-8 text-green-600" />
           </div>

@@ -385,45 +385,45 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
         const isSemester1 = month <= 7; // Jan-Jul
         const isSemester2 = month > 7; // Aug-Dec
 
-        // Funding inflows based on semester
+        // Funding inflows
         let bridgeFunding = 0;
         let desenvolveSPFunding = 0;
-        let prefeituaSubsidy = 0;
+        let innovationFunding = 0;
+        let prefeituraSubsidy = 0;
+        let bridgeRepayment = 0;
+        let bridgeInterest = 0;
 
         if (month === 1) {
-          // Semester 1 bridge funding arrives
-          bridgeFunding = INVESTMENT_PHASES.phase1.semester1.bridgeInvestment; // R$10M
+          // Bridge funding arrives January
+          bridgeFunding = 10000000; // R$10M
         }
         if (month === 8) {
-          // Semester 2 funding arrives
-          desenvolveSPFunding = INVESTMENT_PHASES.phase1.semester2.desenvolveSP; // R$10M
-          prefeituaSubsidy = INVESTMENT_PHASES.phase1.semester2.prefeituraSubsidy; // R$2.5M
-          bridgeFunding = INVESTMENT_PHASES.phase1.semester2.bridgeInvestment; // R$2.5M
+          // DSP + Innovation + Prefeitura arrive August
+          desenvolveSPFunding = 20000000; // R$20M
+          innovationFunding = 15000000; // R$15M
+          prefeituraSubsidy = 5000000; // R$5M
+        }
+        if (month === 10) {
+          // Bridge repaid October
+          bridgeRepayment = 10000000; // R$10M principal
+          bridgeInterest = 1800000; // R$1.8M interest (9 months × 2%)
         }
 
         // Monthly expense allocations
-        const techMonthly = isSemester1 ?
-          INVESTMENT_PHASES.phase1.semester1.allocation.technologyPlatform / 7 : // R$5M / 7 months
-          INVESTMENT_PHASES.phase1.semester2.allocation.technology / 5; // R$2M / 5 months
+        const techMonthly = isSemester1 ? 5000000 / 7 : 2000000 / 5; // R$5M S1, R$2M S2
 
-        const peopleMonthly = isSemester1 ?
-          INVESTMENT_PHASES.phase1.semester1.allocation.peoplePreLaunch / 7 : // R$3.4M / 7 months
-          INVESTMENT_PHASES.phase1.semester2.allocation.peopleHiring / 5; // R$3M / 5 months (corporate hiring)
+        const peopleMonthly = isSemester1 ? 3400000 / 7 : 3000000 / 5; // R$3.4M S1, R$3M S2
 
-        // 30 teachers hired and trained in semester 2 for flagship launch
-        // Average teacher salary ~R$8K/month, hiring 30 teachers over 5 months
-        const teacherHiringMonthly = isSemester2 ? 30 * 8000 : 0; // R$240K/month for 30 teachers
+        // 30 teachers hired and trained in S2 for flagship launch
+        const teacherHiringMonthly = isSemester2 ? 30 * 8000 : 0; // R$240K/month
 
-        const curriculumMonthly = isSemester1 && month >= 2 ?
-          INVESTMENT_PHASES.phase1.semester1.allocation.curriculumDevelopment / 6 : 0; // R$1.5M / 6 months (Feb-Jul)
+        // Content development in S2 (R$100K/month for 5 months)
+        const contentMonthly = isSemester2 ? 100000 : 0;
 
-        const architectPayment = month === 1 ?
-          INVESTMENT_PHASES.architectProject.upfront : // R$100k upfront
-          INVESTMENT_PHASES.architectProject.monthlyPayment; // R$45.8k/month
+        const architectPayment = month === 1 ? 100000 : 45833; // R$100K upfront, R$45.8K/month
 
-        // CAPEX only in semester 2
-        const capexMonthly = isSemester2 ?
-          INVESTMENT_PHASES.phase1.semester2.allocation.capexConstruction / 5 : 0; // R$10M / 5 months
+        // CAPEX starts April (month 4), R$10M over 9 months (Apr-Dec)
+        const capexMonthly = month >= 4 ? 10000000 / 9 : 0;
 
         const details = {
           month,
@@ -432,29 +432,32 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           inflows: {
             bridgeInvestment: bridgeFunding,
             desenvolveSP: desenvolveSPFunding,
-            prefeituraSubsidy: prefeituaSubsidy,
-            total: bridgeFunding + desenvolveSPFunding + prefeituaSubsidy
+            innovationLoan: innovationFunding,
+            prefeituraSubsidy: prefeituraSubsidy,
+            total: bridgeFunding + desenvolveSPFunding + innovationFunding + prefeituraSubsidy
           },
           outflows: {
             techDevelopment: techMonthly,
             peopleOperations: peopleMonthly,
-            teacherHiring: teacherHiringMonthly, // 30 teachers for flagship - training in S2
-            curriculumDevelopment: curriculumMonthly,
+            teacherHiring: teacherHiringMonthly,
+            contentDevelopment: contentMonthly,
             architectProject: architectPayment,
             capexConstruction: capexMonthly,
+            bridgeRepayment: bridgeRepayment,
+            bridgeInterest: bridgeInterest,
             legalSetup: month === 2 ? 50000 : 0,
             marketResearch: month === 3 || month === 4 ? 75000 : 0,
             brandingDesign: month === 5 || month === 6 ? 100000 : 0,
             total: 0
           },
           headcount: {
-            teachers: isSemester2 ? 30 : 0, // 30 teachers hired in S2 for flagship
-            corporate: isSemester1 ? 8 : 12 // Corporate team grows in S2
+            teachers: isSemester2 ? 30 : 0, // 30 teachers hired in S2
+            corporate: isSemester1 ? 8 : 12
           }
         };
 
         details.outflows.total = Object.values(details.outflows).reduce((sum, val) => {
-          return typeof val === 'number' ? sum + val : sum;
+          return typeof val === 'number' && !isNaN(val) ? sum + val : sum;
         }, 0);
         const netFlow = details.inflows.total - details.outflows.total;
         runningCash += netFlow;
@@ -539,12 +542,12 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           total: 0
         },
         
-        // Headcount estimates (scenario-adjusted)
+        // Headcount estimates - Fixed teacher counts per user requirements
+        // Year 1 (2027): 30 teachers (trained in S2 2026)
+        // Year 2+ (2028+): 50 teachers for flagship
         headcount: {
           flagship: {
-            // Teacher ratio varies by scenario: pessimistic 1:30, realistic 1:25, optimistic 1:20
-            teachers: students.flagship ? Math.ceil(students.flagship * rampFactor / 
-              (currentScenario === 'pessimistic' ? 30 : currentScenario === 'optimistic' ? 20 : 25)) : 0,
+            teachers: year === 1 ? 30 : (year >= 2 ? 50 : 0),
             support: students.flagship ? Math.ceil(students.flagship * rampFactor / 200) : 0
           },
           corporate: {
@@ -1454,7 +1457,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                           {month.outflows.technology > 0 && (
                             <div className="flex justify-between text-sm ml-2 relative">
                               <span className="text-gray-600 flex items-center gap-1">
-                                Technology OPEX (10%)
+                                Technology OPEX (4%)
                                 <button
                                   onMouseEnter={() => setShowExpenseTooltip('technology')}
                                   onMouseLeave={() => setShowExpenseTooltip(null)}
@@ -1476,7 +1479,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                           {month.outflows.marketing > 0 && (
                             <div className="flex justify-between text-sm ml-2 relative">
                               <span className="text-gray-600 flex items-center gap-1">
-                                Marketing & Growth (8%)
+                                Marketing & Growth (5%)
                                 <button
                                   onMouseEnter={() => setShowExpenseTooltip('marketing')}
                                   onMouseLeave={() => setShowExpenseTooltip(null)}
@@ -1521,7 +1524,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                           )}
                           {month.outflows.insurance > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Insurance (0.2%)</span>
+                              <span className="text-gray-600">Insurance (0.5%)</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.insurance)}</span>
                             </div>
                           )}

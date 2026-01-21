@@ -1353,13 +1353,13 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
                 <div className="space-y-4">
                   <div className="border border-gray-200 p-4 rounded-lg">
                     <h3 className="font-bold text-primary-600 mb-2">1. TECHNOLOGY EXPENSES</h3>
-                    <p className="text-sm text-gray-600 mb-2">10% of total revenue</p>
+                    <p className="text-sm text-gray-600 mb-2">4% of total revenue</p>
                     <p className="text-xs text-gray-500">Cloud infrastructure, software licenses, API costs, system maintenance</p>
                   </div>
                   
                   <div className="border border-gray-200 p-4 rounded-lg">
                     <h3 className="font-bold text-primary-600 mb-2">2. MARKETING & GROWTH</h3>
-                    <p className="text-sm text-gray-600 mb-2">8% of total revenue</p>
+                    <p className="text-sm text-gray-600 mb-2">5% of total revenue</p>
                     <p className="text-xs text-gray-500">Customer acquisition, brand building, digital marketing, advertising, events</p>
                   </div>
                   
@@ -1407,7 +1407,7 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
                   <div className="border border-gray-200 p-4 rounded-lg">
                     <h3 className="font-bold text-primary-600 mb-2">7. OPERATIONAL EXPENSES</h3>
                     <div className="text-xs text-gray-600 space-y-1">
-                      <p><strong>Insurance:</strong> 0.2% of revenue</p>
+                      <p><strong>Insurance:</strong> 0.5% of revenue</p>
                       <p><strong>Travel & Business:</strong> Max(R$300K OR R$50K x locations)</p>
                       <p><strong>Working Capital:</strong> 1% of revenue</p>
                       <p><strong>Contingency:</strong> 0.5% of revenue</p>
@@ -1425,7 +1425,7 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
                   <div className="border border-gray-200 p-4 rounded-lg">
                     <h3 className="font-bold text-primary-600 mb-2">9. TAXES</h3>
                     <div className="text-xs text-gray-600 space-y-1">
-                      <p><strong>Corporate Income Tax:</strong> 25% of EBITDA</p>
+                      <p><strong>Corporate Income Tax:</strong> 34% of EBITDA (IRPJ + CSLL)</p>
                     </div>
                   </div>
                 </div>

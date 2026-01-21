@@ -212,7 +212,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
             Customize specific year assumptions and see immediate impact on complete P&L projections
           </div>
           <div className="ml-4 text-xs text-blue-600">
-            📊 Now showing complete P&L with all expense categories including 10% technology allocation
+            📊 Now showing complete P&L with all expense categories including 4% technology allocation
           </div>
         </div>
 
@@ -521,13 +521,13 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                   <h5 className="font-semibold text-red-900 mb-3">💸 Operating Expenses</h5>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Technology OPEX (10%)</span>
+                      <span className="text-sm text-gray-600">Technology OPEX (4%)</span>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.costs?.technologyOpex || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Marketing (8%)</span>
+                      <span className="text-sm text-gray-600">Marketing (5%)</span>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.costs?.marketing || 0)}
                       </span>
@@ -645,7 +645,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                   <h5 className="font-semibold text-blue-900 mb-3">📊 Financial Results</h5>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Bad Debt (5%)</span>
+                      <span className="text-sm text-gray-600">Bad Debt (2%)</span>
                       <span className="font-semibold text-red-600">
                         {formatCurrency((selectedYearProjection.revenue?.total || 0) * 0.05)}
                       </span>
@@ -667,7 +667,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Taxes (25%)</span>
+                      <span className="text-sm text-gray-600">Taxes (34%)</span>
                       <span className="font-semibold text-red-600">
                         {formatCurrency(selectedYearProjection.taxes || 0)}
                       </span>
@@ -774,7 +774,7 @@ const YearByYearEditor = ({ parameters, onParameterChange, financialData, curren
         <h4 className="font-medium text-yellow-900 mb-2">How to Use Enhanced Private Sector Year-by-Year Planning:</h4>
         <ul className="text-sm text-yellow-800 space-y-1">
           <li>• <strong>Scenario Integration</strong> - Numbers automatically reflect your selected scenario ({SCENARIO_PRESETS[currentScenario]?.name || currentScenario}) from the Private Sector tab</li>
-          <li>• <strong>Complete P&L View</strong> - See full profit & loss breakdown including all operating expenses and technology costs (10%)</li>
+          <li>• <strong>Complete P&L View</strong> - See full profit & loss breakdown including all operating expenses and technology costs (4%)</li>
           <li>• <strong>Select a year</strong> from the dropdown to view or edit that year's assumptions</li>
           <li>• <strong>Toggle Edit Mode</strong> to modify student counts, pricing, or investments for specific years</li>
           <li>• <strong>Performance Indicators</strong> - Color-coded results show financial health at a glance</li>

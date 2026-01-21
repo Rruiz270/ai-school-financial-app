@@ -226,7 +226,18 @@ const ExpenseDetailModal = ({
     }
 
     setMonthlyValues(newValues);
-    setHasChanges(true);
+
+    // Auto-save to parent so changes persist immediately
+    if (onSave) {
+      onSave({
+        expenseId: expense.id,
+        yearIndex: selectedYear,
+        monthlyValues: newValues,
+        annualTotal: newValues.reduce((a, b) => a + b, 0),
+      });
+    }
+
+    setHasChanges(false); // Changes have been saved
     // Close the month detail modal
     setIsMonthModalOpen(false);
     setSelectedMonthIndex(null);

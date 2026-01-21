@@ -213,9 +213,18 @@ const ExpenseDetailModal = ({
   };
 
   const handleMonthDetailSave = (data) => {
-    // Update the monthly value with the new total from detailed items
     const newValues = [...monthlyValues];
-    newValues[data.monthIndex] = data.newTotal;
+
+    if (data.applyToRestOfYear) {
+      // Apply the new total from this month through December
+      for (let i = data.monthIndex; i < 12; i++) {
+        newValues[i] = data.newTotal;
+      }
+    } else {
+      // Only update this specific month
+      newValues[data.monthIndex] = data.newTotal;
+    }
+
     setMonthlyValues(newValues);
     setHasChanges(true);
     // Close the month detail modal

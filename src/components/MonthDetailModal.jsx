@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Users, Building, Laptop, Megaphone, BookOpen, CreditCard, Shield, Plane, PiggyBank, HardHat, Landmark, Edit2, Save, Plus, Trash2 } from 'lucide-react';
+import { X, Users, Building, Laptop, Megaphone, BookOpen, CreditCard, Shield, Plane, PiggyBank, HardHat, Landmark, Edit2, Save, Plus, Trash2, Calendar, ArrowRight } from 'lucide-react';
 
 // Detailed breakdown definitions for each expense type
 const EXPENSE_BREAKDOWNS = {
@@ -510,8 +510,8 @@ const MonthDetailModal = ({
     setIsEditing(false);
   };
 
-  // Handle save
-  const handleSave = () => {
+  // Handle save for this month only
+  const handleSaveThisMonth = () => {
     const newTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
     if (onSave) {
       onSave({
@@ -520,32 +520,53 @@ const MonthDetailModal = ({
         yearIndex,
         items: editedItems,
         newTotal,
+        applyToRestOfYear: false,
       });
     }
     setIsEditing(false);
   };
 
-  // Update staff item
+  // Handle save for rest of year (from this month onwards)
+  const handleSaveRestOfYear = () => {
+    const newTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+    if (onSave) {
+      onSave({
+        expenseId,
+        monthIndex,
+        yearIndex,
+        items: editedItems,
+        newTotal,
+        applyToRestOfYear: true,
+      });
+    }
+    setIsEditing(false);
+  };
+
+  // Update staff item - allow empty input for easier editing
   const handleStaffChange = (index, field, value) => {
     setEditedItems(prev => {
       const newItems = [...prev];
-      const numValue = parseInt(value) || 0;
+      // Allow empty string for typing, treat as 0 for calculations
+      const numValue = value === '' ? '' : (parseInt(value) || 0);
+      const calcValue = value === '' ? 0 : (parseInt(value) || 0);
+
       newItems[index] = {
         ...newItems[index],
         [field]: numValue,
         total: field === 'quantity'
-          ? numValue * newItems[index].monthlySalary
-          : newItems[index].quantity * numValue,
+          ? calcValue * (newItems[index].monthlySalary === '' ? 0 : newItems[index].monthlySalary)
+          : (newItems[index].quantity === '' ? 0 : newItems[index].quantity) * calcValue,
       };
       return newItems;
     });
   };
 
-  // Update generic item
+  // Update generic item - allow empty input for easier editing
   const handleItemChange = (index, field, value) => {
     setEditedItems(prev => {
       const newItems = [...prev];
-      const numValue = parseFloat(value) || 0;
+      // Allow empty string for typing
+      const numValue = value === '' ? '' : (parseFloat(value) || 0);
       newItems[index] = {
         ...newItems[index],
         [field]: numValue,
@@ -741,49 +762,66 @@ const MonthDetailModal = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {isEditing ? (
-              <span className="text-blue-600 font-medium">✏️ Editing Mode - Changes will update the total</span>
-            ) : (
-              <>Year {yearIndex} ({calendarYear}) • {months[monthIndex]}</>
-            )}
+        <div className="bg-gray-50 px-6 py-4 border-t">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              {isEditing ? (
+                <span className="text-blue-600 font-medium">✏️ Editing Mode - Changes will update the total</span>
+              ) : (
+                <>Year {yearIndex} ({calendarYear}) • {months[monthIndex]}</>
+              )}
+            </div>
+            <div className="flex space-x-3">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveThisMonth}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    title={`Save changes only for ${months[monthIndex]}`}
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>Save This Month</span>
+                  </button>
+                  <button
+                    onClick={handleSaveRestOfYear}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    title={`Apply these values from ${months[monthIndex]} through December`}
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                    <span>Save {months[monthIndex]} → Dec</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleStartEdit}
+                    className={`flex items-center space-x-2 px-4 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-colors`}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    <span>Edit Details</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex space-x-3">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={handleStartEdit}
-                  className={`flex items-center space-x-2 px-4 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-colors`}
-                >
-                  <Edit2 className="w-4 h-4" />
-                  <span>Edit Details</span>
-                </button>
-              </>
-            )}
-          </div>
+          {isEditing && (
+            <div className="mt-3 text-xs text-gray-500 text-right">
+              <span className="font-medium">Save This Month:</span> Changes apply only to {months[monthIndex]} |
+              <span className="font-medium ml-2">Save {months[monthIndex]} → Dec:</span> Apply to {months[monthIndex]} and all months after
+            </div>
+          )}
         </div>
       </div>
     </div>

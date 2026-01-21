@@ -275,6 +275,8 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
       [key]: {
         monthlyValues: data.monthlyValues,
         annualTotal: data.annualTotal,
+        // Store item-level overrides if provided
+        itemOverrides: data.itemOverrides || prev[key]?.itemOverrides || {},
       }
     }));
 
@@ -842,6 +844,7 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
         allYearsData={expenseData}
         onSave={handleExpenseSave}
         parameters={parameters}
+        expenseOverrides={expenseOverrides}
       />
     </div>
   );

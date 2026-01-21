@@ -483,6 +483,7 @@ const MonthDetailModal = ({
   yearIndex,
   calendarYear,
   onSave,
+  savedItems,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedItems, setEditedItems] = useState([]);
@@ -493,10 +494,15 @@ const MonthDetailModal = ({
   const breakdown = EXPENSE_BREAKDOWNS[expenseId];
 
   const items = useMemo(() => {
+    // Use saved items if available (persisted overrides)
+    if (savedItems && savedItems.length > 0) {
+      return savedItems;
+    }
+    // Otherwise calculate from defaults
     if (!breakdown) return [];
     const result = breakdown.getItems(monthValue, yearIndex, monthIndex);
     return result;
-  }, [breakdown, monthValue, yearIndex, monthIndex]);
+  }, [breakdown, monthValue, yearIndex, monthIndex, savedItems]);
 
   // Initialize editedItems when entering edit mode
   const handleStartEdit = () => {

@@ -20,7 +20,8 @@ const ExpenseDetailModal = ({
   yearData,
   allYearsData,
   onSave,
-  parameters
+  parameters,
+  expenseOverrides = {}
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedYear, setSelectedYear] = useState(yearData?.yearIndex ?? 1);
@@ -214,26 +215,33 @@ const ExpenseDetailModal = ({
 
   const handleMonthDetailSave = (data) => {
     const newValues = [...monthlyValues];
+    const overrideKey = `${expense.id}_${selectedYear}`;
+    const currentOverrides = expenseOverrides[overrideKey]?.itemOverrides || {};
+    const newItemOverrides = { ...currentOverrides };
 
     if (data.applyToRestOfYear) {
       // Apply the new total from this month through December
       for (let i = data.monthIndex; i < 12; i++) {
         newValues[i] = data.newTotal;
+        // Store item overrides for each month
+        newItemOverrides[i] = data.items;
       }
     } else {
       // Only update this specific month
       newValues[data.monthIndex] = data.newTotal;
+      newItemOverrides[data.monthIndex] = data.items;
     }
 
     setMonthlyValues(newValues);
 
-    // Auto-save to parent so changes persist immediately
+    // Auto-save to parent so changes persist immediately (including item overrides)
     if (onSave) {
       onSave({
         expenseId: expense.id,
         yearIndex: selectedYear,
         monthlyValues: newValues,
         annualTotal: newValues.reduce((a, b) => a + b, 0),
+        itemOverrides: newItemOverrides,
       });
     }
 
@@ -457,6 +465,7 @@ const ExpenseDetailModal = ({
         yearIndex={selectedYear}
         calendarYear={calendarYear}
         onSave={handleMonthDetailSave}
+        savedItems={expenseOverrides[`${expense?.id}_${selectedYear}`]?.itemOverrides?.[selectedMonthIndex]}
       />
     </div>
   );

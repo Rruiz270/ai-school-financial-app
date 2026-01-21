@@ -1,5 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Edit2, Save, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Helper function to get expense value from nested path - defined outside component
+const getExpenseValueFromPath = (exp, data) => {
+  if (!exp || !data) return 0;
+  const path = exp.field.split('.');
+  let value = data;
+  for (const key of path) {
+    value = value?.[key];
+  }
+  return value || 0;
+};
 
 const ExpenseDetailModal = ({
   isOpen,
@@ -11,11 +22,18 @@ const ExpenseDetailModal = ({
   parameters
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(yearData?.yearIndex || 1);
+  const [selectedYear, setSelectedYear] = useState(yearData?.yearIndex ?? 1);
   const [monthlyValues, setMonthlyValues] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Update selectedYear when yearData changes
+  useEffect(() => {
+    if (yearData?.yearIndex !== undefined) {
+      setSelectedYear(yearData.yearIndex);
+    }
+  }, [yearData]);
 
   // Get the current year's data
   const currentYearData = useMemo(() => {
@@ -26,7 +44,7 @@ const ExpenseDetailModal = ({
   const calculateMonthlyValues = useMemo(() => {
     if (!expense || !currentYearData) return Array(12).fill(0);
 
-    const annualValue = getExpenseValue(expense, currentYearData);
+    const annualValue = getExpenseValueFromPath(expense, currentYearData);
     const yearIndex = currentYearData.yearIndex;
     const calendarYear = 2026 + yearIndex;
 
@@ -138,16 +156,6 @@ const ExpenseDetailModal = ({
     setHasChanges(false);
     setIsEditing(false);
   }, [calculateMonthlyValues]);
-
-  const getExpenseValue = (exp, data) => {
-    if (!exp || !data) return 0;
-    const path = exp.field.split('.');
-    let value = data;
-    for (const key of path) {
-      value = value?.[key];
-    }
-    return value || 0;
-  };
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null || isNaN(value)) return 'R$ 0';
@@ -295,7 +303,7 @@ const ExpenseDetailModal = ({
             <div className="overflow-x-auto">
               <div className="flex space-x-2">
                 {allYearsData?.map((year) => {
-                  const value = getExpenseValue(expense, year);
+                  const value = getExpenseValueFromPath(expense, year);
                   const isSelected = year.yearIndex === selectedYear;
                   return (
                     <button

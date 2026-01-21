@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { X, Edit2, Save, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Edit2, Save, RotateCcw, ChevronLeft, ChevronRight, MousePointer } from 'lucide-react';
+import MonthDetailModal from './MonthDetailModal';
 
 // Helper function to get expense value from nested path - defined outside component
 const getExpenseValueFromPath = (exp, data) => {
@@ -25,6 +26,10 @@ const ExpenseDetailModal = ({
   const [selectedYear, setSelectedYear] = useState(yearData?.yearIndex ?? 1);
   const [monthlyValues, setMonthlyValues] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Month detail modal state
+  const [isMonthModalOpen, setIsMonthModalOpen] = useState(false);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState(null);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -200,6 +205,13 @@ const ExpenseDetailModal = ({
     }
   };
 
+  const handleMonthClick = (monthIndex) => {
+    if (!isEditing && monthlyValues[monthIndex] > 0) {
+      setSelectedMonthIndex(monthIndex);
+      setIsMonthModalOpen(true);
+    }
+  };
+
   if (!isOpen || !expense) return null;
 
   const annualTotal = monthlyValues.reduce((a, b) => a + b, 0);
@@ -256,18 +268,34 @@ const ExpenseDetailModal = ({
 
         {/* Monthly Breakdown */}
         <div className="p-6 overflow-y-auto max-h-[50vh]">
+          {/* Click hint */}
+          {!isEditing && (
+            <div className="flex items-center space-x-2 text-sm text-blue-600 mb-4">
+              <MousePointer className="w-4 h-4" />
+              <span>Click any month to see detailed breakdown</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {months.map((month, index) => (
               <div
                 key={month}
+                onClick={() => handleMonthClick(index)}
                 className={`rounded-lg border-2 p-4 transition-all ${
                   isEditing
                     ? 'border-blue-300 bg-blue-50'
-                    : 'border-gray-200 bg-white'
+                    : monthlyValues[index] > 0
+                      ? 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 cursor-pointer group'
+                      : 'border-gray-100 bg-gray-50'
                 }`}
               >
-                <div className="text-sm font-medium text-gray-600 mb-2">
-                  {month} {calendarYear}
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm font-medium text-gray-600">
+                    {month} {calendarYear}
+                  </div>
+                  {!isEditing && monthlyValues[index] > 0 && (
+                    <MousePointer className="w-3 h-3 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
                 </div>
                 {isEditing ? (
                   <input
@@ -277,7 +305,7 @@ const ExpenseDetailModal = ({
                     className="w-full px-3 py-2 border border-blue-300 rounded-lg text-right font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="text-lg font-bold text-gray-800 text-right">
+                  <div className={`text-lg font-bold text-right ${monthlyValues[index] > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
                     {formatCurrency(monthlyValues[index])}
                   </div>
                 )}
@@ -383,6 +411,21 @@ const ExpenseDetailModal = ({
           </div>
         </div>
       </div>
+
+      {/* Month Detail Modal */}
+      <MonthDetailModal
+        isOpen={isMonthModalOpen}
+        onClose={() => {
+          setIsMonthModalOpen(false);
+          setSelectedMonthIndex(null);
+        }}
+        expenseId={expense?.id}
+        expenseLabel={expense?.label}
+        monthIndex={selectedMonthIndex}
+        monthValue={selectedMonthIndex !== null ? monthlyValues[selectedMonthIndex] : 0}
+        yearIndex={selectedYear}
+        calendarYear={calendarYear}
+      />
     </div>
   );
 };

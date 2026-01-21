@@ -140,13 +140,13 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
     },
     qualityAssurance: {
       title: "Quality & Compliance",
-      formula: "Max(R$300K OR 1% revenue)",
+      formula: "Max(R$45K OR 0.15% revenue)",
       description: "Quality assurance, regulatory compliance, data privacy"
     },
     insurance: {
       title: "Insurance",
-      percentage: "0.5% of revenue",
-      description: "Business insurance, liability coverage (market rate)"
+      formula: "R$100K/year + inflation",
+      description: "Business insurance, liability coverage"
     },
     travel: {
       title: "Travel & Business",
@@ -1524,7 +1524,7 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
                           )}
                           {month.outflows.insurance > 0 && (
                             <div className="flex justify-between text-sm ml-2">
-                              <span className="text-gray-600">Insurance (0.5%)</span>
+                              <span className="text-gray-600">Insurance (R$100K/yr)</span>
                               <span className="text-red-600">{formatCurrency(month.outflows.insurance)}</span>
                             </div>
                           )}

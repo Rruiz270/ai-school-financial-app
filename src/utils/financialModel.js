@@ -461,7 +461,7 @@ export class FinancialModel {
     const inflationMultiplier = Math.pow(1.05, Math.max(0, year - 1)); // 5% annual inflation
 
     const baseStaffCorporate = Math.max(3000000, totalStudents * 80);
-    const baseStaffFlagship = flagshipStudents > 0 ? Math.max(2500000, flagshipStudents * 2200) : 0;
+    const baseStaffFlagship = flagshipStudents > 0 ? Math.max(5000000, flagshipStudents * 4400) : 0; // Doubled for realistic teacher salaries
     const baseStaffFranchiseSupport = franchiseCount * 300000;
 
     // Adoption support: 1 person (R$10K salary) per 20 schools
@@ -478,8 +478,8 @@ export class FinancialModel {
     // Educational & Operational costs
     // Teacher training: base cost without crazy multiplier
     const teacherTraining = Math.max(200000, (flagshipStudents + franchiseStudents) * 250) * inflationMultiplier;
-    const qualityAssurance = Math.max(300000, totalRevenue * 0.01);
-    const regulatoryCompliance = Math.max(400000, totalRevenue * 0.005);
+    const qualityAssurance = Math.max(45000, totalRevenue * 0.0015); // 15% of original (was 0.01)
+    const regulatoryCompliance = Math.max(60000, totalRevenue * 0.00075); // 15% of original (was 0.005)
     const dataManagement = Math.max(200000, totalStudents * 40);
     const parentEngagement = Math.max(150000, totalStudents * 60);
 
@@ -498,7 +498,7 @@ export class FinancialModel {
 
     // Other costs
     const legalCompliance = Math.max(500000, totalRevenue * 0.003);
-    const insurance = totalRevenue * 0.005; // 0.5% (market rate for education)
+    const insurance = 100000 * inflationMultiplier; // Fixed R$100K/year + inflation
     const travel = Math.max(300000, (franchiseCount + Math.floor(adoptionStudents / 5000)) * 50000);
     const workingCapital = totalRevenue * 0.01;
     const contingency = totalRevenue * 0.005;

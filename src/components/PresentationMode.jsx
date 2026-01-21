@@ -1407,7 +1407,7 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
                   <div className="border border-gray-200 p-4 rounded-lg">
                     <h3 className="font-bold text-primary-600 mb-2">7. OPERATIONAL EXPENSES</h3>
                     <div className="text-xs text-gray-600 space-y-1">
-                      <p><strong>Insurance:</strong> 0.5% of revenue</p>
+                      <p><strong>Insurance:</strong> R$100K/year + inflation</p>
                       <p><strong>Travel & Business:</strong> Max(R$300K OR R$50K x locations)</p>
                       <p><strong>Working Capital:</strong> 1% of revenue</p>
                       <p><strong>Contingency:</strong> 0.5% of revenue</p>

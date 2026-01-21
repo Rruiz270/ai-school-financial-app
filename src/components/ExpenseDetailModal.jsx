@@ -233,16 +233,22 @@ const ExpenseDetailModal = ({
     const currentOverrides = expenseOverrides[overrideKey]?.itemOverrides || {};
     const newItemOverrides = { ...currentOverrides };
 
+    // Use delta to apply change to the scaled monthly value
+    // This preserves the Year 0 ramp-up scaling while allowing edits
+    const delta = data.delta || 0;
+
     if (data.applyToRestOfYear) {
-      // Apply the new total from this month through December
+      // Apply the delta from this month through December
       for (let i = data.monthIndex; i < 12; i++) {
-        newValues[i] = data.newTotal;
+        // Add delta to current value (preserves scaling)
+        newValues[i] = Math.max(0, monthlyValues[i] + delta);
         // Store item overrides for each month
         newItemOverrides[i] = data.items;
       }
     } else {
       // Only update this specific month
-      newValues[data.monthIndex] = data.newTotal;
+      // Add delta to current value (preserves scaling)
+      newValues[data.monthIndex] = Math.max(0, monthlyValues[data.monthIndex] + delta);
       newItemOverrides[data.monthIndex] = data.items;
     }
 

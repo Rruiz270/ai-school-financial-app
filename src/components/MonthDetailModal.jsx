@@ -516,16 +516,25 @@ const MonthDetailModal = ({
     setIsEditing(false);
   };
 
+  // Calculate the delta between original and edited items
+  const calculateDelta = () => {
+    const originalTotal = items.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+    const editedTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+    return editedTotal - originalTotal;
+  };
+
   // Handle save for this month only
   const handleSaveThisMonth = () => {
-    const newTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+    const delta = calculateDelta();
+    const editedTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
     if (onSave) {
       onSave({
         expenseId,
         monthIndex,
         yearIndex,
         items: editedItems,
-        newTotal,
+        newTotal: editedTotal,
+        delta, // Pass the change amount so parent can apply to scaled value
         applyToRestOfYear: false,
       });
     }
@@ -534,14 +543,16 @@ const MonthDetailModal = ({
 
   // Handle save for rest of year (from this month onwards)
   const handleSaveRestOfYear = () => {
-    const newTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+    const delta = calculateDelta();
+    const editedTotal = editedItems.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
     if (onSave) {
       onSave({
         expenseId,
         monthIndex,
         yearIndex,
         items: editedItems,
-        newTotal,
+        newTotal: editedTotal,
+        delta, // Pass the change amount so parent can apply to scaled value
         applyToRestOfYear: true,
       });
     }

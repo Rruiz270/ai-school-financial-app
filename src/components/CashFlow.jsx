@@ -840,9 +840,9 @@ const CashFlow = ({ financialData, parameters, currentScenario, publicModelData,
           </div>
           <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
             <div className="text-sm font-semibold text-red-700">Bridge Repayment</div>
-            <div className="text-lg font-bold text-red-900">{formatCurrency(INVESTMENT_PHASES.phase2.bridgeRepayment.amount)}</div>
-            <div className="text-xs text-red-600 mt-1">August 2027</div>
-            <div className="text-xs text-red-500">When Desenvolve SP disburses</div>
+            <div className="text-lg font-bold text-red-900">{formatCurrency(INVESTMENT_PHASES.phase1.semester2.bridgeRepayment.amount)}</div>
+            <div className="text-xs text-red-600 mt-1">October 2026</div>
+            <div className="text-xs text-red-500">R$10M + R$1.8M interest (9 months)</div>
           </div>
         </div>
 

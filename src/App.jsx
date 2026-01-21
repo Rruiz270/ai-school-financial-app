@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge, RotateCcw, Wallet } from 'lucide-react';
+import { BarChart3, Settings, Presentation, Calculator, TrendingUp, Users, Calendar, School, Building2, GitMerge, RotateCcw, Wallet, FileSpreadsheet } from 'lucide-react';
 import { FinancialModel, DEFAULT_PARAMETERS, SCENARIO_PRESETS, INVESTMENT_PHASES } from './utils/financialModel';
 import Dashboard from './components/Dashboard';
 import ParameterControl from './components/ParameterControl';
@@ -9,6 +9,7 @@ import PublicPartnerships from './components/PublicPartnerships';
 import ConsolidatedView from './components/ConsolidatedView';
 import CashFlow from './components/CashFlow';
 import UnitEconomics from './components/UnitEconomics';
+import AllExpenses from './components/AllExpenses';
 import IntegratedDashboard from './components/IntegratedDashboard';
 import SimpleIntegrated from './components/SimpleIntegrated';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -807,12 +808,24 @@ function App() {
       name: 'Cash Flow',
       icon: <Wallet className="w-5 h-5" />,
       component: (
-        <CashFlow 
+        <CashFlow
           financialData={financialData}
           parameters={parameters}
           currentScenario={currentScenario}
           publicModelData={publicModelData}
           currentPublicScenario={currentPublicScenario}
+        />
+      )
+    },
+    {
+      id: 'expenses',
+      name: 'All Expenses',
+      icon: <FileSpreadsheet className="w-5 h-5" />,
+      component: (
+        <AllExpenses
+          financialData={financialData}
+          parameters={parameters}
+          currentScenario={currentScenario}
         />
       )
     },
@@ -999,7 +1012,7 @@ function App() {
         )}
         
         {activeTab === 'cashflow' && (
-          <CashFlow 
+          <CashFlow
             financialData={financialData}
             parameters={parameters}
             currentScenario={currentScenario}
@@ -1007,7 +1020,15 @@ function App() {
             currentPublicScenario={currentPublicScenario}
           />
         )}
-        
+
+        {activeTab === 'expenses' && (
+          <AllExpenses
+            financialData={financialData}
+            parameters={parameters}
+            currentScenario={currentScenario}
+          />
+        )}
+
         {activeTab === 'uniteconomics' && (
           <UnitEconomics 
             financialData={financialData}

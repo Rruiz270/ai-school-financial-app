@@ -1,8 +1,11 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { DollarSign, Users, Building, BookOpen, Briefcase, Settings, TrendingDown, ChevronDown, ChevronRight, MousePointer } from 'lucide-react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { DollarSign, Users, Building, BookOpen, Briefcase, Settings, TrendingDown, ChevronDown, ChevronRight, MousePointer, RotateCcw, Save } from 'lucide-react';
 import { CAPEX_SCENARIOS } from '../utils/financialModel';
 import ExpenseDetailModal from './ExpenseDetailModal';
 import { getStaffBreakdownTotal } from './MonthDetailModal';
+
+// localStorage key for saving expense overrides
+const STORAGE_KEY = 'ai-school-expense-overrides';
 
 // Define all expense items with their metadata
 const EXPENSE_DEFINITIONS = {
@@ -237,8 +240,39 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [selectedYearData, setSelectedYearData] = useState(null);
 
-  // Store expense overrides locally
-  const [expenseOverrides, setExpenseOverrides] = useState({});
+  // Store expense overrides - load from localStorage on mount
+  const [expenseOverrides, setExpenseOverrides] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Error loading saved overrides:', e);
+    }
+    return {};
+  });
+
+  // Save to localStorage whenever overrides change
+  useEffect(() => {
+    try {
+      if (Object.keys(expenseOverrides).length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(expenseOverrides));
+        console.log('Saved overrides to localStorage');
+      }
+    } catch (e) {
+      console.error('Error saving overrides:', e);
+    }
+  }, [expenseOverrides]);
+
+  // Reset all overrides to defaults
+  const handleResetAll = useCallback(() => {
+    if (window.confirm('Reset all expense values to defaults? This cannot be undone.')) {
+      setExpenseOverrides({});
+      localStorage.removeItem(STORAGE_KEY);
+      console.log('Reset all overrides');
+    }
+  }, []);
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null || isNaN(value)) return 'R$ 0';
@@ -660,9 +694,19 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
               CAPEX: <span className="font-medium">{CAPEX_SCENARIOS[parameters?.capexScenario]?.name || 'Private Historic'}</span>
             </p>
             {Object.keys(expenseOverrides).length > 0 && (
-              <p className="text-sm text-amber-600 mt-2">
-                {Object.keys(expenseOverrides).length} expense(s) have been modified
-              </p>
+              <div className="flex items-center space-x-3 mt-2">
+                <p className="text-sm text-amber-600">
+                  <Save className="w-4 h-4 inline mr-1" />
+                  {Object.keys(expenseOverrides).length} expense(s) modified (auto-saved)
+                </p>
+                <button
+                  onClick={handleResetAll}
+                  className="flex items-center space-x-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset All</span>
+                </button>
+              </div>
             )}
           </div>
           <div className="text-right">

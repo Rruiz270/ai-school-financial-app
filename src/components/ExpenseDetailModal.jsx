@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Edit2, Save, RotateCcw, ChevronLeft, ChevronRight, MousePointer } from 'lucide-react';
-import MonthDetailModal from './MonthDetailModal';
+import MonthDetailModal, { getStaffBreakdownTotal } from './MonthDetailModal';
 
 // Helper function to get expense value from nested path - defined outside component
 const getExpenseValueFromPath = (exp, data) => {
@@ -56,39 +56,29 @@ const ExpenseDetailModal = ({
 
     // Different distribution patterns based on expense type
     switch (expense.id) {
-      // Staff expenses - use formula value from grid (even distribution)
-      // The MonthDetailModal will show individual roles + overhead to match this total
+      // Staff expenses - use actual item totals (no scaling)
       case 'staff.corporate':
       case 'staff.flagship':
       case 'staff.franchiseSupport':
       case 'staff.adoptionSupport':
-        // Use even distribution based on annual formula value
-        // This ensures popup matches the grid (Min/Max formula)
-        return Array(12).fill(annualValue / 12);
-
-      // Technology - special handling for Y0 Bridge loan period
-      case 'operational.technology':
-        if (yearIndex === 0) {
-          // Y0: R$2M from Bridge loan spent Feb-Jul (months 1-6)
-          const techMonthly = 2000000 / 6; // ~R$333K/month
-          return months.map((_, i) => (i >= 1 && i <= 6) ? techMonthly : 0);
+        // Get actual sum of staff items for each month
+        const staffTotal = getStaffBreakdownTotal(expense.id, yearIndex, 0);
+        if (staffTotal !== null) {
+          // Use the actual item totals - same value for all 12 months
+          return Array(12).fill(staffTotal);
         }
-        if (yearIndex === 1) {
-          // Y1: Revenue ramps up through the year
-          const weights = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2];
-          const totalWeight = weights.reduce((a, b) => a + b, 0);
-          return weights.map(w => (annualValue * w) / totalWeight);
-        }
+        // Fallback to even distribution if breakdown not available
         return Array(12).fill(annualValue / 12);
 
       // Revenue-based costs - follow revenue pattern
+      case 'operational.technology':
       case 'operational.marketing':
       case 'business.badDebt':
       case 'business.paymentProcessing':
       case 'business.platformRD':
       case 'educational.contentDevelopment':
         if (yearIndex === 0) {
-          // Y0: No revenue, minimal costs in latter half of year
+          // Y0: No revenue, minimal costs
           return months.map((_, i) => i >= 8 ? (annualValue / 5) : 0);
         }
         if (yearIndex === 1) {

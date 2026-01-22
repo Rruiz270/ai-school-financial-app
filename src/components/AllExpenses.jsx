@@ -40,7 +40,7 @@ const EXPENSE_DEFINITIONS = {
     id: 'operational.technology',
     label: 'Technology (Platform & Infrastructure)',
     field: 'operational.technology',
-    formula: 'Revenue × 4%',
+    formula: 'Y0: Innovation loan, Y1+: Revenue × 4%',
     section: 'operational',
   },
   'operational.marketing': {
@@ -98,7 +98,7 @@ const EXPENSE_DEFINITIONS = {
     id: 'educational.contentDevelopment',
     label: 'Content Development',
     field: 'educational.contentDevelopment',
-    formula: 'Revenue × 4%',
+    formula: 'Y0: R$1.5M (10% Innovation loan), Y1+: Yearly budget',
     section: 'educational',
   },
 
@@ -121,7 +121,7 @@ const EXPENSE_DEFINITIONS = {
     id: 'business.platformRD',
     label: 'Platform R&D',
     field: 'business.platformRD',
-    formula: 'Revenue × 6%',
+    formula: 'Y0: Innovation loan, Y1+: Revenue × 6%',
     section: 'business',
   },
 
@@ -197,14 +197,14 @@ const EXPENSE_DEFINITIONS = {
     id: 'debtService.dspInterest',
     label: 'Desenvolve SP Interest',
     field: 'debtService.dspInterest',
-    formula: 'R$30M × 12%/year (36-mo grace, then declining)',
+    formula: 'R$30M × 8.4%/year (0.7%/mo, 36-mo grace)',
     section: 'debtService',
   },
   'debtService.innovationInterest': {
     id: 'debtService.innovationInterest',
     label: 'Innovation Loan Interest',
     field: 'debtService.innovationInterest',
-    formula: 'R$15M × 12%/year (36-mo grace, then declining)',
+    formula: 'R$15M × 8.4%/year (0.7%/mo, 36-mo grace)',
     section: 'debtService',
   },
   'debtService.principal': {
@@ -319,8 +319,9 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
         }
 
         if (yearIndex >= 1) {
-          debtService.dspInterest = 30000000 * 0.12;
-          debtService.innovationInterest = 15000000 * 0.12;
+          // 0.7% monthly = 8.4% annual
+          debtService.dspInterest = 30000000 * 0.084;
+          debtService.innovationInterest = 15000000 * 0.084;
         }
 
         const graceEndYear = 4;
@@ -328,8 +329,9 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
           debtService.principal = 9000000;
           const yearsSinceGraceEnd = yearIndex - graceEndYear;
           const remainingPrincipal = 45000000 - (yearsSinceGraceEnd * 9000000);
-          debtService.dspInterest = (remainingPrincipal * 0.12) * (30/45);
-          debtService.innovationInterest = (remainingPrincipal * 0.12) * (15/45);
+          // 0.7% monthly = 8.4% annual
+          debtService.dspInterest = (remainingPrincipal * 0.084) * (30/45);
+          debtService.innovationInterest = (remainingPrincipal * 0.084) * (15/45);
         }
 
         debtService.totalDebtService = debtService.bridgeInterest + debtService.bridgeRepayment +

@@ -454,7 +454,10 @@ export class FinancialModel {
                         franchiseFeeRevenue + adoptionRevenue + kitRevenue;
 
     // Cost calculations
-    const technologyOpex = totalRevenue * this.params.technologyOpexRate;
+    // Technology costs: Y0 funded by Innovation loan (R$15M), Y1+ from revenue
+    const technologyOpex = year === 0
+      ? 0 // Y0: Funded by Innovation loan, not from operations
+      : totalRevenue * this.params.technologyOpexRate;
     const marketingCosts = totalRevenue * this.params.marketingRate;
 
     // Staff costs with SENSIBLE annual increases (5% inflation only, not compound)
@@ -486,9 +489,18 @@ export class FinancialModel {
     // Business costs
     const badDebt = totalRevenue * 0.02; // 2%
     const paymentProcessing = totalRevenue * 0.025; // 2.5%
-    const platformRD = totalRevenue * 0.06; // 6% for platform R&D
-    // Content development: 4% of revenue (removed separate curriculum line)
-    const contentDevelopment = totalRevenue * 0.04;
+
+    // Platform R&D: Y0 funded by Innovation loan, Y1+ from 6% of revenue
+    const platformRD = year === 0
+      ? 0 // Y0: Funded by Innovation loan
+      : totalRevenue * 0.06;
+
+    // Content Development:
+    // Y0: 10% of R$15M Innovation loan = R$1.5M (funded by loan)
+    // Y1+: Budget defined yearly, not a fixed % (set to 0, user can override)
+    const contentDevelopment = year === 0
+      ? 0 // Y0: Funded by Innovation loan (shown separately)
+      : 0; // Y1+: Defined yearly via budgeting, not automatic %
 
     // Facility costs with 5% annual inflation
     const capexScenario = CAPEX_SCENARIOS[this.params.capexScenario];
@@ -578,18 +590,18 @@ export class FinancialModel {
           desenvolveSP: 10000000, // Remaining R$10M from Desenvolve SP
           prefeituraSubsidy: 1250000, // R$1.25M
         };
-        // Quarterly interest on DSP R$30M + Innovation R$15M = R$45M × 12% / 4 = R$1.35M/quarter
+        // Quarterly interest on DSP R$30M + Innovation R$15M = R$45M × 8.4% / 4 (0.7% monthly)
         debtService = {
-          dspInterest: 30000000 * 0.12, // R$3.6M/year
-          innovationInterest: 15000000 * 0.12, // R$1.8M/year
+          dspInterest: 30000000 * 0.084, // R$2.52M/year (0.7% monthly = 8.4% annual)
+          innovationInterest: 15000000 * 0.084, // R$1.26M/year
         };
         architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
       } else if (year === 2) {
         architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
-        // Interest only (still in grace period)
+        // Interest only (still in grace period) - 0.7% monthly = 8.4% annual
         debtService = {
-          dspInterest: 30000000 * 0.12,
-          innovationInterest: 15000000 * 0.12,
+          dspInterest: 30000000 * 0.084,
+          innovationInterest: 15000000 * 0.084,
         };
       } else if (year >= 3) {
         // Grace period ends Aug 2029 (36 months from Aug 2026)
@@ -602,14 +614,14 @@ export class FinancialModel {
           if (remainingPrincipal > 0) {
             debtService = {
               principal: 9000000, // R$9M/year
-              interest: remainingPrincipal * 0.12, // Interest on remaining
+              interest: remainingPrincipal * 0.084, // 0.7% monthly = 8.4% annual
             };
           }
         } else {
-          // Still in grace - interest only
+          // Still in grace - interest only (0.7% monthly = 8.4% annual)
           debtService = {
-            dspInterest: 30000000 * 0.12,
-            innovationInterest: 15000000 * 0.12,
+            dspInterest: 30000000 * 0.084,
+            innovationInterest: 15000000 * 0.084,
           };
         }
       }

@@ -449,7 +449,7 @@ const EXPENSE_BREAKDOWNS = {
     color: 'yellow',
     title: 'Desenvolve SP Interest',
     getItems: (monthValue, yearIndex) => [
-      { item: 'Quarterly Interest Payment', category: 'Interest', percentage: 100, amount: monthValue, note: 'R$30M × 12%/year = R$3.6M/year (R$900K/quarter)' },
+      { item: 'Quarterly Interest Payment', category: 'Interest', percentage: 100, amount: monthValue, note: 'R$30M × 8.4%/year = R$2.52M/year (0.7%/month)' },
     ],
   },
 
@@ -458,7 +458,7 @@ const EXPENSE_BREAKDOWNS = {
     color: 'yellow',
     title: 'Innovation Loan Interest',
     getItems: (monthValue, yearIndex) => [
-      { item: 'Quarterly Interest Payment', category: 'Interest', percentage: 100, amount: monthValue, note: 'R$15M × 12%/year = R$1.8M/year (R$450K/quarter)' },
+      { item: 'Quarterly Interest Payment', category: 'Interest', percentage: 100, amount: monthValue, note: 'R$15M × 8.4%/year = R$1.26M/year (0.7%/month)' },
     ],
   },
 

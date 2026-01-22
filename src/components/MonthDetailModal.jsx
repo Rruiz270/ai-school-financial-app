@@ -473,6 +473,24 @@ const EXPENSE_BREAKDOWNS = {
   },
 };
 
+// Helper function to get staff breakdown total for a given expense
+// This is exported so ExpenseDetailModal can use it for consistent calculations
+export const getStaffBreakdownTotal = (expenseId, yearIndex, monthIndex = 0) => {
+  const breakdown = EXPENSE_BREAKDOWNS[expenseId];
+  if (!breakdown) return null;
+
+  // Only calculate for staff breakdowns
+  if (!expenseId.startsWith('staff.')) return null;
+
+  const items = breakdown.getItems(0, yearIndex, monthIndex);
+  if (!items || items.length === 0) return null;
+
+  return items.reduce((sum, item) => sum + (item.total || item.amount || 0), 0);
+};
+
+// Export EXPENSE_BREAKDOWNS for use in other components
+export { EXPENSE_BREAKDOWNS };
+
 const MonthDetailModal = ({
   isOpen,
   onClose,

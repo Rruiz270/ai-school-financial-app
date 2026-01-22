@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Edit2, Save, RotateCcw, ChevronLeft, ChevronRight, MousePointer } from 'lucide-react';
-import MonthDetailModal from './MonthDetailModal';
+import MonthDetailModal, { getStaffBreakdownTotal } from './MonthDetailModal';
 
 // Helper function to get expense value from nested path - defined outside component
 const getExpenseValueFromPath = (exp, data) => {
@@ -56,20 +56,18 @@ const ExpenseDetailModal = ({
 
     // Different distribution patterns based on expense type
     switch (expense.id) {
-      // Expenses that ramp up during the year
+      // Staff expenses - use actual item totals (no scaling)
       case 'staff.corporate':
       case 'staff.flagship':
       case 'staff.franchiseSupport':
       case 'staff.adoptionSupport':
-        // Staff costs: flat monthly after hiring ramp in Y0/Y1
-        if (yearIndex === 0) {
-          // Y0: Ramp up - 50% in S1, 100% in S2
-          return months.map((_, i) => {
-            if (i < 4) return (annualValue / 12) * 0.5;
-            if (i < 8) return (annualValue / 12) * 0.75;
-            return (annualValue / 12);
-          });
+        // Get actual sum of staff items for each month
+        const staffTotal = getStaffBreakdownTotal(expense.id, yearIndex, 0);
+        if (staffTotal !== null) {
+          // Use the actual item totals - same value for all 12 months
+          return Array(12).fill(staffTotal);
         }
+        // Fallback to even distribution if breakdown not available
         return Array(12).fill(annualValue / 12);
 
       // Revenue-based costs - follow revenue pattern
@@ -233,22 +231,15 @@ const ExpenseDetailModal = ({
     const currentOverrides = expenseOverrides[overrideKey]?.itemOverrides || {};
     const newItemOverrides = { ...currentOverrides };
 
-    // Use delta to apply change to the scaled monthly value
-    // This preserves the Year 0 ramp-up scaling while allowing edits
-    const delta = data.delta || 0;
-
     if (data.applyToRestOfYear) {
-      // Apply the delta from this month through December
+      // Apply the new total from this month through December
       for (let i = data.monthIndex; i < 12; i++) {
-        // Add delta to current value (preserves scaling)
-        newValues[i] = Math.max(0, monthlyValues[i] + delta);
-        // Store item overrides for each month
+        newValues[i] = data.newTotal;
         newItemOverrides[i] = data.items;
       }
     } else {
       // Only update this specific month
-      // Add delta to current value (preserves scaling)
-      newValues[data.monthIndex] = Math.max(0, monthlyValues[data.monthIndex] + delta);
+      newValues[data.monthIndex] = data.newTotal;
       newItemOverrides[data.monthIndex] = data.items;
     }
 

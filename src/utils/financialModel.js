@@ -118,29 +118,31 @@ export const INVESTMENT_PHASES = {
   phase1: {
     name: 'Phase 1 - 2026 (Pre-Launch)',
     semester1: {
-      total: 10000000, // R$10M
+      // Jan-Jul 2026: Bridge loan funds everything
+      total: 10000000, // R$10M Bridge loan
       sources: {
         bridgeInvestment: 10000000, // R$10M from bridge private investment
       },
       allocation: {
-        architectUpfront: 100000, // R$100K architect upfront
-        technologyPlatform: 5000000, // R$5M tech development
-        peoplePreLaunch: 3400000, // R$3.4M salaries and operations
-        contentDevelopment: 500000, // R$500K content (R$100K/mo for 5 months S2)
+        // Bridge loan split: 20% tech, 80% CAPEX/architect
+        technology: 2000000, // R$2M (20% of bridge) - Feb-Jul ~R$333k/month
+        capexAndArchitect: 8000000, // R$8M (80% of bridge) for CAPEX/architect
       },
       months: [1, 2, 3, 4, 5, 6, 7] // Jan-Jul
     },
     semester2: {
-      total: 15000000, // R$15M
+      // Aug-Dec 2026: Innovation + Desenvolve SP arrive
+      total: 45000000, // R$15M Innovation + R$30M Desenvolve SP (R$20M in 2026)
       sources: {
-        desenvolveSP: 20000000, // R$20M from Desenvolve SP
-        innovationLoan: 15000000, // R$15M Innovation loan
+        desenvolveSP: 20000000, // R$20M from Desenvolve SP (for CAPEX)
+        innovationLoan: 15000000, // R$15M Innovation loan (for Tech/Platform/Content)
         prefeituraSubsidy: 5000000, // Part of 25% subsidy (R$5M in 2026)
       },
       allocation: {
-        capexConstruction: 10000000, // R$10M CAPEX
-        peopleHiring: 3000000, // R$3M people hiring
-        technology: 2000000, // R$2M additional tech
+        // Innovation loan R$15M: Tech, Platform R&D, Content
+        technologyPlatformContent: 15000000, // R$15M from Innovation
+        // Desenvolve SP R$20M: CAPEX only
+        capexConstruction: 20000000, // R$20M CAPEX from Desenvolve SP
       },
       months: [8, 9, 10, 11, 12], // Aug-Dec
       bridgeRepayment: {
@@ -177,17 +179,17 @@ export const INVESTMENT_PHASES = {
       repaymentMonth: 10, // October 2026
     },
     desenvolveSP: {
-      total: 30000000, // R$30M total
+      total: 30000000, // R$30M total (for CAPEX only)
       year2026: 20000000, // R$20M in Aug 2026
       year2027: 10000000, // R$10M in Jan 2027
-      interestRate: 0.12, // 12% per year
+      interestRate: 0.084, // 8.4% per year (0.7% per month)
       gracePeriodMonths: 36, // 3 years grace
       repaymentYears: 5, // 5 year amortization after grace
     },
     innovation: {
-      amount: 15000000, // R$15M
+      amount: 15000000, // R$15M (for Tech/Platform/Content - NOT CAPEX)
       disbursementMonth: 8, // August 2026 with Desenvolve SP
-      interestRate: 0.12, // Same terms as Desenvolve SP
+      interestRate: 0.084, // 8.4% per year (0.7% per month)
       gracePeriodMonths: 36,
       repaymentYears: 5,
     },
@@ -454,9 +456,11 @@ export class FinancialModel {
                         franchiseFeeRevenue + adoptionRevenue + kitRevenue;
 
     // Cost calculations
-    // Technology costs: Y0 funded by Innovation loan (R$15M), Y1+ from revenue
+    // Technology costs:
+    // Y0 (2026): Feb-Jul from Bridge (R$2M = 20% of R$10M), Aug-Dec from Innovation loan
+    // Y1+ (2027+): 4% of revenue
     const technologyOpex = year === 0
-      ? 0 // Y0: Funded by Innovation loan, not from operations
+      ? 2000000 // Y0: R$2M from Bridge loan (Feb-Jul ~R$333k/month)
       : totalRevenue * this.params.technologyOpexRate;
     const marketingCosts = totalRevenue * this.params.marketingRate;
 
@@ -490,16 +494,16 @@ export class FinancialModel {
     const badDebt = totalRevenue * 0.02; // 2%
     const paymentProcessing = totalRevenue * 0.025; // 2.5%
 
-    // Platform R&D: Y0 funded by Innovation loan, Y1+ from 6% of revenue
+    // Platform R&D: Y0 Aug-Dec funded by Innovation loan, Y1+ from 6% of revenue
     const platformRD = year === 0
-      ? 0 // Y0: Funded by Innovation loan
+      ? 0 // Y0: Aug-Dec funded by Innovation loan (separate from operations)
       : totalRevenue * 0.06;
 
     // Content Development:
-    // Y0: 10% of R$15M Innovation loan = R$1.5M (funded by loan)
+    // Y0: 10% of R$15M Innovation loan = R$1.5M (Aug-Dec, funded by loan)
     // Y1+: Budget defined yearly, not a fixed % (set to 0, user can override)
     const contentDevelopment = year === 0
-      ? 0 // Y0: Funded by Innovation loan (shown separately)
+      ? 0 // Y0: Aug-Dec funded by Innovation loan (separate from operations)
       : 0; // Y1+: Defined yearly via budgeting, not automatic %
 
     // Facility costs with 5% annual inflation

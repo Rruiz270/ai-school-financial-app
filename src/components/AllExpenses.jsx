@@ -40,7 +40,7 @@ const EXPENSE_DEFINITIONS = {
     id: 'operational.technology',
     label: 'Technology (Platform & Infrastructure)',
     field: 'operational.technology',
-    formula: 'Y0: Innovation loan, Y1+: Revenue × 4%',
+    formula: 'Y0: R$2M from Bridge (Feb-Jul), Y1+: Revenue × 4%',
     section: 'operational',
   },
   'operational.marketing': {

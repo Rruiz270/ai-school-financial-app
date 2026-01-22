@@ -2,37 +2,42 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { DollarSign, Users, Building, BookOpen, Briefcase, Settings, TrendingDown, ChevronDown, ChevronRight, MousePointer } from 'lucide-react';
 import { CAPEX_SCENARIOS } from '../utils/financialModel';
 import ExpenseDetailModal from './ExpenseDetailModal';
+import { getStaffBreakdownTotal } from './MonthDetailModal';
 
 // Define all expense items with their metadata
 const EXPENSE_DEFINITIONS = {
-  // STAFF
+  // STAFF - Uses actual staff breakdown totals (click to see details)
   'staff.corporate': {
     id: 'staff.corporate',
     label: 'Corporate Staff',
     field: 'staff.corporate',
-    formula: 'Max(R$3M, students × R$80) × inflation',
+    formula: 'Sum of actual staff salaries × 12 months',
     section: 'staff',
+    useBreakdown: true, // Flag to use breakdown totals instead of formula
   },
   'staff.flagship': {
     id: 'staff.flagship',
     label: 'Flagship Staff (Teachers + Admin)',
     field: 'staff.flagship',
-    formula: 'Max(R$5M, flagshipStudents × R$4,400) × inflation',
+    formula: 'Sum of actual staff salaries × 12 months',
     section: 'staff',
+    useBreakdown: true,
   },
   'staff.franchiseSupport': {
     id: 'staff.franchiseSupport',
     label: 'Franchise Support Staff',
     field: 'staff.franchiseSupport',
-    formula: 'franchiseCount × R$300K × inflation',
+    formula: 'Sum of actual staff salaries × 12 months',
     section: 'staff',
+    useBreakdown: true,
   },
   'staff.adoptionSupport': {
     id: 'staff.adoptionSupport',
     label: 'Adoption Support Staff',
     field: 'staff.adoptionSupport',
-    formula: '(adoptionSchools ÷ 20) × R$10K/mo × 12 × inflation',
+    formula: 'Sum of actual staff salaries × 12 months',
     section: 'staff',
+    useBreakdown: true,
   },
 
   // OPERATIONAL
@@ -347,21 +352,34 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
         return originalValue;
       };
 
+      // Get actual staff breakdown totals (monthly × 12)
+      // This uses the real staff items defined in MonthDetailModal
+      const getStaffAnnualTotal = (expenseId) => {
+        const monthlyTotal = getStaffBreakdownTotal(expenseId, yearIndex, 0);
+        if (monthlyTotal !== null && monthlyTotal > 0) {
+          return monthlyTotal * 12; // Annual = monthly × 12
+        }
+        return 0;
+      };
+
+      // Staff values from actual breakdown (not formula)
+      const staffCorporate = applyOverride('staff.corporate', getStaffAnnualTotal('staff.corporate'));
+      const staffFlagship = applyOverride('staff.flagship', getStaffAnnualTotal('staff.flagship'));
+      const staffFranchiseSupport = applyOverride('staff.franchiseSupport', getStaffAnnualTotal('staff.franchiseSupport'));
+      const staffAdoptionSupport = applyOverride('staff.adoptionSupport', getStaffAnnualTotal('staff.adoptionSupport'));
+
       years.push({
         yearIndex,
         calendarYear,
         label: yearIndex === 0 ? 'Y0 (2026)' : `Y${yearIndex} (${calendarYear})`,
 
-        // STAFF EXPENSES
+        // STAFF EXPENSES - from actual breakdown totals
         staff: {
-          corporate: applyOverride('staff.corporate', costs.staffCorporate || 0),
-          flagship: applyOverride('staff.flagship', costs.staffFlagship || 0),
-          franchiseSupport: applyOverride('staff.franchiseSupport', costs.staffFranchiseSupport || 0),
-          adoptionSupport: applyOverride('staff.adoptionSupport', costs.staffAdoptionSupport || 0),
-          subtotal: applyOverride('staff.corporate', costs.staffCorporate || 0) +
-                   applyOverride('staff.flagship', costs.staffFlagship || 0) +
-                   applyOverride('staff.franchiseSupport', costs.staffFranchiseSupport || 0) +
-                   applyOverride('staff.adoptionSupport', costs.staffAdoptionSupport || 0),
+          corporate: staffCorporate,
+          flagship: staffFlagship,
+          franchiseSupport: staffFranchiseSupport,
+          adoptionSupport: staffAdoptionSupport,
+          subtotal: staffCorporate + staffFlagship + staffFranchiseSupport + staffAdoptionSupport,
         },
 
         // OPERATIONAL EXPENSES
@@ -432,13 +450,43 @@ const AllExpenses = ({ financialData, parameters, currentScenario, onExpenseOver
           totalDebtService: debtService.totalDebtService,
         },
 
-        // TOTALS
-        totalOperatingCosts: costs.total || 0,
-        totalCashOut: (costs.total || 0) + (yearData.capex || 0) + debtService.totalDebtService,
+        // TOTALS - Calculate using actual staff breakdown values
+        totalOperatingCosts: (() => {
+          const staffTotal = staffCorporate + staffFlagship + staffFranchiseSupport + staffAdoptionSupport;
+          const nonStaffCosts = (costs.technologyOpex || 0) + (costs.marketing || 0) + (costs.facilities || 0) +
+                         (costs.teacherTraining || 0) + (costs.qualityAssurance || 0) + (costs.regulatoryCompliance || 0) +
+                         (costs.dataManagement || 0) + (costs.parentEngagement || 0) + (costs.contentDevelopment || 0) +
+                         (costs.badDebt || 0) + (costs.paymentProcessing || 0) + (costs.platformRD || 0) +
+                         (costs.legal || 0) + (costs.insurance || 0) + (costs.travel || 0) +
+                         (costs.workingCapital || 0) + (costs.contingency || 0);
+          return staffTotal + nonStaffCosts;
+        })(),
+        totalCashOut: (() => {
+          const staffTotal = staffCorporate + staffFlagship + staffFranchiseSupport + staffAdoptionSupport;
+          const nonStaffCosts = (costs.technologyOpex || 0) + (costs.marketing || 0) + (costs.facilities || 0) +
+                         (costs.teacherTraining || 0) + (costs.qualityAssurance || 0) + (costs.regulatoryCompliance || 0) +
+                         (costs.dataManagement || 0) + (costs.parentEngagement || 0) + (costs.contentDevelopment || 0) +
+                         (costs.badDebt || 0) + (costs.paymentProcessing || 0) + (costs.platformRD || 0) +
+                         (costs.legal || 0) + (costs.insurance || 0) + (costs.travel || 0) +
+                         (costs.workingCapital || 0) + (costs.contingency || 0);
+          const totalOpCosts = staffTotal + nonStaffCosts;
+          return totalOpCosts + (yearData.capex || 0) + (costs.architectPayment || 0) + debtService.totalDebtService;
+        })(),
 
         // Revenue for reference
         revenue: yearData.revenue?.total || 0,
-        ebitda: yearData.ebitda || 0,
+        // Recalculate EBITDA with actual staff costs
+        ebitda: (() => {
+          const staffTotal = staffCorporate + staffFlagship + staffFranchiseSupport + staffAdoptionSupport;
+          const nonStaffCosts = (costs.technologyOpex || 0) + (costs.marketing || 0) + (costs.facilities || 0) +
+                         (costs.teacherTraining || 0) + (costs.qualityAssurance || 0) + (costs.regulatoryCompliance || 0) +
+                         (costs.dataManagement || 0) + (costs.parentEngagement || 0) + (costs.contentDevelopment || 0) +
+                         (costs.badDebt || 0) + (costs.paymentProcessing || 0) + (costs.platformRD || 0) +
+                         (costs.legal || 0) + (costs.insurance || 0) + (costs.travel || 0) +
+                         (costs.workingCapital || 0) + (costs.contingency || 0);
+          const totalOpCosts = staffTotal + nonStaffCosts;
+          return (yearData.revenue?.total || 0) - totalOpCosts;
+        })(),
         students: yearData.students?.total || 0,
       });
     }

@@ -4,71 +4,139 @@ import { X, Users, Building, Laptop, Megaphone, BookOpen, CreditCard, Shield, Pl
 // Detailed breakdown definitions for each expense type
 const EXPENSE_BREAKDOWNS = {
   // STAFF - CORPORATE
+  // Formula: Max(R$3M/year, students × R$80) × inflation
+  // Monthly minimum: R$3M / 12 = R$250K/month
   'staff.corporate': {
     icon: Users,
     color: 'blue',
     title: 'Corporate Staff Breakdown',
     getItems: (monthValue, yearIndex) => {
       const inflationMultiplier = Math.pow(1.05, Math.max(0, yearIndex - 1));
+      // Reduced salaries to fit within R$3M/year = R$250K/month budget
       const baseItems = [
-        { role: 'CEO', quantity: 1, monthlySalary: 80000, department: 'Executive', type: 'Leadership' },
-        { role: 'CFO', quantity: 1, monthlySalary: 65000, department: 'Executive', type: 'Leadership' },
-        { role: 'COO', quantity: 1, monthlySalary: 60000, department: 'Executive', type: 'Leadership' },
-        { role: 'CTO', quantity: 1, monthlySalary: 55000, department: 'Technology', type: 'Leadership' },
-        { role: 'CMO', quantity: 1, monthlySalary: 50000, department: 'Marketing', type: 'Leadership' },
-        { role: 'HR Director', quantity: 1, monthlySalary: 35000, department: 'Human Resources', type: 'Management' },
-        { role: 'Legal Counsel', quantity: 1, monthlySalary: 40000, department: 'Legal', type: 'Professional' },
-        { role: 'Finance Manager', quantity: 2, monthlySalary: 18000, department: 'Finance', type: 'Management' },
-        { role: 'HR Analyst', quantity: 2, monthlySalary: 8000, department: 'Human Resources', type: 'Analyst' },
-        { role: 'Administrative Assistant', quantity: 3, monthlySalary: 5000, department: 'Admin', type: 'Support' },
-        { role: 'IT Support', quantity: 2, monthlySalary: 7000, department: 'Technology', type: 'Support' },
-        { role: 'Receptionist', quantity: 1, monthlySalary: 3500, department: 'Admin', type: 'Support' },
+        { role: 'CEO', quantity: 1, monthlySalary: 45000, department: 'Executive', type: 'Leadership' },
+        { role: 'CFO', quantity: 1, monthlySalary: 35000, department: 'Executive', type: 'Leadership' },
+        { role: 'COO', quantity: 1, monthlySalary: 32000, department: 'Executive', type: 'Leadership' },
+        { role: 'CTO', quantity: 1, monthlySalary: 30000, department: 'Technology', type: 'Leadership' },
+        { role: 'CMO', quantity: 1, monthlySalary: 28000, department: 'Marketing', type: 'Leadership' },
+        { role: 'HR Director', quantity: 1, monthlySalary: 18000, department: 'Human Resources', type: 'Management' },
+        { role: 'Legal Counsel', quantity: 1, monthlySalary: 20000, department: 'Legal', type: 'Professional' },
+        { role: 'Finance Manager', quantity: 2, monthlySalary: 10000, department: 'Finance', type: 'Management' },
+        { role: 'HR Analyst', quantity: 1, monthlySalary: 6000, department: 'Human Resources', type: 'Analyst' },
+        { role: 'Administrative Assistant', quantity: 2, monthlySalary: 4000, department: 'Admin', type: 'Support' },
+        { role: 'IT Support', quantity: 1, monthlySalary: 6000, department: 'Technology', type: 'Support' },
+        { role: 'Receptionist', quantity: 1, monthlySalary: 3000, department: 'Admin', type: 'Support' },
       ];
-      return baseItems.map(item => ({
+      // Total: 45+35+32+30+28+18+20+20+6+8+6+3 = R$251K/month (close to R$250K formula)
+
+      const items = baseItems.map(item => ({
         ...item,
         monthlySalary: Math.round(item.monthlySalary * inflationMultiplier),
         total: Math.round(item.quantity * item.monthlySalary * inflationMultiplier),
       }));
+
+      // Calculate actual salaries total
+      const actualSalariesTotal = items.reduce((sum, item) => sum + item.total, 0);
+
+      // Adjust to match monthValue exactly
+      if (monthValue > 0 && Math.abs(monthValue - actualSalariesTotal) > 100) {
+        const adjustment = monthValue - actualSalariesTotal;
+        if (adjustment > 0) {
+          items.push({
+            role: 'Corporate Reserve & Benefits',
+            quantity: 1,
+            monthlySalary: adjustment,
+            department: 'Administration',
+            type: 'Reserve',
+            total: adjustment,
+            isOverhead: true,
+          });
+        } else {
+          // Scale down salaries proportionally
+          const scaleFactor = monthValue / actualSalariesTotal;
+          items.forEach(item => {
+            item.monthlySalary = Math.round(item.monthlySalary * scaleFactor);
+            item.total = Math.round(item.quantity * item.monthlySalary);
+          });
+        }
+      }
+
+      return items;
     },
   },
 
   // STAFF - FLAGSHIP (Teachers + Admin)
+  // Formula: Max(R$5M/year, flagshipStudents × R$4,400) × inflation
+  // Monthly minimum: R$5M / 12 = ~R$416.7K/month
   'staff.flagship': {
     icon: Users,
     color: 'blue',
     title: 'Flagship School Staff Breakdown',
     getItems: (monthValue, yearIndex) => {
       const inflationMultiplier = Math.pow(1.05, Math.max(0, yearIndex - 1));
-      const teacherCount = yearIndex <= 1 ? 30 : 50;
+      // Scaled staffing to fit within R$5M/year = ~R$417K/month budget
       const baseItems = [
-        { role: 'School Director', quantity: 1, monthlySalary: 45000, department: 'Administration', type: 'Leadership' },
-        { role: 'Academic Coordinator', quantity: 2, monthlySalary: 25000, department: 'Academic', type: 'Management' },
-        { role: 'AI/Tech Lead Teacher', quantity: 3, monthlySalary: 18000, department: 'Teaching - STEM', type: 'Teacher' },
-        { role: 'Math Teacher', quantity: Math.ceil(teacherCount * 0.15), monthlySalary: 12000, department: 'Teaching - STEM', type: 'Teacher' },
-        { role: 'Science Teacher', quantity: Math.ceil(teacherCount * 0.15), monthlySalary: 12000, department: 'Teaching - STEM', type: 'Teacher' },
-        { role: 'Portuguese Teacher', quantity: Math.ceil(teacherCount * 0.12), monthlySalary: 11000, department: 'Teaching - Languages', type: 'Teacher' },
-        { role: 'English Teacher', quantity: Math.ceil(teacherCount * 0.12), monthlySalary: 13000, department: 'Teaching - Languages', type: 'Teacher' },
-        { role: 'History/Geography Teacher', quantity: Math.ceil(teacherCount * 0.10), monthlySalary: 10000, department: 'Teaching - Humanities', type: 'Teacher' },
-        { role: 'Arts/Music Teacher', quantity: Math.ceil(teacherCount * 0.08), monthlySalary: 9000, department: 'Teaching - Arts', type: 'Teacher' },
-        { role: 'Physical Education Teacher', quantity: Math.ceil(teacherCount * 0.08), monthlySalary: 8500, department: 'Teaching - PE', type: 'Teacher' },
-        { role: 'Teaching Assistant', quantity: Math.ceil(teacherCount * 0.20), monthlySalary: 4000, department: 'Teaching Support', type: 'Support' },
-        { role: 'School Psychologist', quantity: 2, monthlySalary: 12000, department: 'Student Services', type: 'Professional' },
-        { role: 'Librarian', quantity: 1, monthlySalary: 6000, department: 'Academic Support', type: 'Support' },
-        { role: 'Lab Technician', quantity: 2, monthlySalary: 5500, department: 'STEM Support', type: 'Support' },
-        { role: 'Administrative Staff', quantity: 4, monthlySalary: 4500, department: 'Administration', type: 'Support' },
-        { role: 'Security', quantity: 3, monthlySalary: 3000, department: 'Operations', type: 'Support' },
-        { role: 'Cleaning Staff', quantity: 6, monthlySalary: 2500, department: 'Operations', type: 'Support' },
-        { role: 'Cafeteria Staff', quantity: 4, monthlySalary: 2800, department: 'Operations', type: 'Support' },
+        { role: 'School Director', quantity: 1, monthlySalary: 25000, department: 'Administration', type: 'Leadership' },
+        { role: 'Academic Coordinator', quantity: 2, monthlySalary: 15000, department: 'Academic', type: 'Management' },
+        { role: 'AI/Tech Lead Teacher', quantity: 2, monthlySalary: 12000, department: 'Teaching - STEM', type: 'Teacher' },
+        { role: 'Math Teacher', quantity: 4, monthlySalary: 8000, department: 'Teaching - STEM', type: 'Teacher' },
+        { role: 'Science Teacher', quantity: 4, monthlySalary: 8000, department: 'Teaching - STEM', type: 'Teacher' },
+        { role: 'Portuguese Teacher', quantity: 3, monthlySalary: 7500, department: 'Teaching - Languages', type: 'Teacher' },
+        { role: 'English Teacher', quantity: 3, monthlySalary: 8500, department: 'Teaching - Languages', type: 'Teacher' },
+        { role: 'History/Geography Teacher', quantity: 2, monthlySalary: 7000, department: 'Teaching - Humanities', type: 'Teacher' },
+        { role: 'Arts/Music Teacher', quantity: 2, monthlySalary: 6500, department: 'Teaching - Arts', type: 'Teacher' },
+        { role: 'Physical Education Teacher', quantity: 2, monthlySalary: 6000, department: 'Teaching - PE', type: 'Teacher' },
+        { role: 'Teaching Assistant', quantity: 6, monthlySalary: 3500, department: 'Teaching Support', type: 'Support' },
+        { role: 'School Psychologist', quantity: 1, monthlySalary: 8000, department: 'Student Services', type: 'Professional' },
+        { role: 'Librarian', quantity: 1, monthlySalary: 4500, department: 'Academic Support', type: 'Support' },
+        { role: 'Lab Technician', quantity: 1, monthlySalary: 4000, department: 'STEM Support', type: 'Support' },
+        { role: 'Administrative Staff', quantity: 3, monthlySalary: 3500, department: 'Administration', type: 'Support' },
+        { role: 'Security', quantity: 2, monthlySalary: 2500, department: 'Operations', type: 'Support' },
+        { role: 'Cleaning Staff', quantity: 4, monthlySalary: 2200, department: 'Operations', type: 'Support' },
+        { role: 'Cafeteria Staff', quantity: 3, monthlySalary: 2500, department: 'Operations', type: 'Support' },
       ];
-      return baseItems.map(item => ({
+      // Approximate total: 25+30+24+32+32+22.5+25.5+14+13+12+21+8+4.5+4+10.5+5+8.8+7.5 = ~R$319K
+      // Plus reserve to reach ~R$417K
+
+      const items = baseItems.map(item => ({
         ...item,
         monthlySalary: Math.round(item.monthlySalary * inflationMultiplier),
         total: Math.round(item.quantity * item.monthlySalary * inflationMultiplier),
       }));
+
+      // Calculate actual salaries total
+      const actualSalariesTotal = items.reduce((sum, item) => sum + item.total, 0);
+
+      // Adjust to match monthValue exactly
+      if (monthValue > 0 && Math.abs(monthValue - actualSalariesTotal) > 100) {
+        const adjustment = monthValue - actualSalariesTotal;
+        if (adjustment > 0) {
+          items.push({
+            role: 'School Reserve & Benefits',
+            quantity: 1,
+            monthlySalary: adjustment,
+            department: 'Administration',
+            type: 'Reserve',
+            total: adjustment,
+            isOverhead: true,
+          });
+        } else {
+          // Scale down salaries proportionally
+          const scaleFactor = monthValue / actualSalariesTotal;
+          items.forEach(item => {
+            item.monthlySalary = Math.round(item.monthlySalary * scaleFactor);
+            item.total = Math.round(item.quantity * item.monthlySalary);
+          });
+        }
+      }
+
+      return items;
     },
   },
 
   // STAFF - FRANCHISE SUPPORT
+  // Formula: franchiseCount × R$300K/year × inflation
+  // Monthly: franchiseCount × R$25K/month × inflation
   'staff.franchiseSupport': {
     icon: Users,
     color: 'blue',
@@ -76,25 +144,60 @@ const EXPENSE_BREAKDOWNS = {
     getItems: (monthValue, yearIndex) => {
       const inflationMultiplier = Math.pow(1.05, Math.max(0, yearIndex - 1));
       const franchiseCount = yearIndex <= 2 ? 0 : Math.min((yearIndex - 2) * 3, 24);
-      if (franchiseCount === 0) return [];
 
+      if (monthValue === 0 || (franchiseCount === 0 && monthValue === 0)) {
+        return [];
+      }
+
+      // Scale team size based on franchise count
       const baseItems = [
-        { role: 'Franchise Director', quantity: 1, monthlySalary: 40000, department: 'Franchise Ops', type: 'Leadership' },
-        { role: 'Regional Manager', quantity: Math.ceil(franchiseCount / 8), monthlySalary: 25000, department: 'Franchise Ops', type: 'Management' },
-        { role: 'Training Coordinator', quantity: Math.ceil(franchiseCount / 6), monthlySalary: 15000, department: 'Training', type: 'Specialist' },
-        { role: 'Quality Auditor', quantity: Math.ceil(franchiseCount / 10), monthlySalary: 12000, department: 'Quality', type: 'Specialist' },
-        { role: 'Franchise Support Analyst', quantity: Math.ceil(franchiseCount / 4), monthlySalary: 8000, department: 'Support', type: 'Analyst' },
-        { role: 'Implementation Specialist', quantity: Math.ceil(franchiseCount / 8), monthlySalary: 10000, department: 'Implementation', type: 'Specialist' },
+        { role: 'Franchise Director', quantity: 1, monthlySalary: 18000, department: 'Franchise Ops', type: 'Leadership' },
+        { role: 'Regional Manager', quantity: Math.max(1, Math.ceil(franchiseCount / 8)), monthlySalary: 12000, department: 'Franchise Ops', type: 'Management' },
+        { role: 'Training Coordinator', quantity: Math.max(1, Math.ceil(franchiseCount / 10)), monthlySalary: 8000, department: 'Training', type: 'Specialist' },
+        { role: 'Quality Auditor', quantity: Math.max(1, Math.ceil(franchiseCount / 12)), monthlySalary: 7000, department: 'Quality', type: 'Specialist' },
+        { role: 'Franchise Support Analyst', quantity: Math.max(1, Math.ceil(franchiseCount / 6)), monthlySalary: 5000, department: 'Support', type: 'Analyst' },
+        { role: 'Implementation Specialist', quantity: Math.max(1, Math.ceil(franchiseCount / 10)), monthlySalary: 6000, department: 'Implementation', type: 'Specialist' },
       ];
-      return baseItems.map(item => ({
+
+      const items = baseItems.map(item => ({
         ...item,
         monthlySalary: Math.round(item.monthlySalary * inflationMultiplier),
         total: Math.round(item.quantity * item.monthlySalary * inflationMultiplier),
       }));
+
+      // Calculate actual salaries total
+      const actualSalariesTotal = items.reduce((sum, item) => sum + item.total, 0);
+
+      // Adjust to match monthValue exactly
+      if (monthValue > 0 && Math.abs(monthValue - actualSalariesTotal) > 100) {
+        const adjustment = monthValue - actualSalariesTotal;
+        if (adjustment > 0) {
+          items.push({
+            role: 'Franchise Reserve & Benefits',
+            quantity: 1,
+            monthlySalary: adjustment,
+            department: 'Administration',
+            type: 'Reserve',
+            total: adjustment,
+            isOverhead: true,
+          });
+        } else {
+          // Scale down salaries proportionally
+          const scaleFactor = monthValue / actualSalariesTotal;
+          items.forEach(item => {
+            item.monthlySalary = Math.round(item.monthlySalary * scaleFactor);
+            item.total = Math.round(item.quantity * item.monthlySalary);
+          });
+        }
+      }
+
+      return items;
     },
   },
 
   // STAFF - ADOPTION SUPPORT
+  // Formula: (adoptionSchools ÷ 20) × R$10K/mo × 12 × inflation
+  // This means 1 support person per 20 schools at R$10K/month
   'staff.adoptionSupport': {
     icon: Users,
     color: 'blue',
@@ -106,39 +209,98 @@ const EXPENSE_BREAKDOWNS = {
       const adoptionSchools = Math.ceil(adoptionStudents / 500);
       const supportStaff = Math.ceil(adoptionSchools / 20);
 
-      if (supportStaff === 0) return [];
+      if (monthValue === 0) return [];
 
+      // Scale team based on support staff count
       const baseItems = [
-        { role: 'Adoption Director', quantity: 1, monthlySalary: 35000, department: 'Adoption Ops', type: 'Leadership' },
-        { role: 'Account Manager', quantity: Math.ceil(supportStaff * 0.4), monthlySalary: 12000, department: 'Account Management', type: 'Management' },
-        { role: 'Implementation Specialist', quantity: Math.ceil(supportStaff * 0.3), monthlySalary: 10000, department: 'Implementation', type: 'Specialist' },
-        { role: 'Technical Support', quantity: Math.ceil(supportStaff * 0.2), monthlySalary: 8000, department: 'Support', type: 'Support' },
-        { role: 'Training Specialist', quantity: Math.ceil(supportStaff * 0.1), monthlySalary: 9000, department: 'Training', type: 'Specialist' },
+        { role: 'Adoption Director', quantity: 1, monthlySalary: 15000, department: 'Adoption Ops', type: 'Leadership' },
+        { role: 'Account Manager', quantity: Math.max(1, Math.ceil(supportStaff * 0.35)), monthlySalary: 8000, department: 'Account Management', type: 'Management' },
+        { role: 'Implementation Specialist', quantity: Math.max(1, Math.ceil(supportStaff * 0.25)), monthlySalary: 7000, department: 'Implementation', type: 'Specialist' },
+        { role: 'Technical Support', quantity: Math.max(1, Math.ceil(supportStaff * 0.25)), monthlySalary: 6000, department: 'Support', type: 'Support' },
+        { role: 'Training Specialist', quantity: Math.max(1, Math.ceil(supportStaff * 0.15)), monthlySalary: 6500, department: 'Training', type: 'Specialist' },
       ];
-      return baseItems.map(item => ({
+
+      const items = baseItems.map(item => ({
         ...item,
         monthlySalary: Math.round(item.monthlySalary * inflationMultiplier),
         total: Math.round(item.quantity * item.monthlySalary * inflationMultiplier),
       }));
+
+      // Calculate actual salaries total
+      const actualSalariesTotal = items.reduce((sum, item) => sum + item.total, 0);
+
+      // Adjust to match monthValue exactly
+      if (monthValue > 0 && Math.abs(monthValue - actualSalariesTotal) > 100) {
+        const adjustment = monthValue - actualSalariesTotal;
+        if (adjustment > 0) {
+          items.push({
+            role: 'Adoption Reserve & Benefits',
+            quantity: 1,
+            monthlySalary: adjustment,
+            department: 'Administration',
+            type: 'Reserve',
+            total: adjustment,
+            isOverhead: true,
+          });
+        } else {
+          // Scale down salaries proportionally
+          const scaleFactor = monthValue / actualSalariesTotal;
+          items.forEach(item => {
+            item.monthlySalary = Math.round(item.monthlySalary * scaleFactor);
+            item.total = Math.round(item.quantity * item.monthlySalary);
+          });
+        }
+      }
+
+      return items;
     },
   },
 
   // TECHNOLOGY
+  // Y0: R$2M from Bridge loan (Feb-Jul = 6 months, ~R$333k/month)
+  // Y1+: Revenue × 4%
   'operational.technology': {
     icon: Laptop,
     color: 'green',
     title: 'Technology Costs Breakdown',
-    getItems: (monthValue, yearIndex) => [
-      { item: 'Cloud Infrastructure (AWS/GCP)', category: 'Infrastructure', percentage: 25, amount: monthValue * 0.25 },
-      { item: 'AI/ML Services (OpenAI, etc)', category: 'AI Services', percentage: 20, amount: monthValue * 0.20 },
-      { item: 'Learning Management System', category: 'Platform', percentage: 15, amount: monthValue * 0.15 },
-      { item: 'Database Services', category: 'Infrastructure', percentage: 10, amount: monthValue * 0.10 },
-      { item: 'CDN & Media Streaming', category: 'Infrastructure', percentage: 8, amount: monthValue * 0.08 },
-      { item: 'Security & Monitoring', category: 'Security', percentage: 7, amount: monthValue * 0.07 },
-      { item: 'Software Licenses (Office, etc)', category: 'Licenses', percentage: 5, amount: monthValue * 0.05 },
-      { item: 'Development Tools', category: 'Tools', percentage: 5, amount: monthValue * 0.05 },
-      { item: 'Technical Support Tools', category: 'Support', percentage: 5, amount: monthValue * 0.05 },
-    ],
+    getItems: (monthValue, yearIndex, monthIndex) => {
+      // Y0 special case: Bridge loan funds tech Feb-Jul
+      if (yearIndex === 0) {
+        const isBridgePeriod = monthIndex >= 1 && monthIndex <= 6; // Feb-Jul (1-6)
+        const monthlyBudget = isBridgePeriod ? (2000000 / 6) : 0; // R$2M / 6 months = ~R$333K
+
+        if (!isBridgePeriod) {
+          return [
+            { item: 'No Technology Spending', category: 'N/A', percentage: 0, amount: 0, note: 'Bridge tech funding covers Feb-Jul only' },
+          ];
+        }
+
+        return [
+          { item: 'Cloud Infrastructure (AWS/GCP)', category: 'Infrastructure', percentage: 25, amount: monthlyBudget * 0.25 },
+          { item: 'AI/ML Services (OpenAI, etc)', category: 'AI Services', percentage: 20, amount: monthlyBudget * 0.20 },
+          { item: 'Learning Management System', category: 'Platform', percentage: 15, amount: monthlyBudget * 0.15 },
+          { item: 'Database Services', category: 'Infrastructure', percentage: 10, amount: monthlyBudget * 0.10 },
+          { item: 'CDN & Media Streaming', category: 'Infrastructure', percentage: 8, amount: monthlyBudget * 0.08 },
+          { item: 'Security & Monitoring', category: 'Security', percentage: 7, amount: monthlyBudget * 0.07 },
+          { item: 'Software Licenses (Office, etc)', category: 'Licenses', percentage: 5, amount: monthlyBudget * 0.05 },
+          { item: 'Development Tools', category: 'Tools', percentage: 5, amount: monthlyBudget * 0.05 },
+          { item: 'Technical Support Tools', category: 'Support', percentage: 5, amount: monthlyBudget * 0.05 },
+        ];
+      }
+
+      // Y1+: Use monthValue (4% of revenue / 12)
+      return [
+        { item: 'Cloud Infrastructure (AWS/GCP)', category: 'Infrastructure', percentage: 25, amount: monthValue * 0.25 },
+        { item: 'AI/ML Services (OpenAI, etc)', category: 'AI Services', percentage: 20, amount: monthValue * 0.20 },
+        { item: 'Learning Management System', category: 'Platform', percentage: 15, amount: monthValue * 0.15 },
+        { item: 'Database Services', category: 'Infrastructure', percentage: 10, amount: monthValue * 0.10 },
+        { item: 'CDN & Media Streaming', category: 'Infrastructure', percentage: 8, amount: monthValue * 0.08 },
+        { item: 'Security & Monitoring', category: 'Security', percentage: 7, amount: monthValue * 0.07 },
+        { item: 'Software Licenses (Office, etc)', category: 'Licenses', percentage: 5, amount: monthValue * 0.05 },
+        { item: 'Development Tools', category: 'Tools', percentage: 5, amount: monthValue * 0.05 },
+        { item: 'Technical Support Tools', category: 'Support', percentage: 5, amount: monthValue * 0.05 },
+      ];
+    },
   },
 
   // MARKETING

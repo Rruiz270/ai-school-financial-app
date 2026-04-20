@@ -196,11 +196,23 @@ export const INVESTMENT_PHASES = {
     sources: {
       desenvolveSP: 10000000, // R$10M more from Desenvolve SP (total 30M)
       prefeituraSubsidy: 1250000, // Remaining 25% subsidy (R$1.25M)
+      // === AUDIT: SERIES A EQUITY ROUND to bridge Y1-Y2 cash gap ===
+      // Without Series A, model shows negative cash in Y1 (-R$15M) and Y2 (-R$27M)
+      // because operational ramp-up precedes public sector revenue scaling (Y3+).
+      // Timing (Aug/2027): 7-8 months of flagship operating data + first B2B pipeline.
+      seriesA: 30000000, // R$30M equity — no interest, no principal repayment
     },
     allocation: {
       capexEquipment: 3000000, // R$3M equipment and finishing
       capexInfrastructure: 2000000, // R$2M additional infrastructure
     },
+  },
+  // Series A round details
+  seriesA: {
+    amount: 30000000,       // R$30M
+    disbursementYear: 1,    // Year 1 (2027)
+    disbursementMonth: 8,   // August 2027 (post flagship Y1 traction proof)
+    type: 'equity',         // No interest, no repayment
   },
   architectProject: {
     total: 1200000, // R$1.2M total
@@ -234,11 +246,14 @@ export const INVESTMENT_PHASES = {
   },
   totals: {
     totalCapex: 25000000, // R$25M total CAPEX
-    bridgeInvestment: 10000000, // R$10M bridge (repaid Aug 2026)
+    bridgeInvestment: 10000000, // R$10M bridge (repaid Oct 2026)
     desenvolveSPLoan: 30000000, // R$30M total from Desenvolve SP
     innovationLoan: 15000000, // R$15M Innovation loan
     prefeituraSubsidy: 6250000, // R$6.25M total from Prefeitura (25% of R$25M CAPEX)
+    seriesAEquity: 30000000, // R$30M Series A equity (Aug 2027)
     totalDebt: 45000000, // R$30M DSP + R$15M Innovation
+    totalEquity: 40000000, // R$10M bridge + R$30M Series A
+    totalFunding: 91250000, // R$45M debt + R$40M equity + R$6.25M grant
   }
 };
 
@@ -694,8 +709,9 @@ export class FinancialModel {
           details: INVESTMENT_PHASES.phase2,
         };
         fundingSources = {
-          desenvolveSP: 10000000, // Remaining R$10M from Desenvolve SP
+          desenvolveSP: 10000000, // Remaining R$10M from Desenvolve SP (Jan 2027)
           prefeituraSubsidy: 1250000, // R$1.25M
+          seriesA: INVESTMENT_PHASES.seriesA.amount, // R$30M equity round (Aug 2027)
         };
         // Quarterly interest on DSP R$30M + Innovation R$15M = R$45M × 8.4% / 4 (0.7% monthly)
         debtService = {

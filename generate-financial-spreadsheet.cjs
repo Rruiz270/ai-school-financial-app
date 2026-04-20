@@ -43,6 +43,16 @@ const CONFIG = {
       year2026: 5000000,   // R$5M in Aug 2026
       year2027: 1250000,   // R$1.25M in Jan 2027
       isGrant: true,
+    },
+    // === AUDIT: SERIES A EQUITY ROUND (Aug 2027) ===
+    // Closes the Y1-Y2 cash gap revealed by full-cost audit.
+    // Equity (no interest, no repayment) — dilutes founders but enables runway.
+    // Trigger moment: ~8 months of flagship operating data + B2B pipeline evidence.
+    seriesA: {
+      amount: 30000000,       // R$30M
+      disbursementYear: 1,    // Year 1 (2027)
+      disbursementMonth: 8,   // August 2027
+      type: 'equity',
     }
   },
 
@@ -383,7 +393,7 @@ const calculateFinancialData = () => {
         year, month,
         label: getMonthLabel(year, month),
         students: { flagship: 0, adoptionPrivate: 0, adoptionPublic: 0 },
-        funding: { bridge: 0, desenvolveSP: 0, innovation: 0, prefeitura: 0 },
+        funding: { bridge: 0, desenvolveSP: 0, innovation: 0, prefeitura: 0, seriesA: 0 },
         revenue: { flagship: 0, franchiseRoyalty: 0, franchiseMarketing: 0, franchiseFees: 0, adoptionPrivate: 0, kits: 0, adoptionPublic: 0 },
         expenses: {
           corporateStaff: 0, flagshipStaff: 0, franchiseSupport: 0, adoptionSupport: 0,
@@ -440,7 +450,9 @@ const calculateFinancialData = () => {
           monthData.expenses.corporateStaff = R(CONFIG.preOperational.semester2.people / 5);
 
           // Teachers hired - 30 teachers (with CLT burden applied)
-          monthData.expenses.teachers = R(30 * CONFIG.staff.teacherSalary * cltBurden);
+          // Y0 semester 2: teachers hired (Aug-Dec). inflationMultiplier = 1.0 in Y0 so no change,
+          // but keeping the × factor for consistency with the operational-years formula below.
+          monthData.expenses.teachers = R(30 * CONFIG.staff.teacherSalary * cltBurden * inflationMultiplier);
           monthData.headcount.teachers = 30;
           monthData.headcount.corporate = 12;
 
@@ -502,8 +514,9 @@ const calculateFinancialData = () => {
         monthData.expenses.flagshipStaff = R(staffFlagship / 12);
         monthData.expenses.franchiseSupport = R(staffFranchise / 12);
         monthData.expenses.adoptionSupport = R(staffAdoption / 12);
-        // Teachers: monthly cost = count × monthly salary × CLT burden
-        monthData.expenses.teachers = R(teacherCount * CONFIG.staff.teacherSalary * cltBurden);
+        // Teachers: count × monthly salary × CLT burden × annual inflation (5% simple)
+        // BUG FIX: previously missing inflationMultiplier (teacher wages frozen at Y1 level)
+        monthData.expenses.teachers = R(teacherCount * CONFIG.staff.teacherSalary * cltBurden * inflationMultiplier);
         monthData.expenses.technology = R(technologyCost / 12);
         monthData.expenses.marketing = R(marketingCost / 12);
         monthData.expenses.b2bSales = R(b2bSalesCost / 12);
@@ -537,11 +550,16 @@ const calculateFinancialData = () => {
           }
           monthData.expenses.architect = R(CONFIG.preOperational.semester1.architectMonthly);
 
-          // January 2027: Second tranche
+          // January 2027: Second tranche (DSP + Prefeitura)
           if (month === 1) {
             monthData.funding.desenvolveSP = R(CONFIG.funding.desenvolveSP.year2027);
             monthData.funding.prefeitura = R(CONFIG.funding.prefeitura.year2027);
             desenvolveSPOutstanding += CONFIG.funding.desenvolveSP.year2027;
+          }
+
+          // August 2027: Series A equity closes (R$30M, no debt service)
+          if (month === CONFIG.funding.seriesA.disbursementMonth) {
+            monthData.funding.seriesA = R(CONFIG.funding.seriesA.amount);
           }
         }
 
@@ -668,7 +686,7 @@ const createWorkbook = async (financialData) => {
   ws1.getCell('A1').alignment = { horizontal: 'center' };
 
   ws1.mergeCells('A2:M2');
-  ws1.getCell('A2').value = 'Private: REALISTIC | Public: OPTIMISTIC | Bridge R$10M (Oct repay) | DSP R$30M | Innovation R$15M | Prefeitura R$6.25M';
+  ws1.getCell('A2').value = 'Private: REALISTIC | Public: OPTIMISTIC | Bridge R$10M | DSP R$30M | Innovation R$15M | Prefeitura R$6.25M | Series A R$30M (Aug 2027)';
   ws1.getCell('A2').alignment = { horizontal: 'center' };
 
   ws1.mergeCells('A3:M3');
@@ -764,11 +782,12 @@ const createWorkbook = async (financialData) => {
 
   const monthlyRowDefs = [
     // FUNDING
-    { label: 'FUNDING (Loans & Grants)', isSection: true, color: COLORS.fundingHeader },
-    { cat: '', label: 'Bridge Loan (R$10M, repaid Oct)', dataPath: 'funding.bridge', color: COLORS.fundingFill },
-    { cat: '', label: 'Desenvolve SP (R$30M)', dataPath: 'funding.desenvolveSP', color: COLORS.fundingFill },
+    { label: 'FUNDING (Loans, Grants & Equity)', isSection: true, color: COLORS.fundingHeader },
+    { cat: '', label: 'Bridge Loan (R$10M, repaid Oct 2026)', dataPath: 'funding.bridge', color: COLORS.fundingFill },
+    { cat: '', label: 'Desenvolve SP (R$30M, loan)', dataPath: 'funding.desenvolveSP', color: COLORS.fundingFill },
     { cat: '', label: 'Innovation Loan (R$15M)', dataPath: 'funding.innovation', color: COLORS.fundingFill },
     { cat: '', label: 'Prefeitura Grant (R$6.25M)', dataPath: 'funding.prefeitura', color: COLORS.fundingFill },
+    { cat: '', label: 'Series A Equity (R$30M, Aug 2027)', dataPath: 'funding.seriesA', color: COLORS.fundingFill },
     { label: 'TOTAL FUNDING', isTotal: true, dataPath: 'totalFunding', color: COLORS.fundingHeader },
     { isBlank: true },
 

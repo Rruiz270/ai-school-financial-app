@@ -221,4 +221,55 @@ corporateTaxRate: 0.34,
 
 ---
 
-*Audited: 2026-04 | Branch: `fix/financial-audit-corrections`*
+## Addendum — Second Pass Findings (2026-04-20)
+
+After applying the audit corrections, a second review of the year-by-year cash trajectory
+revealed issues that were masked by the prior (incomplete) cost model:
+
+### 🔴 CRITICAL — Negative cash Y1-Y2 exposed (FIXED)
+**Finding:** Once all real costs (CLT, indirect taxes, LGPD, LLM, certification) are loaded,
+the company runs negative cash in 2027 (-R$15M ending) and 2028 (-R$27M ending) before
+public sector revenue scales in Y3.
+
+**Root cause:** The pre-op + Y1 ramp-up (facilities, staff hires, CAPEX contingency) consumes
+the R$61M funding stack before operational revenue can cover OpEx.
+
+**Fix:** Added **Series A equity round of R$30M in August 2027** (Y1 Q3).
+- Timing aligns with 7-8 months of flagship operating data + first B2B pipeline evidence.
+- Equity (not debt) — no interest, no principal repayment.
+- Dilutes founders but provides runway.
+
+**Post-fix cash trajectory:**
+- Y1 ending cash: +R$14.6M (was -R$15.4M)
+- Y2 ending cash: +R$2.1M (was -R$27.5M) — **tight but positive**
+- Y3 ending cash: +R$45.2M (comfortable inflection)
+- Y10 ending cash: +R$3.03B (unchanged materially)
+
+**Narrative for investor:** Y2 buffer of R$2M signals Series A is the **minimum viable raise**,
+not an inflated request. Any delay in public licitação process or CAPEX overrun reopens the gap.
+
+### 🟡 MINOR — Teacher salary inflation bug (FIXED)
+**Finding:** `generate-financial-spreadsheet.cjs` line 516 was missing `inflationMultiplier`
+in the teachers expense formula. Teachers costs were frozen at nominal R$8K/month throughout
+the 10-year projection.
+
+**Fix:** Added `× inflationMultiplier` to the monthly teachers calculation.
+
+**Impact:** ~R$4-5M/year additional staff cost by Y10. ~R$25M cumulative over 10 years.
+Negligible on P&L but material in labor/CLT due diligence.
+
+### Updated Y10 P&L (post-addendum):
+| Metric              | Value                    |
+|---------------------|--------------------------|
+| Gross Revenue       | R$3.49B                  |
+| Indirect Taxes      | R$427M (12.25%)          |
+| Net Revenue         | R$3.06B                  |
+| Operating Expenses  | R$1.73B                  |
+| EBITDA              | R$1.33B (38.1% gross / 43.5% net) |
+| Cash ending Y10     | R$3.03B                  |
+
+Fundamentals unchanged. Model now shows **positive cash in every year**.
+
+---
+
+*Audited: 2026-04-19 | Addendum: 2026-04-20 | Branch: `fix/financial-audit-corrections`*

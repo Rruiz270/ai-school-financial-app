@@ -1,4 +1,5 @@
 // Financial modeling engine with live calculations
+// Audited & corrected 2026-04 — see BUSINESS_PLAN_AUDIT.md
 
 export const DEFAULT_PARAMETERS = {
   // Market and Students (realistic targets)
@@ -21,6 +22,43 @@ export const DEFAULT_PARAMETERS = {
   technologyCapex: 3000000,
   technologyOpexRate: 0.04, // 4% of revenue
   marketingRate: 0.05, // 5% of revenue
+
+  // === AUDIT CORRECTIONS (2026-04) ===
+  // Brazilian indirect taxes on revenue (before EBITDA)
+  pisCofinsRate: 0.0925, // 9.25% non-cumulative (Lucro Real)
+  issRate: 0.03, // 3% ISS (São Paulo, services)
+  // Corporate tax on profit (IRPJ 15% + 10% surtax + CSLL 9% = 34%)
+  corporateTaxRate: 0.34,
+
+  // CLT labor burden on base salaries (INSS 20% + FGTS 8% + SAT/Sistema S ~5% +
+  // 13th salary 1/12 + vacation 1/12 + 1/3 vacation bonus + rescissions provision)
+  // Industry benchmark "encargos totais": 70–80% over gross salary. Using 80%.
+  cltBurdenMultiplier: 1.80,
+
+  // LLM/AI variable cost per student per year (OpenAI/Anthropic/Gemini APIs)
+  // Conservative estimate for K-12 use: R$150/student/year
+  llmCostPerStudentAnnual: 150,
+
+  // Bad debt segmentation (Fenep/Semesp benchmark: 8-12% B2C K-12 in Brazil,
+  // Law 9.870/99 prevents student retention → school absorbs the loss)
+  badDebtRateB2C: 0.08, // Flagship, franchise tuition, kits
+  badDebtRateB2B: 0.02, // Adoption (private + public)
+
+  // Dedicated B2B sales team (NOT the same as brand marketing)
+  // Scales with number of new B2B schools being acquired
+  b2bSalesTeamBaseAnnual: 3000000, // R$3M base (5 BDRs + 2 AEs + 1 Head loaded)
+  b2bSalesVariableRate: 0.015, // 1.5% of B2B revenue (events, travel, PoCs)
+
+  // LGPD/data governance (DPO, ISO 27001, ANPD audits — mandatory for minors' data)
+  lgpdBaseAnnual: 800000, // R$800K base
+  lgpdPerStudent: 80, // R$80/student/year
+  lgpdCertificationUpfront: 3000000, // R$3M Y0-Y1 for ISO 27001 + initial LGPD
+
+  // CAPEX contingency (historic building retrofit risk: 20% industry standard)
+  capexContingencyRate: 0.20,
+
+  // MEC/Secretarias authorization costs (initial, not recurring)
+  mecAuthorizationUpfront: 1500000, // R$1.5M upfront Y0
 
   // CAPEX Scenarios
   capexScenario: 'private-historic',
@@ -182,14 +220,14 @@ export const INVESTMENT_PHASES = {
       total: 30000000, // R$30M total (for CAPEX only)
       year2026: 20000000, // R$20M in Aug 2026
       year2027: 10000000, // R$10M in Jan 2027
-      interestRate: 0.084, // 8.4% per year (0.7% per month)
+      interestRate: 0.12, // 12% per year (Desenvolve SP realistic rate 2026: TJLP+spread)
       gracePeriodMonths: 36, // 3 years grace
       repaymentYears: 5, // 5 year amortization after grace
     },
     innovation: {
       amount: 15000000, // R$15M (for Tech/Platform/Content - NOT CAPEX)
       disbursementMonth: 8, // August 2026 with Desenvolve SP
-      interestRate: 0.084, // 8.4% per year (0.7% per month)
+      interestRate: 0.12, // 12% per year (Desenvolve SP realistic rate 2026: TJLP+spread)
       gracePeriodMonths: 36,
       repaymentYears: 5,
     },
@@ -467,6 +505,8 @@ export class FinancialModel {
     // Staff costs with SENSIBLE annual increases (5% inflation only, not compound)
     const inflationMultiplier = Math.pow(1.05, Math.max(0, year - 1)); // 5% annual inflation
 
+    // Corporate scales with private students only (flagship + franchise + adoption).
+    // Public sector is calculated separately in PublicPartnerships and has its own staff line.
     const baseStaffCorporate = Math.max(3000000, totalStudents * 80);
     const baseStaffFlagship = flagshipStudents > 0 ? Math.max(5000000, flagshipStudents * 4400) : 0; // Doubled for realistic teacher salaries
     const baseStaffFranchiseSupport = franchiseCount * 300000;
@@ -477,21 +517,40 @@ export class FinancialModel {
     const adoptionSupportStaff = Math.ceil(adoptionSchools / 20);
     const baseStaffAdoptionSupport = adoptionSupportStaff * 10000 * 12; // R$10K/month × 12
 
-    const staffCorporate = baseStaffCorporate * inflationMultiplier;
-    const staffFlagship = baseStaffFlagship * inflationMultiplier;
-    const staffFranchiseSupport = baseStaffFranchiseSupport * inflationMultiplier;
-    const staffAdoptionSupport = baseStaffAdoptionSupport * inflationMultiplier;
+    // === CLT LABOR BURDEN ===
+    // Base salaries in MonthDetailModal are GROSS (no INSS/FGTS/13th/vacation).
+    // Multiplier 1.80 covers: INSS 20% + FGTS 8% + SAT/Sistema S ~5% +
+    // 13th (1/12) + vacation (1/12) + 1/3 vacation bonus + rescissions provision.
+    const cltBurden = this.params.cltBurdenMultiplier || 1.80;
+
+    const staffCorporate = baseStaffCorporate * inflationMultiplier * cltBurden;
+    const staffFlagship = baseStaffFlagship * inflationMultiplier * cltBurden;
+    const staffFranchiseSupport = baseStaffFranchiseSupport * inflationMultiplier * cltBurden;
+    const staffAdoptionSupport = baseStaffAdoptionSupport * inflationMultiplier * cltBurden;
 
     // Educational & Operational costs
     // Teacher training: base cost without crazy multiplier
     const teacherTraining = Math.max(200000, (flagshipStudents + franchiseStudents) * 250) * inflationMultiplier;
     const qualityAssurance = Math.max(45000, totalRevenue * 0.0015); // 15% of original (was 0.01)
     const regulatoryCompliance = Math.max(60000, totalRevenue * 0.00075); // 15% of original (was 0.005)
-    const dataManagement = Math.max(200000, totalStudents * 40);
-    const parentEngagement = Math.max(150000, totalStudents * 60);
+    // LGPD/Data governance (base + per-student) — minors' data requires DPO, ISO 27001, ANPD audits
+    const dataManagement = Math.max(
+      this.params.lgpdBaseAnnual || 800000,
+      totalStudents * (this.params.lgpdPerStudent || 80)
+    );
+    // Parent engagement applies ONLY to B2C (flagship + franchise).
+    // For adoption (B2B), the client schools handle parent communications.
+    const parentEngagement = Math.max(150000, (flagshipStudents + franchiseStudents) * 60);
 
-    // Business costs
-    const badDebt = totalRevenue * 0.02; // 2%
+    // === SEGMENTED BAD DEBT ===
+    // B2C (flagship tuition + franchise tuition + kits): 8% — Fenep/Semesp benchmark for K-12
+    // B2B (adoption private + public): 2% — corporate contracts have lower default risk
+    const b2cRevenue = flagshipRevenue + franchiseRoyaltyRevenue + franchiseMarketingRevenue +
+                      franchiseFeeRevenue + kitRevenue;
+    const b2bRevenue = adoptionRevenue;
+    const badDebt = (b2cRevenue * (this.params.badDebtRateB2C || 0.08)) +
+                    (b2bRevenue * (this.params.badDebtRateB2B || 0.02));
+
     const paymentProcessing = totalRevenue * 0.025; // 2.5%
 
     // Platform R&D: Y0 Aug-Dec funded by Innovation loan, Y1+ from 6% of revenue
@@ -506,6 +565,31 @@ export class FinancialModel {
       ? 0 // Y0: Aug-Dec funded by Innovation loan (separate from operations)
       : 0; // Y1+: Defined yearly via budgeting, not automatic %
 
+    // === LLM/AI VARIABLE COST PER STUDENT ===
+    // OpenAI/Anthropic/Gemini API tokens: R$150/student/year baseline usage.
+    // This is SEPARATE from the 4% technology opex (infrastructure/licenses),
+    // because LLM tokens scale linearly with student engagement, not revenue.
+    const llmCostPerStudent = this.params.llmCostPerStudentAnnual || 150;
+    const llmVariableCost = year === 0 ? 0 : totalStudents * llmCostPerStudent * inflationMultiplier;
+
+    // === B2B DEDICATED SALES (scales with adoption) ===
+    // Separate from brand marketing — Account Executives, BDRs, events, PoCs.
+    // Only meaningful once B2B revenue is growing (Y2+).
+    const b2bSalesBase = this.params.b2bSalesTeamBaseAnnual || 3000000;
+    const b2bSalesVariable = b2bRevenue * (this.params.b2bSalesVariableRate || 0.015);
+    const b2bSales = year < 2 ? 0 :
+      Math.max(b2bSalesBase, b2bSalesVariable) * inflationMultiplier * cltBurden;
+
+    // === LGPD/CERTIFICATION UPFRONT (Y0–Y1) ===
+    // ISO 27001 + ANPD initial compliance, MEC/SEE-SP authorization
+    let certificationUpfront = 0;
+    if (year === 0) {
+      certificationUpfront = (this.params.lgpdCertificationUpfront || 3000000) * 0.5 +
+                             (this.params.mecAuthorizationUpfront || 1500000);
+    } else if (year === 1) {
+      certificationUpfront = (this.params.lgpdCertificationUpfront || 3000000) * 0.5;
+    }
+
     // Facility costs with 5% annual inflation
     const capexScenario = CAPEX_SCENARIOS[this.params.capexScenario];
     const baseFacilityCost = capexScenario.baseFacilityCost || 1500000;
@@ -519,15 +603,28 @@ export class FinancialModel {
     const workingCapital = totalRevenue * 0.01;
     const contingency = totalRevenue * 0.005;
 
+    // === INDIRECT TAXES ON REVENUE (BEFORE EBITDA — Brazilian GAAP) ===
+    // PIS 1,65% + COFINS 7,6% = 9,25% (Lucro Real, non-cumulative)
+    // ISS 3% (São Paulo, services). Educação básica formal tem imunidade parcial,
+    // mas franchise royalty, kits, licenciamento e serviços B2B são tributáveis.
+    // Aplicamos na receita total — esta é a abordagem conservadora/realista.
+    const pisCofins = totalRevenue * (this.params.pisCofinsRate || 0.0925);
+    const iss = totalRevenue * (this.params.issRate || 0.03);
+    const indirectTaxes = pisCofins + iss;
+    const netRevenue = totalRevenue - indirectTaxes;
+
     const totalCosts = technologyOpex + marketingCosts + staffCorporate + staffFlagship +
                       staffFranchiseSupport + staffAdoptionSupport + facilityCosts +
                       legalCompliance + insurance + travel + workingCapital + contingency +
                       teacherTraining + qualityAssurance +
                       regulatoryCompliance + dataManagement + parentEngagement + badDebt +
-                      paymentProcessing + platformRD + contentDevelopment;
-    
-    const ebitda = totalRevenue - totalCosts;
+                      paymentProcessing + platformRD + contentDevelopment +
+                      llmVariableCost + b2bSales + certificationUpfront;
+
+    // EBITDA is computed on NET revenue (after indirect taxes), as per Brazilian standard.
+    const ebitda = netRevenue - totalCosts;
     const ebitdaMargin = totalRevenue > 0 ? ebitda / totalRevenue : 0;
+    const ebitdaMarginNet = netRevenue > 0 ? ebitda / netRevenue : 0;
 
     // CAPEX calculation with phased structure
     // For private-historic: Year 0 = R$20M, Year 1 = R$5M (Phase 2)
@@ -536,13 +633,16 @@ export class FinancialModel {
     if (yearOverrides.capex !== undefined) {
       capex = yearOverrides.capex;
     } else if (year === 0) {
-      // Phase 1: Initial CAPEX (R$20M for private-historic)
-      capex = capexScenario.initialCapex;
+      // Phase 1: Initial CAPEX (R$20M for private-historic) + contingency buffer.
+      // Historic building retrofits routinely overrun 20–40% (fire code,
+      // accessibility, structural). Industry standard contingency: 20%.
+      const contingencyRate = this.params.capexContingencyRate || 0.20;
+      capex = capexScenario.initialCapex * (1 + contingencyRate);
     } else if (year === 1 && capexScenario.year1Capex) {
-      // Phase 2 CAPEX (R$5M for private-historic)
-      // Plus ongoing architect payments (12 months × R$45.8k)
+      // Phase 2 CAPEX (R$5M for private-historic) + contingency + architect
       const architectPayments = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
-      capex = capexScenario.year1Capex + architectPayments;
+      const contingencyRate = this.params.capexContingencyRate || 0.20;
+      capex = capexScenario.year1Capex * (1 + contingencyRate) + architectPayments;
     } else if (year === 2 && this.params.capexScenario === 'private-historic') {
       // Final year of architect payments (remaining 12 months)
       capex = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
@@ -551,11 +651,14 @@ export class FinancialModel {
       capex = year <= 5 ? totalRevenue * 0.005 : totalRevenue * 0.003;
     }
 
-    // Tax calculation - Brazil corporate tax (IRPJ + CSLL) = 34%
-    const taxRate = 0.34;
+    // Tax calculation — IRPJ 15% + 10% surtax + CSLL 9% = 34% on taxable income.
+    // Taxable income approximates EBITDA (we don't track D&A + interest explicitly
+    // at the year-total level; this is a reasonable simplification given the tax
+    // carryforward of initial losses in Y0-Y2).
+    const taxRate = this.params.corporateTaxRate || 0.34;
     const taxableIncome = Math.max(0, ebitda);
     const taxes = taxableIncome * taxRate;
-    
+
     const netIncome = ebitda - taxes;
     const freeCashFlow = netIncome - capex;
     
@@ -581,7 +684,7 @@ export class FinancialModel {
         // Bridge repaid in Aug 2026 when funding arrives
         debtService = {
           bridgeRepayment: 10000000, // R$10M principal
-          bridgeInterest: 1400000, // ~2% × 7 months
+          bridgeInterest: 1800000, // ~2% × 9 months (Jan-Oct) — sync with INVESTMENT_PHASES
         };
         architectPayment = INVESTMENT_PHASES.architectProject.upfront +
                           (INVESTMENT_PHASES.architectProject.monthlyPayment * 11); // upfront + 11 months
@@ -596,16 +699,16 @@ export class FinancialModel {
         };
         // Quarterly interest on DSP R$30M + Innovation R$15M = R$45M × 8.4% / 4 (0.7% monthly)
         debtService = {
-          dspInterest: 30000000 * 0.084, // R$2.52M/year (0.7% monthly = 8.4% annual)
-          innovationInterest: 15000000 * 0.084, // R$1.26M/year
+          dspInterest: 30000000 * 0.12, // R$2.52M/year (0.7% monthly = 8.4% annual)
+          innovationInterest: 15000000 * 0.12, // R$1.26M/year
         };
         architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
       } else if (year === 2) {
         architectPayment = INVESTMENT_PHASES.architectProject.monthlyPayment * 12;
         // Interest only (still in grace period) - 0.7% monthly = 8.4% annual
         debtService = {
-          dspInterest: 30000000 * 0.084,
-          innovationInterest: 15000000 * 0.084,
+          dspInterest: 30000000 * 0.12,
+          innovationInterest: 15000000 * 0.12,
         };
       } else if (year >= 3) {
         // Grace period ends Aug 2029 (36 months from Aug 2026)
@@ -618,14 +721,14 @@ export class FinancialModel {
           if (remainingPrincipal > 0) {
             debtService = {
               principal: 9000000, // R$9M/year
-              interest: remainingPrincipal * 0.084, // 0.7% monthly = 8.4% annual
+              interest: remainingPrincipal * 0.12, // 12% per year (Desenvolve SP 2026 realistic)
             };
           }
         } else {
           // Still in grace - interest only (0.7% monthly = 8.4% annual)
           debtService = {
-            dspInterest: 30000000 * 0.084,
-            innovationInterest: 15000000 * 0.084,
+            dspInterest: 30000000 * 0.12,
+            innovationInterest: 15000000 * 0.12,
           };
         }
       }
@@ -647,7 +750,12 @@ export class FinancialModel {
         franchiseFees: franchiseFeeRevenue,
         adoption: adoptionRevenue,
         kits: kitRevenue,
-        total: totalRevenue
+        total: totalRevenue,
+        // Indirect taxes applied on top of gross revenue (Brazilian GAAP)
+        pisCofins,
+        iss,
+        indirectTaxes,
+        netRevenue,
       },
       costs: {
         technologyOpex,
@@ -672,11 +780,16 @@ export class FinancialModel {
         platformRD,
         contentDevelopment,
         architectPayment,
+        // Audit additions
+        llmVariableCost,
+        b2bSales,
+        certificationUpfront,
         total: totalCosts
       },
       capex,
       ebitda,
       ebitdaMargin,
+      ebitdaMarginNet,
       taxes,
       netIncome,
       freeCashFlow,

@@ -74,7 +74,9 @@ const CONFIG = {
   public: {
     students: { 0: 0, 1: 0, 2: 12000, 3: 60000, 4: 120000, 5: 216000, 6: 360000, 7: 540000, 8: 780000, 9: 1080000, 10: 1440000 },
     feePerMonth: 150, // R$150/student/month
-    costRate: 0.20,   // 20% costs (sales & training team only)
+    // AUDIT: reduced from 20% → 5% because dedicated B2B sales is now a separate line (b2bSales).
+    // This 5% covers recurring teacher training, platform customization per network, and municipal liaison.
+    costRate: 0.05,
   },
 
   // STAFF - Matches financialModel.js (DOUBLED values)
@@ -100,10 +102,10 @@ const CONFIG = {
 
   // COSTS - Matches financialModel.js
   costs: {
-    // Technology: 4% of revenue (FIXED - was 10%)
+    // Technology: 4% of revenue (infrastructure, licenses — NOT LLM tokens)
     technologyRate: 0.04,
 
-    // Marketing: 5% flat (FIXED - was 8%→5%→3%)
+    // Marketing: 5% flat brand marketing (B2B sales is separate below)
     marketingRate: 0.05,
 
     // Facilities: R$1.5M base + 5% inflation per year
@@ -117,22 +119,56 @@ const CONFIG = {
     teacherTraining: { base: 200000, perStudent: 250 },
 
     // Quality & Compliance - REDUCED to 15% of original
-    qualityAssurance: { base: 45000, rate: 0.0015 }, // (FIXED - was 300K/1%)
-    regulatory: { base: 60000, rate: 0.00075 }, // (FIXED - was 400K/0.5%)
+    qualityAssurance: { base: 45000, rate: 0.0015 },
+    regulatory: { base: 60000, rate: 0.00075 },
 
-    dataManagement: { base: 200000, perStudent: 40 },
+    // LGPD/Data governance — minors' data, requires DPO, ISO 27001, ANPD audits
+    dataManagement: { base: 800000, perStudent: 80 },
     parentEngagement: { base: 150000, perStudent: 60 },
-    badDebt: 0.02, // 2%
+
+    // === AUDIT: SEGMENTED BAD DEBT ===
+    // B2C K-12 benchmark (Fenep/Semesp): 8–12% due to Law 9.870/99
+    badDebtRateB2C: 0.08,
+    badDebtRateB2B: 0.02,
+
     paymentProcessing: 0.025, // 2.5%
     platformRD: 0.06, // 6%
     legal: { base: 500000, rate: 0.003 },
 
-    // Insurance: Fixed R$100K/year (FIXED - was 0.5% of revenue)
+    // Insurance: Fixed R$100K/year
     insuranceFixed: 100000,
 
     travel: { base: 300000, perLocation: 50000 },
     workingCapital: 0.01,
     contingency: 0.005,
+
+    // === AUDIT: LLM/AI VARIABLE COST PER STUDENT ===
+    // OpenAI/Anthropic/Gemini API tokens: R$150/student/year baseline.
+    // Separate from 4% tech (infrastructure) — scales with student engagement.
+    llmCostPerStudent: 150,
+
+    // === AUDIT: DEDICATED B2B SALES (Account Executives, BDRs, events, PoCs) ===
+    // Distinct from brand marketing — needed to sell adoption to private + public schools
+    b2bSalesBase: 3000000,       // R$3M base team (5 BDRs + 2 AEs + 1 Head loaded)
+    b2bSalesVariableRate: 0.015, // 1.5% of B2B revenue for events/travel/PoCs
+
+    // === AUDIT: CLT LABOR BURDEN ===
+    // Base salaries are GROSS. Multiplier covers INSS + FGTS + 13th + vacation +
+    // 1/3 bonus + rescissions provision + SAT/Sistema S = ~80% extra.
+    cltBurdenMultiplier: 1.80,
+
+    // === AUDIT: CAPEX CONTINGENCY (historic building retrofit risk) ===
+    capexContingencyRate: 0.20,
+
+    // === AUDIT: CERTIFICATION/AUTHORIZATION UPFRONT ===
+    lgpdCertificationUpfront: 3000000,  // ISO 27001 + initial LGPD (split Y0/Y1)
+    mecAuthorizationUpfront: 1500000,   // MEC/SEE-SP school authorization (Y0)
+  },
+
+  // === AUDIT: INDIRECT TAXES (Brazilian GAAP — applied to gross revenue) ===
+  indirectTaxes: {
+    pisCofins: 0.0925, // 1.65% PIS + 7.6% COFINS (Lucro Real, non-cumulative)
+    iss: 0.03,         // 3% ISS on services (São Paulo)
   },
 
   // Pre-operational (2026) - CAPEX starts April, not August
@@ -148,13 +184,13 @@ const CONFIG = {
     semester2: {
       technology: 2000000,
       people: 3000000,
-      teacherHiring: 30 * 8000 * 5, // 30 teachers × R$8K × 5 months
+      teacherHiring: 30 * 8000 * 5 * 1.80, // CLT burden applied
     },
     capexStartMonth: 4, // April (FIXED - was August)
   },
 
-  // Tax rate (corporate tax from model)
-  taxRate: 0.34, // 34% corporate tax in Brazil (IRPJ + CSLL)
+  // Tax rate (corporate tax on profit — IRPJ 15% + 10% surtax + CSLL 9%)
+  taxRate: 0.34,
 };
 
 // ============================================
@@ -260,21 +296,35 @@ const calculateFinancialData = () => {
     // 5% simple inflation (FIXED - was compound)
     const inflationMultiplier = Math.pow(1 + CONFIG.staff.inflationRate, Math.max(0, year - 1));
 
-    // Staff costs with DOUBLED flagship values
-    const staffCorporate = Math.max(CONFIG.staff.corporate.base, totalStudents * CONFIG.staff.corporate.perStudent) * inflationMultiplier;
-    const staffFlagship = flagshipStudents > 0 ? Math.max(CONFIG.staff.flagship.base, flagshipStudents * CONFIG.staff.flagship.perStudent) * inflationMultiplier : 0;
-    const staffFranchise = franchiseCount * CONFIG.staff.franchiseSupport * inflationMultiplier;
+    // === AUDIT: CLT burden applied to all base salaries ===
+    const cltBurden = CONFIG.costs.cltBurdenMultiplier;
 
-    // Adoption support: 1 person per 20 schools
+    // Staff costs — BASE salary × inflation × CLT burden (encargos).
+    // Corporate scales with PRIVATE students (high-touch) + 10% of PUBLIC (light-touch B2B).
+    // Previous formula totalStudents * 80 was unrealistic at 1.5M public students.
+    const corporateScalingStudents = totalPrivateStudents + (publicStudents * 0.10);
+    const staffCorporate = Math.max(CONFIG.staff.corporate.base, corporateScalingStudents * CONFIG.staff.corporate.perStudent) * inflationMultiplier * cltBurden;
+    const staffFlagship = flagshipStudents > 0 ? Math.max(CONFIG.staff.flagship.base, flagshipStudents * CONFIG.staff.flagship.perStudent) * inflationMultiplier * cltBurden : 0;
+    const staffFranchise = franchiseCount * CONFIG.staff.franchiseSupport * inflationMultiplier * cltBurden;
+
+    // Adoption support: 1 person per 20 schools (with CLT burden)
     const adoptionSchools = Math.ceil(adoptionStudentsPrivate / CONFIG.staff.avgStudentsPerSchool);
     const adoptionSupportStaff = Math.ceil(adoptionSchools / CONFIG.staff.schoolsPerSupportPerson);
-    const staffAdoption = adoptionSupportStaff * CONFIG.staff.adoptionSupportPerSchool * 12 * inflationMultiplier;
+    const staffAdoption = adoptionSupportStaff * CONFIG.staff.adoptionSupportPerSchool * 12 * inflationMultiplier * cltBurden;
 
-    // Technology: 4% of revenue (FIXED)
+    // Technology: 4% of revenue (infrastructure & licenses — LLM tokens are separate)
     const technologyCost = totalRevenue * CONFIG.costs.technologyRate;
 
-    // Marketing: 5% flat (FIXED)
+    // Marketing: 5% flat brand marketing
     const marketingCost = totalRevenue * CONFIG.costs.marketingRate;
+
+    // === AUDIT: Dedicated B2B sales team (separate from brand marketing) ===
+    const b2bRevenue = annualAdoptionRevenue + annualPublicRevenue;
+    const b2bSalesCost = year < 2 ? 0 :
+      Math.max(CONFIG.costs.b2bSalesBase, b2bRevenue * CONFIG.costs.b2bSalesVariableRate) * inflationMultiplier * cltBurden;
+
+    // === AUDIT: LLM/AI variable cost per student ===
+    const llmCost = year === 0 ? 0 : totalStudents * CONFIG.costs.llmCostPerStudent * inflationMultiplier;
 
     // Public sector costs: 20%
     const publicDirectCosts = annualPublicRevenue * CONFIG.public.costRate;
@@ -286,20 +336,46 @@ const calculateFinancialData = () => {
     const teacherTrainingCost = Math.max(CONFIG.costs.teacherTraining.base, (flagshipStudents + franchiseStudents) * CONFIG.costs.teacherTraining.perStudent) * inflationMultiplier;
     const qaCost = Math.max(CONFIG.costs.qualityAssurance.base, totalRevenue * CONFIG.costs.qualityAssurance.rate);
     const regulatoryCost = Math.max(CONFIG.costs.regulatory.base, totalRevenue * CONFIG.costs.regulatory.rate);
-    const dataCost = Math.max(CONFIG.costs.dataManagement.base, totalStudents * CONFIG.costs.dataManagement.perStudent);
-    const parentCost = Math.max(CONFIG.costs.parentEngagement.base, totalStudents * CONFIG.costs.parentEngagement.perStudent);
-    const badDebtCost = totalRevenue * CONFIG.costs.badDebt;
+
+    // LGPD/Data governance — private students at full rate, public at 25% (shared with secretariats)
+    const dataScalingStudents = totalPrivateStudents + (publicStudents * 0.25);
+    const dataCost = Math.max(CONFIG.costs.dataManagement.base, dataScalingStudents * CONFIG.costs.dataManagement.perStudent);
+    // Parent engagement applies ONLY to B2C (flagship + franchise). Public sector = school is the client, not parents.
+    const parentScalingStudents = flagshipStudents + franchiseStudents;
+    const parentCost = Math.max(CONFIG.costs.parentEngagement.base, parentScalingStudents * CONFIG.costs.parentEngagement.perStudent);
+
+    // === AUDIT: SEGMENTED BAD DEBT ===
+    // B2C (flagship tuition + franchise tuition + kits): 8% — Fenep benchmark
+    // B2B (adoption private + public): 2% — corporate contracts
+    const b2cRevenue = annualFlagshipRevenue + annualFranchiseRoyalty + annualFranchiseMarketing +
+                      annualFranchiseFees + annualKitRevenue;
+    const b2bRevenueForBadDebt = annualAdoptionRevenue + annualPublicRevenue;
+    const badDebtCost = (b2cRevenue * CONFIG.costs.badDebtRateB2C) +
+                        (b2bRevenueForBadDebt * CONFIG.costs.badDebtRateB2B);
+
     const paymentCost = totalRevenue * CONFIG.costs.paymentProcessing;
     const rdCost = totalRevenue * CONFIG.costs.platformRD;
     const contentCost = totalRevenue * CONFIG.costs.contentDev;
     const legalCost = Math.max(CONFIG.costs.legal.base, totalRevenue * CONFIG.costs.legal.rate);
 
-    // Insurance: Fixed R$100K + inflation (FIXED)
+    // Insurance: Fixed R$100K + inflation
     const insuranceCost = CONFIG.costs.insuranceFixed * inflationMultiplier;
 
     const travelCost = Math.max(CONFIG.costs.travel.base, (franchiseCount + Math.floor(adoptionStudentsPrivate / 5000)) * CONFIG.costs.travel.perLocation);
     const workingCapitalCost = totalRevenue * CONFIG.costs.workingCapital;
     const contingencyCost = totalRevenue * CONFIG.costs.contingency;
+
+    // === AUDIT: INDIRECT TAXES (PIS/COFINS 9,25% + ISS 3%) ===
+    const pisCofinsCost = totalRevenue * CONFIG.indirectTaxes.pisCofins;
+    const issCost = totalRevenue * CONFIG.indirectTaxes.iss;
+
+    // === AUDIT: Certification / authorization upfront (Y0–Y1) ===
+    let certificationUpfrontCost = 0;
+    if (year === 0) {
+      certificationUpfrontCost = CONFIG.costs.lgpdCertificationUpfront * 0.5 + CONFIG.costs.mecAuthorizationUpfront;
+    } else if (year === 1) {
+      certificationUpfrontCost = CONFIG.costs.lgpdCertificationUpfront * 0.5;
+    }
 
     // ===== MONTHLY BREAKDOWN =====
     for (let month = 1; month <= 12; month++) {
@@ -311,13 +387,17 @@ const calculateFinancialData = () => {
         revenue: { flagship: 0, franchiseRoyalty: 0, franchiseMarketing: 0, franchiseFees: 0, adoptionPrivate: 0, kits: 0, adoptionPublic: 0 },
         expenses: {
           corporateStaff: 0, flagshipStaff: 0, franchiseSupport: 0, adoptionSupport: 0,
-          teachers: 0, technology: 0, marketing: 0, facilities: 0,
+          teachers: 0, technology: 0, marketing: 0, b2bSales: 0, llmCost: 0,
+          facilities: 0,
           curriculum: 0, teacherTraining: 0,
           qa: 0, regulatory: 0, dataManagement: 0, legal: 0, insurance: 0,
           parentEngagement: 0, badDebt: 0, paymentProcessing: 0,
           platformRD: 0, contentDev: 0, travel: 0, workingCapital: 0, contingency: 0,
           publicCosts: 0, capex: 0, architect: 0,
+          // Audit additions
+          certificationUpfront: 0,
         },
+        indirectTaxes: { pisCofins: 0, iss: 0 },
         debtService: { bridgeInterest: 0, bridgePrincipal: 0, dspInterest: 0, dspPrincipal: 0, innovationInterest: 0, innovationPrincipal: 0 },
         tax: { corporateTax: 0 },
         headcount: { teachers: 0, corporate: 0, franchiseTeam: 0 },
@@ -347,17 +427,20 @@ const calculateFinancialData = () => {
             monthData.debtService.bridgeInterest = R(bridgeOutstanding * CONFIG.funding.bridge.interestRate);
           }
 
-          // CAPEX starts April (month 4) - FIXED
+          // CAPEX starts April (month 4) — with 20% contingency buffer
+          // (historic building retrofit risk: fire code, accessibility, structural)
           if (month >= CONFIG.preOperational.capexStartMonth) {
-            monthData.expenses.capex = R(10000000 / 9); // R$10M over 9 months (Apr-Dec)
+            monthData.expenses.capex = R(10000000 * (1 + CONFIG.costs.capexContingencyRate) / 9);
           }
+          // Certification upfront spread across Y0 (12 months)
+          monthData.expenses.certificationUpfront = R(certificationUpfrontCost / 12);
         } else {
           // Semester 2 (Aug-Dec)
           monthData.expenses.technology = R(CONFIG.preOperational.semester2.technology / 5);
           monthData.expenses.corporateStaff = R(CONFIG.preOperational.semester2.people / 5);
 
-          // Teachers hired - 30 teachers
-          monthData.expenses.teachers = R(30 * CONFIG.staff.teacherSalary);
+          // Teachers hired - 30 teachers (with CLT burden applied)
+          monthData.expenses.teachers = R(30 * CONFIG.staff.teacherSalary * cltBurden);
           monthData.headcount.teachers = 30;
           monthData.headcount.corporate = 12;
 
@@ -379,10 +462,13 @@ const calculateFinancialData = () => {
             monthData.debtService.bridgeInterest = R(bridgeOutstanding * CONFIG.funding.bridge.interestRate);
           }
 
-          // CAPEX continues
-          monthData.expenses.capex = R(10000000 / 9);
+          // CAPEX continues — with contingency
+          monthData.expenses.capex = R(10000000 * (1 + CONFIG.costs.capexContingencyRate) / 9);
 
           monthData.expenses.architect = R(CONFIG.preOperational.semester1.architectMonthly);
+
+          // Certification upfront spread across Y0
+          monthData.expenses.certificationUpfront = R(certificationUpfrontCost / 12);
 
           // DSP + Innovation quarterly interest December
           if (month === 12) {
@@ -416,9 +502,12 @@ const calculateFinancialData = () => {
         monthData.expenses.flagshipStaff = R(staffFlagship / 12);
         monthData.expenses.franchiseSupport = R(staffFranchise / 12);
         monthData.expenses.adoptionSupport = R(staffAdoption / 12);
-        monthData.expenses.teachers = R(teacherCount * CONFIG.staff.teacherSalary);
+        // Teachers: monthly cost = count × monthly salary × CLT burden
+        monthData.expenses.teachers = R(teacherCount * CONFIG.staff.teacherSalary * cltBurden);
         monthData.expenses.technology = R(technologyCost / 12);
         monthData.expenses.marketing = R(marketingCost / 12);
+        monthData.expenses.b2bSales = R(b2bSalesCost / 12);
+        monthData.expenses.llmCost = R(llmCost / 12);
         monthData.expenses.facilities = R(facilitiesCost / 12);
         monthData.expenses.teacherTraining = R(teacherTrainingCost / 12);
         monthData.expenses.qa = R(qaCost / 12);
@@ -435,11 +524,16 @@ const calculateFinancialData = () => {
         monthData.expenses.workingCapital = R(workingCapitalCost / 12);
         monthData.expenses.contingency = R(contingencyCost / 12);
         monthData.expenses.publicCosts = R(publicDirectCosts / 12);
+        monthData.expenses.certificationUpfront = R(certificationUpfrontCost / 12);
 
-        // CAPEX Year 1
+        // Indirect taxes — applied on monthly revenue
+        monthData.indirectTaxes.pisCofins = R(pisCofinsCost / 12);
+        monthData.indirectTaxes.iss = R(issCost / 12);
+
+        // CAPEX Year 1 — with contingency
         if (year === 1) {
           if (month <= 8) {
-            monthData.expenses.capex = R(CONFIG.capex.year2027 / 8);
+            monthData.expenses.capex = R(CONFIG.capex.year2027 * (1 + CONFIG.costs.capexContingencyRate) / 8);
           }
           monthData.expenses.architect = R(CONFIG.preOperational.semester1.architectMonthly);
 
@@ -488,12 +582,13 @@ const calculateFinancialData = () => {
           }
         }
 
-        // CORPORATE TAX (34% on profit)
+        // CORPORATE TAX (34% on profit AFTER indirect taxes and expenses)
         const monthlyRevenue = monthData.revenue.flagship + monthData.revenue.franchiseRoyalty +
                               monthData.revenue.franchiseMarketing + monthData.revenue.franchiseFees +
                               monthData.revenue.adoptionPrivate + monthData.revenue.kits + monthData.revenue.adoptionPublic;
         const monthlyExpenses = Object.values(monthData.expenses).reduce((a, b) => a + b, 0);
-        const monthlyProfit = monthlyRevenue - monthlyExpenses;
+        const monthlyIndirectTaxes = monthData.indirectTaxes.pisCofins + monthData.indirectTaxes.iss;
+        const monthlyProfit = monthlyRevenue - monthlyIndirectTaxes - monthlyExpenses;
         if (monthlyProfit > 0) {
           monthData.tax.corporateTax = R(monthlyProfit * CONFIG.taxRate);
         }
@@ -503,11 +598,12 @@ const calculateFinancialData = () => {
       monthData.totalFunding = R(Object.values(monthData.funding).reduce((a, b) => a + b, 0));
       monthData.totalRevenue = R(Object.values(monthData.revenue).reduce((a, b) => a + b, 0));
       monthData.totalExpenses = R(Object.values(monthData.expenses).reduce((a, b) => a + b, 0));
+      monthData.totalIndirectTaxes = R(Object.values(monthData.indirectTaxes).reduce((a, b) => a + b, 0));
       monthData.totalDebtService = R(Object.values(monthData.debtService).reduce((a, b) => a + b, 0));
       monthData.totalTax = R(Object.values(monthData.tax).reduce((a, b) => a + b, 0));
 
       monthData.totalInflows = R(monthData.totalFunding + monthData.totalRevenue);
-      monthData.totalOutflows = R(monthData.totalExpenses + monthData.totalDebtService + monthData.totalTax);
+      monthData.totalOutflows = R(monthData.totalExpenses + monthData.totalIndirectTaxes + monthData.totalDebtService + monthData.totalTax);
       monthData.netCashFlow = R(monthData.totalInflows - monthData.totalOutflows);
 
       cumulativeCash += monthData.netCashFlow;
@@ -518,13 +614,25 @@ const calculateFinancialData = () => {
     }
 
     // Year summary
+    const totalAnnualExpenses = R(yearData.months.reduce((sum, m) => sum + m.totalExpenses, 0));
+    const totalAnnualIndirectTaxes = R(yearData.months.reduce((sum, m) => sum + (m.totalIndirectTaxes || 0), 0));
+    const netRevenueAnnual = R(totalRevenue - totalAnnualIndirectTaxes);
+    const ebitdaAnnual = R(netRevenueAnnual - totalAnnualExpenses);
+    const ebitdaMarginGross = totalRevenue > 0 ? ebitdaAnnual / totalRevenue : 0;
+    const ebitdaMarginNet = netRevenueAnnual > 0 ? ebitdaAnnual / netRevenueAnnual : 0;
+
     yearData.summary = {
       totalPrivateRevenue: R(totalPrivateRevenue),
       totalPublicRevenue: R(annualPublicRevenue),
       totalRevenue: R(totalRevenue),
+      netRevenue: netRevenueAnnual,
       flagshipStudents, franchiseStudents: R(franchiseStudents), franchiseCount,
       adoptionStudentsPrivate, publicStudents, teacherCount,
-      totalExpenses: R(yearData.months.reduce((sum, m) => sum + m.totalExpenses, 0)),
+      totalExpenses: totalAnnualExpenses,
+      totalIndirectTaxes: totalAnnualIndirectTaxes,
+      ebitda: ebitdaAnnual,
+      ebitdaMarginGross,
+      ebitdaMarginNet,
       totalDebtService: R(yearData.months.reduce((sum, m) => sum + m.totalDebtService, 0)),
       totalTax: R(yearData.months.reduce((sum, m) => sum + m.totalTax, 0)),
       totalFunding: R(yearData.months.reduce((sum, m) => sum + m.totalFunding, 0)),
@@ -587,12 +695,15 @@ const createWorkbook = async (financialData) => {
     { label: 'REVENUE', isHeader: true, color: COLORS.revenueHeader },
     { label: 'Private Sector Revenue', key: 'totalPrivateRevenue', color: COLORS.revenueFill },
     { label: 'Public Sector Revenue', key: 'totalPublicRevenue', color: COLORS.revenueFill },
-    { label: 'Total Revenue', key: 'totalRevenue', color: COLORS.revenueHeader },
+    { label: 'Gross Revenue (Total)', key: 'totalRevenue', color: COLORS.revenueHeader },
+    { label: '(-) Indirect Taxes (PIS+COFINS 9.25% + ISS 3%)', key: 'totalIndirectTaxes', color: COLORS.expenseFill },
+    { label: 'Net Revenue (after indirect taxes)', key: 'netRevenue', color: COLORS.revenueHeader },
     { label: '', isBlank: true },
     { label: 'EXPENSES & TAX', isHeader: true, color: COLORS.expenseHeader },
-    { label: 'Operating Expenses', key: 'totalExpenses', color: COLORS.expenseFill },
+    { label: 'Operating Expenses (incl. CLT, LLM, B2B sales)', key: 'totalExpenses', color: COLORS.expenseFill },
+    { label: 'EBITDA (Net Revenue - OpEx)', key: 'ebitda', color: COLORS.revenueHeader },
     { label: 'Debt Service', key: 'totalDebtService', color: COLORS.debtFill },
-    { label: 'Corporate Tax (34%)', key: 'totalTax', color: COLORS.expenseFill },
+    { label: 'Corporate Tax (IRPJ+CSLL 34%)', key: 'totalTax', color: COLORS.expenseFill },
     { label: '', isBlank: true },
     { label: 'FUNDING (Loans/Grants)', isHeader: true, color: COLORS.fundingHeader },
     { label: 'Total Funding Received', key: 'totalFunding', color: COLORS.fundingFill },
@@ -694,17 +805,20 @@ const createWorkbook = async (financialData) => {
 
     // EXPENSES - OPERATIONS
     { label: 'EXPENSES - OPERATIONS', isSection: true, color: COLORS.expenseHeader },
-    { cat: '', label: 'Technology (4% of revenue)', dataPath: 'expenses.technology', color: COLORS.expenseFill },
-    { cat: '', label: 'Marketing (5% of revenue)', dataPath: 'expenses.marketing', color: COLORS.expenseFill },
+    { cat: '', label: 'Technology (4% — infra & licenses)', dataPath: 'expenses.technology', color: COLORS.expenseFill },
+    { cat: '', label: 'LLM/AI Variable Cost (R$150/student/yr)', dataPath: 'expenses.llmCost', color: COLORS.expenseFill },
+    { cat: '', label: 'Marketing - Brand (5% of revenue)', dataPath: 'expenses.marketing', color: COLORS.expenseFill },
+    { cat: '', label: 'B2B Sales Team (dedicated AEs/BDRs)', dataPath: 'expenses.b2bSales', color: COLORS.expenseFill },
     { cat: '', label: 'Facilities (R$1.5M+5%/yr)', dataPath: 'expenses.facilities', color: COLORS.expenseFill },
     { cat: '', label: 'Teacher Training', dataPath: 'expenses.teacherTraining', color: COLORS.expenseFill },
     { isBlank: true },
 
-    // EXPENSES - COMPLIANCE (REDUCED)
-    { label: 'EXPENSES - COMPLIANCE (15% of original)', isSection: true, color: COLORS.expenseHeader },
+    // EXPENSES - COMPLIANCE & DATA GOVERNANCE
+    { label: 'EXPENSES - COMPLIANCE & DATA', isSection: true, color: COLORS.expenseHeader },
     { cat: '', label: 'Quality Assurance (0.15%)', dataPath: 'expenses.qa', color: COLORS.expenseFill },
     { cat: '', label: 'Regulatory (0.075%)', dataPath: 'expenses.regulatory', color: COLORS.expenseFill },
-    { cat: '', label: 'Data Management', dataPath: 'expenses.dataManagement', color: COLORS.expenseFill },
+    { cat: '', label: 'Data Management / LGPD (R$800K+R$80/stud)', dataPath: 'expenses.dataManagement', color: COLORS.expenseFill },
+    { cat: '', label: 'LGPD + MEC Cert Upfront (Y0-Y1)', dataPath: 'expenses.certificationUpfront', color: COLORS.expenseFill },
     { cat: '', label: 'Legal', dataPath: 'expenses.legal', color: COLORS.expenseFill },
     { cat: '', label: 'Insurance (R$100K/yr fixed)', dataPath: 'expenses.insurance', color: COLORS.expenseFill },
     { isBlank: true },
@@ -712,7 +826,7 @@ const createWorkbook = async (financialData) => {
     // EXPENSES - OTHER
     { label: 'EXPENSES - OTHER', isSection: true, color: COLORS.expenseHeader },
     { cat: '', label: 'Parent Engagement', dataPath: 'expenses.parentEngagement', color: COLORS.expenseFill },
-    { cat: '', label: 'Bad Debt (2%)', dataPath: 'expenses.badDebt', color: COLORS.expenseFill },
+    { cat: '', label: 'Bad Debt (B2C 8% / B2B 2%)', dataPath: 'expenses.badDebt', color: COLORS.expenseFill },
     { cat: '', label: 'Payment Processing (2.5%)', dataPath: 'expenses.paymentProcessing', color: COLORS.expenseFill },
     { cat: '', label: 'Platform R&D (6%)', dataPath: 'expenses.platformRD', color: COLORS.expenseFill },
     { cat: '', label: 'Content Development (4%)', dataPath: 'expenses.contentDev', color: COLORS.expenseFill },
@@ -723,12 +837,19 @@ const createWorkbook = async (financialData) => {
     { isBlank: true },
 
     // CAPEX
-    { label: 'EXPENSES - CAPITAL', isSection: true, color: COLORS.expenseHeader },
-    { cat: '', label: 'CAPEX (starts Apr 2026)', dataPath: 'expenses.capex', color: COLORS.expenseFill },
+    { label: 'EXPENSES - CAPITAL (incl. 20% contingency)', isSection: true, color: COLORS.expenseHeader },
+    { cat: '', label: 'CAPEX w/ 20% contingency (starts Apr 2026)', dataPath: 'expenses.capex', color: COLORS.expenseFill },
     { cat: '', label: 'Architect (R$1.2M/24mo)', dataPath: 'expenses.architect', color: COLORS.expenseFill },
     { isBlank: true },
 
     { label: 'TOTAL EXPENSES', isTotal: true, dataPath: 'totalExpenses', color: COLORS.expenseHeader },
+    { isBlank: true },
+
+    // INDIRECT TAXES
+    { label: 'INDIRECT TAXES (on revenue, before EBITDA)', isSection: true, color: COLORS.expenseHeader },
+    { cat: '', label: 'PIS+COFINS (9.25%)', dataPath: 'indirectTaxes.pisCofins', color: COLORS.expenseFill },
+    { cat: '', label: 'ISS São Paulo (3%)', dataPath: 'indirectTaxes.iss', color: COLORS.expenseFill },
+    { label: 'TOTAL INDIRECT TAXES', isTotal: true, dataPath: 'totalIndirectTaxes', color: COLORS.expenseHeader },
     { isBlank: true },
 
     // DEBT SERVICE
@@ -906,15 +1027,20 @@ const main = async () => {
 
   const financialData = calculateFinancialData();
 
-  console.log('Revenue Summary:');
+  console.log('P&L Summary (post-audit: indirect taxes, CLT, LLM, segmented bad debt, etc.):');
+  console.log('  Year    | Gross Rev | Indir Tax | Net Rev  | OpEx    | EBITDA   | EBITDA%GR | Cash End');
+  console.log('  --------|-----------|-----------|----------|---------|----------|-----------|----------');
   financialData.yearly.forEach(y => {
-    console.log(`  ${y.calendarYear}: Private R$${(y.summary.totalPrivateRevenue/1000000).toFixed(1)}M + Public R$${(y.summary.totalPublicRevenue/1000000).toFixed(1)}M = R$${(y.summary.totalRevenue/1000000).toFixed(1)}M | Cash: R$${(y.summary.endingCash/1000000).toFixed(1)}M`);
+    const s = y.summary;
+    const fmt = (v) => (v / 1e6).toFixed(1).padStart(8);
+    const pct = (v) => (v * 100).toFixed(1).padStart(6);
+    console.log(`  ${y.calendarYear}   | ${fmt(s.totalRevenue)}M | ${fmt(s.totalIndirectTaxes)}M | ${fmt(s.netRevenue)}M | ${fmt(s.totalExpenses)}M | ${fmt(s.ebitda)}M | ${pct(s.ebitdaMarginGross)}%   | ${fmt(s.endingCash)}M`);
   });
 
   console.log('\nCreating Excel workbook...');
   const workbook = await createWorkbook(financialData);
 
-  const outputPath = '/Users/Raphael/BP K12/ai-school-financial-app/AI_School_Brazil_10Year_Financial_Plan.xlsx';
+  const outputPath = require('path').join(__dirname, 'AI_School_Brazil_10Year_Financial_Plan.xlsx');
   await workbook.xlsx.writeFile(outputPath);
 
   console.log(`\nDone! File: ${outputPath}`);

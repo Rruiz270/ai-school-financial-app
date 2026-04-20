@@ -25,19 +25,34 @@ Interactive financial modeling application for AI-powered K-12 education venture
 - Executive summary and financial highlights
 - Market opportunity and competitive analysis
 
-## Financial Model Highlights
+## Financial Model Highlights (Post-Audit 2026-04)
 
-**Year 10 Projections:**
-- Revenue: R$1.68B (40%+ CAGR)
-- EBITDA: R$1.38B (82% margin)
-- Students: 326,500 (5% market share)
-- IRR: 38-49% (depending on CAPEX scenario)
+**Year 10 Projections (Private Realistic + Public Optimistic, fully loaded):**
+- Gross Revenue: R$3.49B | Net Revenue (after indirect taxes): R$3.06B
+- EBITDA: ~R$1.33B (**~38% gross margin / ~44% net margin**)
+- Students: ~1.6M total (150K private adoption + 1.2M-1.4M public sector)
+- Cash ending Y10: ~R$3.0B positive
+- Break-even: Y3 (2029)
 
-**Key Business Model:**
-- **Adoption Licensing:** R$648M (38% of revenue) - 250K students at R$200/month
-- **Kit Sales:** R$495M (29% of revenue) - Universal across all students
-- **Franchise Revenue:** R$451M (27% of revenue) - 50 franchises
-- **Flagship Tuition:** R$90M (5% of revenue) - Premium demonstration center
+**Key Business Model (audited):**
+- **Private Adoption Licensing:** R$180/student/month B2B (150K students by Y10)
+- **Public Sector:** R$150/student/month via municipal/state contracts (optimistic path)
+- **Franchise Network:** 24 franchises × 1,200 students, R$180K fee, 6% royalty, 2% marketing fund
+- **Flagship School (SP):** 1,200 students at R$2,300/mo — demonstration center
+- **Kit Sales:** R$1,200/student/year universally
+
+**Audit-applied corrections (see BUSINESS_PLAN_AUDIT.md):**
+- Indirect taxes on revenue: PIS/COFINS 9.25% + ISS 3%
+- CLT labor burden: 1.80× multiplier on base salaries (INSS, FGTS, 13th, vacation)
+- LLM/AI variable cost: R$150/student/year (OpenAI/Anthropic tokens)
+- Segmented bad debt: B2C 8% (Fenep benchmark) / B2B 2%
+- Dedicated B2B sales team separate from brand marketing
+- LGPD uplift (R$800K base + R$80/student) + MEC authorization upfront
+- CAPEX 20% contingency for historic building retrofit
+- Juros Desenvolve SP + Innovation sincronizados a 12%/a.a.
+- Corporate/parent-engagement scaled to private students only (not public B2B)
+- EBITDA margin target realigned from aspirational 82% to defensible 38-44%
+
 
 ## Technology Stack
 

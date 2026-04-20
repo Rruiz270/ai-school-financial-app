@@ -1345,7 +1345,10 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
             <div className="p-6">
               <div className="bg-yellow-100 border-2 border-yellow-300 p-4 rounded-lg mb-6">
                 <p className="text-lg font-bold text-gray-900 text-center">
-                  The model is designed to maintain ~80-85% EBITDA margins at scale while ensuring comprehensive coverage of all operational needs.
+                  Target ~35-45% EBITDA margin at maturity (Y5+), in line with best-in-class Brazilian K-12 peers (Cogna, Arco, Vasta).
+                </p>
+                <p className="text-xs text-gray-600 text-center mt-2">
+                  Post-audit (2026): includes PIS/COFINS/ISS, CLT labor burden, LLM cost, segmented bad debt, dedicated B2B sales, LGPD compliance.
                 </p>
               </div>
 
@@ -1432,11 +1435,31 @@ const PresentationMode = ({ financialData, publicModelData, currentPrivateScenar
               </div>
               
               <div className="mt-6 bg-primary-50 p-4 rounded-lg">
-                <h4 className="font-bold text-primary-900 mb-2">TOTAL OPERATING EXPENSE RATIO</h4>
+                <h4 className="font-bold text-primary-900 mb-2">OPERATING STRUCTURE AT MATURITY (Y10)</h4>
                 <div className="text-sm text-primary-800">
-                  <p>At scale (Year 10): <strong>Total Operating Expenses ~15-20% of revenue</strong></p>
-                  <p><strong>EBITDA Margin: ~80-85%</strong> | <strong>Net Margin (after tax): ~60-65%</strong></p>
+                  <p>Indirect taxes (PIS/COFINS + ISS): ~12% of gross revenue</p>
+                  <p>Operating Expenses (incl. CLT, LLM, B2B sales): ~50-55% of gross revenue</p>
+                  <p><strong>EBITDA Margin: ~35-40% of gross revenue (40-45% of net revenue)</strong></p>
+                  <p><strong>Net Margin (after IRPJ/CSLL 34%): ~22-28%</strong></p>
+                  <p className="text-xs italic mt-2 text-gray-600">Benchmark peers: Cogna EBITDA 25-30%, Arco 30-35%, YDUQS 30-35%, Vasta 15-25%.</p>
                 </div>
+              </div>
+
+              <div className="mt-6 bg-red-50 border border-red-200 p-4 rounded-lg">
+                <h4 className="font-bold text-red-900 mb-2">RISK FACTORS (Material for Investor DD)</h4>
+                <ul className="text-xs text-red-800 space-y-1 list-disc list-inside">
+                  <li><strong>Funding timing:</strong> Desenvolve SP R$30M disbursement is critical — a 6-month delay could default the bridge loan.</li>
+                  <li><strong>Public sector adoption:</strong> 2M+ students requires municipal/state contracts (licitações). Not committed — pipeline only.</li>
+                  <li><strong>CAPEX overrun:</strong> Historic building retrofit in São Paulo carries 20-40% overrun risk (fire code, accessibility, structural).</li>
+                  <li><strong>Regulatory:</strong> MEC/SEE-SP authorization required before operations. LGPD compliance for minors' data is mandatory.</li>
+                  <li><strong>Competition:</strong> Free alternatives (Khan Academy, Google Classroom) + domestic incumbents (Cogna/Arco) have entrenched relationships.</li>
+                  <li><strong>LLM cost volatility:</strong> AI token costs are USD-denominated — FX depreciation directly impacts unit economics.</li>
+                  <li><strong>K-12 inadimplência:</strong> Brazilian law (9.870/99) prevents student retention for default — school absorbs bad debt up to contract end.</li>
+                </ul>
+              </div>
+
+              <div className="mt-4 text-xs text-gray-500 italic">
+                Forward-looking statements. Projections are not guarantees of future performance. See financial model for assumptions.
               </div>
             </div>
           </div>

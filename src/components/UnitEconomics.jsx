@@ -43,9 +43,11 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
       acquisitionCost: newStudents.flagship > 0 ? 
         ((yearData.costs?.marketing || 0) * 0.4) / newStudents.flagship : 0, // Based on actual new students
       lifetimeValue: 2300 * 12 * 3.5, // Average 3.5 years retention
-      contributionMargin: 0.75, // 75% contribution margin
+      // Flagship is capital-intensive (building + teachers + operational staff).
+      // Realistic contribution margin after CLT + LLM + facilities + kits: ~30%
+      contributionMargin: 0.30,
       paybackMonths: 0,
-      churnRate: 0.15 // 15% annual churn
+      churnRate: 0.15 // 15% annual churn (B2C K-12 Brazil benchmark)
     };
     flagship.paybackMonths = flagship.acquisitionCost > 0 ? 
       flagship.acquisitionCost / (flagship.monthlyTuition * flagship.contributionMargin) : 0;
@@ -54,37 +56,42 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
     const prevFranchises = selectedYear > 1 ? (projection[selectedYear - 1].franchiseCount || 0) : 0;
     const newFranchises = Math.max(0, (yearData.franchiseCount || 0) - prevFranchises);
     
+    // Franchise economics — sync with financialModel.js (R$180K fee, 6% royalty, 2% mkt)
+    const franchiseMonthlyRoyalty = 2300 * 0.06 * 1200 / 12; // 6% × R$2,300 × 1200 students ÷ 12 ≈ R$13,800/mo per loc
     const franchise = {
       locations: yearData.franchiseCount || 0,
       newFranchises: newFranchises,
-      studentsPerLocation: yearData.students?.franchise > 0 ? 
+      studentsPerLocation: yearData.students?.franchise > 0 ?
         (yearData.students?.franchise / (yearData.franchiseCount || 1)) : 0,
-      franchiseFee: 225000, // R$225,000 initial fee
-      monthlyRoyalty: 606, // 5% of R$12,120 average monthly revenue per location
-      marketingCosts: (yearData.costs?.marketing || 0) * 0.3, // 30% allocated to franchise
-      acquisitionCost: newFranchises > 0 ? 
-        ((yearData.costs?.marketing || 0) * 0.3) / newFranchises : 0, // Based on actual new franchises
-      lifetimeValue: (225000 + (606 * 12 * 8)), // 8-year average franchise life
-      contributionMargin: 0.85, // 85% contribution margin
+      franchiseFee: 180000, // R$180K — synced with financialModel.js
+      monthlyRoyalty: franchiseMonthlyRoyalty,
+      marketingCosts: (yearData.costs?.marketing || 0) * 0.3,
+      acquisitionCost: newFranchises > 0 ?
+        ((yearData.costs?.marketing || 0) * 0.3) / newFranchises : 0,
+      lifetimeValue: (180000 + (franchiseMonthlyRoyalty * 12 * 8)),
+      // Contribution margin reduced to realistic 50% after CLT + LGPD + LLM + B2B support costs
+      contributionMargin: 0.50,
       paybackMonths: 0,
-      churnRate: 0.08 // 8% annual franchise churn
+      churnRate: 0.08
     };
     franchise.paybackMonths = franchise.acquisitionCost > 0 ? 
       franchise.acquisitionCost / (franchise.monthlyRoyalty * franchise.contributionMargin) : 0;
 
-    // Adoption Licensing Unit Economics
+    // Adoption Licensing Unit Economics — synced with financialModel.js (R$180/student/month)
+    const ADOPTION_MONTHLY_FEE = 180;
     const adoption = {
       students: yearData.students?.adoption || 0,
       newStudents: newStudents.adoption,
-      monthlyFee: 250, // R$250/student/month
-      annualRevenue: (yearData.students?.adoption || 0) * 250 * 12,
-      marketingCosts: (yearData.costs?.marketing || 0) * 0.2, // 20% allocated to adoption
-      acquisitionCost: newStudents.adoption > 0 ? 
-        ((yearData.costs?.marketing || 0) * 0.2) / newStudents.adoption : 0, // Based on actual new students
-      lifetimeValue: 250 * 12 * 4, // Average 4 years retention
-      contributionMargin: 0.90, // 90% contribution margin
+      monthlyFee: ADOPTION_MONTHLY_FEE,
+      annualRevenue: (yearData.students?.adoption || 0) * ADOPTION_MONTHLY_FEE * 12,
+      marketingCosts: (yearData.costs?.marketing || 0) * 0.2,
+      acquisitionCost: newStudents.adoption > 0 ?
+        ((yearData.costs?.marketing || 0) * 0.2) / newStudents.adoption : 0,
+      lifetimeValue: ADOPTION_MONTHLY_FEE * 12 * 4,
+      // B2B licensing contribution margin after LLM/data/B2B sales: 55% (was aspirational 90%)
+      contributionMargin: 0.55,
       paybackMonths: 0,
-      churnRate: 0.12 // 12% annual churn
+      churnRate: 0.12
     };
     adoption.paybackMonths = adoption.acquisitionCost > 0 ? 
       adoption.acquisitionCost / (adoption.monthlyFee * adoption.contributionMargin) : 0;
@@ -96,19 +103,21 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
       publicModelData[selectedYear-2].students : 0;
     const newPublicStudents = Math.max(0, currentPublicStudents - prevPublicStudents);
     
+    const PUBLIC_MONTHLY_FEE = 150; // synced with financialModel.js public scenario
     const publicPartnerships = {
       students: currentPublicStudents,
       newStudents: newPublicStudents,
-      monthlyFee: 250, // R$250/student/month
+      monthlyFee: PUBLIC_MONTHLY_FEE,
       annualRevenue: selectedYear >= 2 && publicModelData && publicModelData[selectedYear-2] ? 
         publicModelData[selectedYear-2].revenue.total : 0,
       marketingCosts: (yearData.costs?.marketing || 0) * 0.1, // 10% allocated to public
       acquisitionCost: newPublicStudents > 0 ? 
         ((yearData.costs?.marketing || 0) * 0.1) / newPublicStudents : 1500, // Based on new students or default
-      lifetimeValue: 250 * 12 * 5, // 5-year government contracts
-      contributionMargin: 0.75, // 75% contribution margin (higher support costs)
+      lifetimeValue: PUBLIC_MONTHLY_FEE * 12 * 5, // 5-year government contracts
+      // Public partnerships: higher LLM cost per student + teacher training overhead = 40% margin
+      contributionMargin: 0.40,
       paybackMonths: 0,
-      churnRate: 0.05 // 5% annual churn (government stability)
+      churnRate: 0.05 // 5% annual churn (government contracts are more stable)
     };
     publicPartnerships.paybackMonths = publicPartnerships.acquisitionCost > 0 ? 
       publicPartnerships.acquisitionCost / (publicPartnerships.monthlyFee * publicPartnerships.contributionMargin) : 0;
@@ -141,12 +150,21 @@ const UnitEconomics = ({ financialData, parameters, currentScenario, publicModel
 
     const ltvCacRatio = weightedCAC > 0 ? weightedLTV / weightedCAC : 0;
     
+    // Blended contribution margin calculated from weighted segments above (was hardcoded 82%).
+    // Realistic post-audit: weighted average of flagship(25-35%) + franchise(50%) + adoption(55%) + public(40%)
+    const weightedBlendedMargin = totalRevenue > 0 ? (
+      (flagship.contributionMargin * flagship.annualRevenue) +
+      (franchise.contributionMargin * (franchise.locations * franchise.monthlyRoyalty * 12)) +
+      (adoption.contributionMargin * adoption.annualRevenue) +
+      (publicPartnerships.contributionMargin * publicPartnerships.annualRevenue)
+    ) / totalRevenue : 0.45;
+
     return {
       totalRevenue,
       weightedCAC,
       weightedLTV,
       ltvCacRatio,
-      blendedMargin: 0.82, // Blended contribution margin
+      blendedMargin: weightedBlendedMargin,
       paybackMonths: weightedCAC > 0 ? weightedCAC / ((weightedLTV / 48) * 0.82) : 0 // 48-month LTV assumption
     };
   }, [unitEconomicsData]);

@@ -203,4 +203,4 @@ The application is designed to be easily customizable:
 
 ## License
 
-© 2024 AI School Brazil Financial Model. All rights reserved.# Integration Dashboard Update Tue Oct 21 00:27:44 -03 2025
+© 2025-2026 AI School Brazil Financial Model. All rights reserved.# Integration Dashboard Update Tue Oct 21 00:27:44 -03 2025

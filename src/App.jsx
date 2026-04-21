@@ -1133,7 +1133,7 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
-                <p>AI School Brazil - Financial Model &copy; 2024</p>
+                <p>AI School Brazil - Financial Model &copy; 2025-2026</p>
                 <p>Interactive financial planning for AI-powered education</p>
               </div>
               <div className="flex items-center space-x-4 text-sm text-gray-600">
